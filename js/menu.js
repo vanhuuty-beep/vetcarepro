@@ -132,6 +132,19 @@ document.addEventListener("DOMContentLoaded", function() {
         font-size: 30px !important; /* Làm chữ VetCare Pro to rõ hơn */
         letter-spacing: 0.5px;
     }
+	@media screen and (max-width: 768px) {
+    /* Khi sidebar mở, tạo lớp nền mờ phía sau */
+    .sidebar.active::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 280px; /* Bắt đầu từ mép menu */
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 998;
+    }
+}
     </style>`;
 
     const container = document.getElementById('menu-container');
@@ -220,3 +233,15 @@ function dangXuat() {
         window.location.href = 'index.html';
     }
 }
+// TỰ ĐỘNG ĐÓNG MENU KHI CHẠM RA NGOÀI MÀN HÌNH TRÊN MOBILE
+document.addEventListener("click", function(event) {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.querySelector('.toggle-btn');
+    
+    // Nếu menu đang mở (có class active) và người dùng bấm ra ngoài sidebar lẫn nút 3 gạch
+    if (sidebar && sidebar.classList.contains('active')) {
+        if (!sidebar.contains(event.target) && (!toggleBtn || !toggleBtn.contains(event.target))) {
+            sidebar.classList.remove('active');
+        }
+    }
+});
