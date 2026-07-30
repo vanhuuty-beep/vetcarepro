@@ -49,6 +49,9 @@ function taoMenuMobile(trangHienTai) {
             <a href="chidinh.html" class="${trangHienTai === 'chidinh' ? 'active' : ''}">
                 <span>📋</span>Chỉ định
             </a>
+			<a href="lichhen.html" class="${trangHienTai === 'lichhen' ? 'active' : ''}">
+                <span>📅 </span>Lịch hẹn
+            </a>
 			<a href="pos.html" class="${trangHienTai === 'pos' ? 'active' : ''}">
                 <span>🪙</span>POS
             </a>
