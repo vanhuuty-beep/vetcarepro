@@ -1,7 +1,9 @@
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
-        sidebar.classList.toggle('active');
+        // Thu phóng hoặc ẩn hiện sidebar mượt mà
+        sidebar.classList.toggle('collapsed');
+        document.body.classList.toggle('sidebar-collapsed');
     }
 }
 
