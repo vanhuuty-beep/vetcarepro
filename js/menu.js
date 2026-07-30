@@ -163,6 +163,23 @@ document.addEventListener("DOMContentLoaded", function() {
             border-radius: 6px;
             margin: 4px 8px;
         }
+        /* ĐẢM BẢO THANH TOP NAVBAR LUÔN HIỂN THỊ CỐ ĐỊNH Ở TRÊN CÙNG */
+    #topnav-container {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        width: 100%;
+    }
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 25px;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        height: 55px;
+        box-sizing: border-box;
+    }
     </style>`;
 
     const container = document.getElementById('menu-container');
