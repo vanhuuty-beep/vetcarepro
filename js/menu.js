@@ -187,3 +187,9 @@ function dangXuat() {
         window.location.href = 'index.html';
     }
 }
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+}
