@@ -427,35 +427,35 @@
                 display: none !important;
             }
         }
-		/* ĐỐI VỚI GIAO DIỆN DI ĐỘNG (MOBILE) TRANG POS */
+		/* TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (MÀN HÌNH DƯỚI 768px) */
 @media screen and (max-width: 768px) {
-    /* 1. Cho phép khu vực danh sách sản phẩm trong giỏ cuộn nội dung độc lập */
-    .cart-items-container, .cart-list, #cart-items {
-        max-height: 250px !important;
-        overflow-y: auto !important;
+    /* 1. Ẩn menu sidebar mặc định trên mobile */
+    .sidebar {
+        position: fixed;
+        left: -260px; /* Đẩy hẳn menu ra ngoài màn hình */
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
     }
 
-    /* 2. Cố định khung tổng tiền và nút thanh toán dính chặt ở đáy màn hình điện thoại */
-    .cart-summary, .pos-checkout-section, .card-footer {
-        position: sticky !important;
-        bottom: 0 !important;
-        background: #ffffff !important;
-        z-index: 99 !important;
-        padding: 10px !important;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
-        border-top: 2px solid #e2e8f0 !important;
+    /* Khi có class active (bấm nút mở menu), sidebar sẽ trượt ra */
+    .sidebar.active {
+        left: 0;
     }
 
-    /* 3. Phóng to nút thanh toán để bấm dễ dàng bằng ngón tay */
-    .btn-checkout, .btn-thanh-toan {
+    /* 2. Mở rộng khung nội dung POS chiếm trọn màn hình điện thoại */
+    .main-content, .pos-container {
         width: 100% !important;
-        padding: 14px !important;
-        font-size: 16px !important;
-        font-weight: bold !important;
-        background-color: #2563eb !important;
-        color: white !important;
-        border-radius: 8px !important;
-        border: none !important;
+        margin-left: 0 !important;
+        padding: 10px !important;
+    }
+
+    /* 3. Sắp xếp lại bố cục các sản phẩm và giỏ hàng POS thành dạng dọc (1 cột) */
+    .pos-layout {
+        display: flex;
+        flex-direction: column !important;
+        gap: 15px;
     }
 }
     </style>
