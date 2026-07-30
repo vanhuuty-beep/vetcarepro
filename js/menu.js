@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         /* TĂNG KÍCH THƯỚC LOGO VETCARE PRO */
     .sidebar-header {
-        font-size: 18px !important; /* Tăng kích thước tổng thể header logo */
+        font-size: 25px !important; /* Tăng kích thước tổng thể header logo */
         font-weight: bold !important;
         padding: 18px 15px !important;
     }
