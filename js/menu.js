@@ -118,6 +118,20 @@ document.addEventListener("DOMContentLoaded", function() {
             70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
             100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
+        /* TĂNG KÍCH THƯỚC LOGO VETCARE PRO */
+    .sidebar-header {
+        font-size: 18px !important; /* Tăng kích thước tổng thể header logo */
+        font-weight: bold !important;
+        padding: 18px 15px !important;
+    }
+    .sidebar-header span:first-child {
+        font-size: 22px !important; /* Làm icon hình chân thú (🐾) to lên */
+        margin-right: 8px;
+    }
+    .sidebar-header .menu-text {
+        font-size: 18px !important; /* Làm chữ VetCare Pro to rõ hơn */
+        letter-spacing: 0.5px;
+    }
     </style>`;
 
     const container = document.getElementById('menu-container');
