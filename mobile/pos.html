@@ -8,11 +8,11 @@
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
+    <!-- Kết nối các file cấu hình -->
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
-
+    
     <!-- Thư viện quét mã vạch qua camera -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
@@ -20,76 +20,97 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
     <link rel="stylesheet" href="css/button.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { background: #f8fafc; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        .mobile-container { max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; padding: 10px; padding-bottom: 80px; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        .top-header h3 { margin: 0; font-size: 16px; color: #1e293b; }
+        .btn-desktop { background: #3b82f6; color: white; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .search-box { border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
+        .search-box:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        .product-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
+        .product-card:hover { border-color: #3b82f6; background: #f8fafc; }
+    </style>
 </head>
 <body>
 
-    <div class="mobile-container" style="padding-bottom: 70px;">
+    <div class="mobile-container">
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
-            <h3>💳 Bán hàng POS</h3>
-            <a href="../pos.html" class="btn-desktop">💻 Bản Desktop</a>
+            <h3 style="color: white;">💳 Bán hàng POS</h3>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <a href="../pos.html" class="btn-desktop">💻 Desktop</a>
+                <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
+            </div>
         </div>
 
-        <!-- THANH TÌM KIẾM VÀ NÚT QUÉT MÃ NẰM CÙNG 1 DÒNG -->
-        <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
-            <input type="text" id="searchPOS" class="search-box" placeholder="🔍 Gõ tên sản phẩm..." onkeyup="timKiemSanPham()" style="flex: 1; margin: 0; padding: 8px; font-size: 12px;">
-            <button type="button" class="btn-add" onclick="moCameraQuetMa()" style="white-space: nowrap; margin: 0; padding: 8px 10px; font-size: 12px; background: #0284c7; cursor: pointer;">📷 Quét</button>
+        <!-- THANH TÌM KIẾM VÀ NÚT QUÉT MÃ -->
+        <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: center;">
+            <input type="text" id="searchPOS" class="search-box" placeholder="🔍 Gõ tên hoặc mã barcode..." onkeyup="timKiemSanPham()" style="flex: 1; margin: 0; padding: 8px; font-size: 12px;">
+            <button type="button" class="btn-add" onclick="moCameraQuetMa()" style="white-space: nowrap; margin: 0; padding: 8px 12px; font-size: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">📷 Quét</button>
         </div>
 
         <!-- DANH SÁCH SẢN PHẨM DẠNG LƯỚI -->
-        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 4px;">📦 Chọn sản phẩm:</div>
-        <div id="product-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 150px; overflow-y: auto; margin-bottom: 8px; padding-right: 2px;">
-            <div style="grid-column: span 2; text-align: center; color: #666; font-size: 11px; padding: 10px;">Đang tải sản phẩm...</div>
+        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 6px;">📦 Chọn sản phẩm:</div>
+        <div id="product-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 160px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;">
+            <div style="grid-column: span 2; text-align: center; color: #666; font-size: 11px; padding: 15px;">Đang tải sản phẩm từ cơ sở dữ liệu...</div>
         </div>
 
         <!-- THÔNG TIN KHÁCH HÀNG & NÚT THÊM NHANH -->
-        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+        <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <label style="font-size: 11px; font-weight: bold; color: #475569;">Khách hàng:</label>
                 <button type="button" onclick="moModalThemKhachHangPOS()" style="background: none; border: none; color: #2563eb; font-size: 11px; font-weight: bold; cursor: pointer; padding: 0;">+ Thêm khách hàng mới</button>
             </div>
-            <select id="selectKhachHang" class="form-control" style="font-size: 11px; padding: 4px; height: auto;">
+            <select id="selectKhachHang" class="form-control" onchange="chonKhachHangTuDropdown()" style="font-size: 11px; padding: 6px; height: auto; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 4px;">
                 <option value="">-- Khách lẻ / Vãng lai --</option>
             </select>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b;">
+                <span id="khachHangStatus">Khách vãng lai</span>
+                <span id="diemTichLuyHienTai" style="color: #059669; font-weight: bold;">Điểm: 0</span>
+            </div>
         </div>
 
         <!-- GIỎ HÀNG -->
-        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 4px;">💰 Giỏ hàng:</div>
-        <div id="gioHangContainer" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;">
-            <div style="text-align: center; color: #777; padding: 8px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>
+        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 6px;">💰 Giỏ hàng:</div>
+        <div id="gioHangContainer" style="margin-bottom: 10px; max-height: 140px; overflow-y: auto;">
+            <div style="text-align: center; color: #777; padding: 12px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>
         </div>
-		<!-- HÓA ĐƠN CHỜ / BILL TẠM -->
-        <div style="background: #f1f5f9; padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+
+        <!-- HÓA ĐƠN CHỜ / BILL TẠM -->
+        <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
             <div style="font-weight: bold; font-size: 11px; color: #334155;">📋 Bill tạm đang lưu: <span id="soLuongBillTam" style="color: #2563eb;">0</span></div>
-            <select id="selectBillTam" class="form-control" style="font-size: 11px; padding: 3px; width: 130px; height: auto;" onchange="taiBillTam(this.value)">
+            <select id="selectBillTam" class="form-control" style="font-size: 11px; padding: 4px; width: 140px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px;" onchange="taiBillTam(this.value)">
                 <option value="">-- Chọn bill chờ --</option>
             </select>
         </div>
 
-        <!-- TỔNG KẾT & THANH TOÁN (CÓ KHUYẾN MÃI VÀ TÍCH ĐIỂM) -->
-        <div style="background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; color: #475569; align-items: center;">
+        <!-- TỔNG KẾT & THANH TOÁN -->
+        <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; color: #475569; align-items: center;">
                 <span>Giảm giá / Voucher:</span>
-                <input type="number" id="inputGiamGia" value="0" placeholder="0" style="width: 80px; padding: 2px 4px; font-size: 11px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;" oninput="tinhToanThanhToan()">
+                <input type="number" id="inputGiamGia" value="0" placeholder="0" style="width: 90px; padding: 3px 6px; font-size: 11px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px;" oninput="tinhToanThanhToan()">
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; color: #475569;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; color: #475569;">
                 <span>Tiền hàng gốc:</span>
                 <span id="tongTienHang" style="font-weight: bold;">0 đ</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; color: #059669;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #059669;">
                 <span>Điểm tích lũy nhận được:</span>
                 <span id="diemTichLuyHienThi" style="font-weight: bold;">0 Điểm</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #2563eb; border-top: 1px solid #e2e8f0; padding-top: 4px; margin-top: 2px;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #2563eb; border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 4px;">
                 <span>Tổng Tiền Cuối Cùng:</span>
                 <span id="tongThanhToan">0 đ</span>
             </div>
             
-            <div style="display: flex; gap: 6px; margin-top: 8px;">
-                <button type="button" style="flex: 1; padding: 8px 4px; font-size: 11px; font-weight: bold; background: #64748b; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="luuTamBill()">💾 Lưu tạm bill</button>
-                <button type="button" style="flex: 1.2; padding: 8px 4px; font-size: 11px; font-weight: bold; background: #059669; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="chotVaTichDiem()">💳 Chốt & Tích điểm</button>
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button type="button" style="flex: 1; padding: 9px 4px; font-size: 11px; font-weight: bold; background: #64748b; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="luuTamBill()">💾 Lưu tạm bill</button>
+                <button type="button" id="btnChotDon" style="flex: 1.3; padding: 9px 4px; font-size: 11px; font-weight: bold; background: #059669; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="chotVaTichDiem()">💳 Chốt & Tích điểm</button>
             </div>
         </div>
+    </div>
 
     <!-- MODAL QUÉT MÃ BARCODE BẰNG CAMERA -->
     <div id="modalQuetMa" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999;">
@@ -103,7 +124,7 @@
         </div>
     </div>
 
-    <!-- MODAL THÊM KHÁCH HÀNG NHANH TỪ TRANG POS -->
+    <!-- MODAL THÊM KHÁCH HÀNG NHANH -->
     <div id="modalThemKH" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999;">
         <div class="modal-content" style="background: #fff; padding: 15px; border-radius: 8px; width: 90%; max-width: 380px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -112,20 +133,20 @@
             </div>
             <form id="formThemKHPos" onsubmit="luuKhachHangNhanhPOS(event)">
                 <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 11px;">Họ và tên (*):</label>
-                    <input type="text" id="posHovaten" class="form-control" placeholder="Nhập tên khách hàng..." required style="font-size: 12px; padding: 6px;">
+                    <label style="font-size: 11px; font-weight: bold;">Họ và tên (*):</label>
+                    <input type="text" id="posHovaten" class="form-control" placeholder="Nhập tên khách hàng..." required style="font-size: 12px; padding: 6px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 11px;">Số điện thoại:</label>
-                    <input type="tel" id="posSodienthoai" class="form-control" placeholder="Nhập số điện thoại..." style="font-size: 12px; padding: 6px;">
+                    <label style="font-size: 11px; font-weight: bold;">Số điện thoại (*):</label>
+                    <input type="tel" id="posSodienthoai" class="form-control" placeholder="Nhập số điện thoại..." required style="font-size: 12px; padding: 6px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 12px;">
-                    <label style="font-size: 11px;">Địa chỉ:</label>
-                    <input type="text" id="posDiachi" class="form-control" placeholder="Nhập địa chỉ..." style="font-size: 12px; padding: 6px;">
+                    <label style="font-size: 11px; font-weight: bold;">Địa chỉ:</label>
+                    <input type="text" id="posDiachi" class="form-control" placeholder="Nhập địa chỉ..." style="font-size: 12px; padding: 6px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px;">
                 </div>
                 <div style="display: flex; gap: 6px; justify-content: flex-end;">
-                    <button type="button" class="btn-cancel" onclick="dongModalThemKhachHangPOS()" style="padding: 6px 10px; font-size: 11px;">Hủy</button>
-                    <button type="submit" class="btn-save" id="btnSavePOS" style="padding: 6px 12px; font-size: 11px; background: #059669; color: #fff; border: none; border-radius: 4px;">Lưu & Chọn</button>
+                    <button type="button" class="btn-cancel" onclick="dongModalThemKhachHangPOS()" style="padding: 6px 10px; font-size: 11px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer;">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSavePOS" style="padding: 6px 12px; font-size: 11px; background: #059669; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Lưu & Chọn</button>
                 </div>
             </form>
         </div>
@@ -133,38 +154,77 @@
 
     <!-- SCRIPT XỬ LÝ POS -->
     <script>
-		
         let danhSachSanPhamGoc = [];
+        let danhSachKhachHangGoc = [];
+        let khachHangDangChon = null;
         let gioHang = [];
         let html5QrCode = null;
+
+        function dangXuatMobile() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                sessionStorage.removeItem('currentUser');
+                window.location.href = '../index.html';
+            }
+        }
 
         async function loadDuLieuPOS() {
             await loadLaiDanhSachKhachHang();
 
-            // Tải danh sách sản phẩm từ bảng 'danhmucsanpham'[cite: 5]
+            if (typeof db === 'undefined' || !db) {
+                console.error('Biến kết nối Supabase `db` chưa được khởi tạo!');
+                document.getElementById('product-grid').innerHTML = `<div style="grid-column: span 2; text-align:center; color:red; font-size:11px;">Lỗi: Chưa kết nối được Supabase</div>`;
+                return;
+            }
+
             const { data: spData, error } = await db.from('danhmucsanpham').select('*');
             if (error) {
                 console.error('Lỗi tải sản phẩm:', error);
-                document.getElementById('product-grid').innerHTML = `<div style="grid-column: span 2; text-align:center; color:red; font-size:11px;">Lỗi tải dữ liệu sản phẩm</div>`;
+                document.getElementById('product-grid').innerHTML = `<div style="grid-column: span 2; text-align:center; color:red; font-size:11px;">Lỗi tải sản phẩm: ${error.message}</div>`;
                 return;
             }
 
             danhSachSanPhamGoc = spData || [];
             hienThiLuoiSanPham(danhSachSanPhamGoc);
+            capNhatDanhSachBillTamSelect();
         }
 
         async function loadLaiDanhSachKhachHang(selectId = null) {
             const selectKH = document.getElementById('selectKhachHang');
             selectKH.innerHTML = '<option value="">-- Khách lẻ / Vãng lai --</option>';
 
-            const { data: khData } = await db.from('khachhang').select('*');
+            const { data: khData, error } = await db.from('khachhang').select('*');
+            if (error) {
+                console.error('Lỗi tải khách hàng:', error);
+                return;
+            }
+
             if (khData) {
+                danhSachKhachHangGoc = khData;
                 khData.forEach(kh => {
-                    const ten = kh.hovaten || kh.ten || 'Khách hàng';
-                    const sdt = kh.sodienthoai ? ` (${kh.sodienthoai})` : '';
+                    const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
+                    const sdt = kh.sdt || kh.sodienthoai ? ` (${kh.sdt || kh.sodienthoai})` : '';
                     const selected = (selectId && kh.id == selectId) ? 'selected' : '';
                     selectKH.innerHTML += `<option value="${kh.id}" ${selected}>${ten}${sdt}</option>`;
                 });
+            }
+            chonKhachHangTuDropdown();
+        }
+
+        function chonKhachHangTuDropdown() {
+            const id = document.getElementById('selectKhachHang').value;
+            if (!id) {
+                khachHangDangChon = null;
+                document.getElementById('khachHangStatus').innerText = 'Khách vãng lai';
+                document.getElementById('diemTichLuyHienTai').innerText = 'Điểm: 0';
+                return;
+            }
+
+            const kh = danhSachKhachHangGoc.find(x => x.id == id);
+            if (kh) {
+                khachHangDangChon = kh;
+                document.getElementById('khachHangStatus').innerText = 'Thành viên';
+                const diem = kh.tichdiem || kh.điểm || 0;
+                document.getElementById('diemTichLuyHienTai').innerText = `Điểm: ${diem}`;
             }
         }
 
@@ -183,7 +243,7 @@
                 const tonKho = sp.soluongton || 0;
 
                 grid.innerHTML += `
-                    <div onclick="themVaoGioHang('${sp.id}', '${tenSP.replace(/'/g, "\\'")}', ${giaSP})" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 5px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="product-card" onclick="themVaoGioHang(${sp.id})">
                         <div style="font-weight: bold; font-size: 11px; color: #1e293b; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${tenSP}</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px;">
                             <span style="color: #059669; font-weight: bold;">${giaSP.toLocaleString()}đ</span>
@@ -204,12 +264,31 @@
             hienThiLuoiSanPham(ketQuaLoc);
         }
 
-        function themVaoGioHang(id, ten, gia) {
+        function themVaoGioHang(id) {
+            const sp = danhSachSanPhamGoc.find(x => x.id === id);
+            if (!sp) return;
+
+            if ((sp.soluongton || 0) <= 0) {
+                alert('Sản phẩm này đã hết hàng trong kho!');
+                return;
+            }
+
             const existingItem = gioHang.find(item => item.id === id);
             if (existingItem) {
-                existingItem.soLuong += 1;
+                if (existingItem.soLuong < sp.soluongton) {
+                    existingItem.soLuong += 1;
+                } else {
+                    alert('Đã đạt giới hạn số lượng tồn kho!');
+                }
             } else {
-                gioHang.push({ id, ten, gia, soLuong: 1 });
+                gioHang.push({
+                    id: sp.id,
+                    masanpham: 'SP' + String(sp.id).padStart(4, '0'),
+                    ten: sp.tensanpham,
+                    gia: Number(sp.giaban || 0),
+                    soLuong: 1,
+                    tonkho: sp.soluongton || 0
+                });
             }
             hienThiGioHang();
         }
@@ -220,6 +299,9 @@
                 item.soLuong += delta;
                 if (item.soLuong <= 0) {
                     gioHang = gioHang.filter(i => i.id !== id);
+                } else if (item.soLuong > item.tonkho) {
+                    alert('Vượt quá số lượng tồn kho!');
+                    item.soLuong = item.tonkho;
                 }
             }
             hienThiGioHang();
@@ -235,7 +317,7 @@
             container.innerHTML = '';
 
             if (gioHang.length === 0) {
-                container.innerHTML = `<div style="text-align: center; color: #777; padding: 8px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #777; padding: 12px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>`;
                 document.getElementById('tongTienHang').textContent = '0 đ';
                 document.getElementById('tongThanhToan').textContent = '0 đ';
                 document.getElementById('diemTichLuyHienThi').textContent = '0 Điểm';
@@ -248,19 +330,19 @@
                 tongTien += thanhTien;
 
                 container.innerHTML += `
-                    <div style="background: #ffffff; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 2; overflow: hidden;">
+                    <div style="background: #ffffff; padding: 6px 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 2; overflow: hidden; padding-right: 4px;">
                             <div style="font-weight: bold; font-size: 11px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.ten}</div>
                             <div style="color: #059669; font-size: 10px;">${item.gia.toLocaleString()}đ</div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center;">
-                            <button type="button" onclick="thayDoiSoLuong('${item.id}', -1)" style="padding: 1px 5px; background: #cbd5e1; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">-</button>
+                        <div style="display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center;">
+                            <button type="button" onclick="thayDoiSoLuong(${item.id}, -1)" style="padding: 2px 6px; background: #e2e8f0; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;">-</button>
                             <span style="font-size: 11px; font-weight: bold;">${item.soLuong}</span>
-                            <button type="button" onclick="thayDoiSoLuong('${item.id}', 1)" style="padding: 1px 5px; background: #cbd5e1; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">+</button>
+                            <button type="button" onclick="thayDoiSoLuong(${item.id}, 1)" style="padding: 2px 6px; background: #e2e8f0; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;">+</button>
                         </div>
                         <div style="text-align: right; flex: 1;">
                             <div style="font-weight: bold; font-size: 11px; color: #2563eb;">${thanhTien.toLocaleString()}đ</div>
-                            <button type="button" onclick="xoaKhoiGioHang('${item.id}')" style="background: none; border: none; color: #ef4444; font-size: 9px; cursor: pointer; padding: 0;">Xóa</button>
+                            <button type="button" onclick="xoaKhoiGioHang(${item.id})" style="background: none; border: none; color: #ef4444; font-size: 10px; cursor: pointer; padding: 0; font-weight: bold;">Xóa</button>
                         </div>
                     </div>
                 `;
@@ -277,14 +359,13 @@
             let tongCuoiCung = tongTienGoc - giamGia;
             if (tongCuoiCung < 0) tongCuoiCung = 0;
 
-            // Quy đổi tích điểm (Ví dụ: Cứ mỗi 100.000đ = 1 điểm tích lũy)
-            let diemTichLuy = Math.floor(tongCuoiCung / 100000);
+            let diemTichLuy = Math.floor(tongCuoiCung / 10000);
 
             document.getElementById('tongThanhToan').textContent = tongCuoiCung.toLocaleString() + ' đ';
             document.getElementById('diemTichLuyHienThi').textContent = diemTichLuy + ' Điểm';
+            return { tongCuoiCung, diemTichLuy };
         }
 
-        // --- XỬ LÝ THÊM KHÁCH HÀNG NHANH ---
         function moModalThemKhachHangPOS() {
             document.getElementById('modalThemKH').style.display = 'flex';
             document.getElementById('formThemKHPos').reset();
@@ -306,7 +387,7 @@
             btnSave.textContent = 'Đang lưu...';
 
             const { data, error } = await db.from('khachhang').insert([
-                { hovaten: hovaten, sodienthoai: sodienthoai, diachi: diachi }
+                { tenkhachhang: hovaten, hovaten: hovaten, sdt: sodienthoai, sodienthoai: sodienthoai, diachi: diachi, tichdiem: 0 }
             ]).select();
 
             btnSave.disabled = false;
@@ -314,7 +395,7 @@
 
             if (error) {
                 console.error('Lỗi thêm khách hàng:', error);
-                alert('Lỗi khi thêm khách hàng! Vui lòng thử lại.');
+                alert('Lỗi khi thêm khách hàng: ' + error.message);
                 return;
             }
 
@@ -323,7 +404,6 @@
             await loadLaiDanhSachKhachHang(data && data[0] ? data[0].id : null);
         }
 
-        // --- XỬ LÝ CAMERA QUÉT MÃ ---
         function moCameraQuetMa() {
             document.getElementById('modalQuetMa').style.display = 'flex';
             if (!html5QrCode) {
@@ -334,7 +414,12 @@
                 { fps: 10, qrbox: { width: 250, height: 150 } },
                 (decodedText) => {
                     dongCamera();
-                    xuLyKetQuaQuet(decodedText);
+                    const sp = danhSachSanPhamGoc.find(x => (x.mabarcode || '').toLowerCase() === decodedText.toLowerCase());
+                    if (sp) {
+                        themVaoGioHang(sp.id);
+                    } else {
+                        alert('Không tìm thấy sản phẩm có mã vạch: ' + decodedText);
+                    }
                 },
                 (errorMessage) => {}
             ).catch(err => {
@@ -355,16 +440,6 @@
             }
         }
 
-        function xuLyKetQuaQuet(barcode) {
-            const sp = danhSachSanPhamGoc.find(item => String(item.mabarcode || '') === String(barcode));
-            if (sp) {
-                themVaoGioHang(sp.id, sp.tensanpham || 'Sản phẩm', Number(sp.giaban || 0));
-            } else {
-                alert('Không tìm thấy sản phẩm có mã vạch: ' + barcode);
-            }
-        }
-
-        // --- QUẢN LÝ HÓA ĐƠN TẠM (LƯU TẠM BILL) ---
         function luuTamBill() {
             if (gioHang.length === 0) {
                 alert('Giỏ hàng đang trống, không thể lưu tạm!');
@@ -372,6 +447,7 @@
             }
 
             const makhachhang = document.getElementById('selectKhachHang').value || '';
+            const tenKhach = khachHangDangChon ? (khachHangDangChon.tenkhachhang || khachHangDangChon.hovaten) : 'Khách vãng lai';
             const giamGia = Number(document.getElementById('inputGiamGia').value) || 0;
             const tongTien = document.getElementById('tongThanhToan').innerText;
 
@@ -379,6 +455,8 @@
                 id: 'BILL_' + Date.now(),
                 thoiGian: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                 makhachhang: makhachhang,
+                tenKhach: tenKhach,
+                khachObj: khachHangDangChon,
                 giamGia: giamGia,
                 gioHang: [...gioHang],
                 tongTienText: tongTien
@@ -390,11 +468,11 @@
 
             alert('💾 Đã lưu tạm bill thành công!');
             
-            // Reset giỏ hàng hiện tại
             gioHang = [];
             document.getElementById('inputGiamGia').value = 0;
             hienThiGioHang();
             document.getElementById('selectKhachHang').value = "";
+            chonKhachHangTuDropdown();
             capNhatDanhSachBillTamSelect();
         }
 
@@ -406,7 +484,7 @@
             select.innerHTML = '<option value="">-- Chọn bill chờ --</option>';
 
             danhSachBillTam.forEach((bill, index) => {
-                select.innerHTML += `<option value="${bill.id}">Bill #${index + 1} (${bill.thoiGian}) - ${bill.tongTienText}</option>`;
+                select.innerHTML += `<option value="${bill.id}">Bill #${index + 1} (${bill.tenKhach}) - ${bill.tongTienText}</option>`;
             });
         }
 
@@ -423,11 +501,11 @@
 
                 gioHang = [...bill.gioHang];
                 document.getElementById('selectKhachHang').value = bill.makhachhang || '';
+                chonKhachHangTuDropdown();
                 document.getElementById('inputGiamGia').value = bill.giamGia || 0;
                 
                 hienThiGioHang();
 
-                // Xóa bill này khỏi danh sách tạm sau khi gọi ra
                 danhSachBillTam = danhSachBillTam.filter(b => b.id !== billId);
                 localStorage.setItem('danhSachBillTamMobile', JSON.stringify(danhSachBillTam));
                 capNhatDanhSachBillTamSelect();
@@ -435,49 +513,72 @@
         }
 
         async function chotVaTichDiem() {
-            if (gioHang.length === 0) {
-                alert('Giỏ hàng đang trống!');
-                return;
-            }
+    if (gioHang.length === 0) {
+        alert('Giỏ hàng đang trống!');
+        return;
+    }
 
-            const makhachhang = document.getElementById('selectKhachHang').value || null;
-            let tongTienGoc = gioHang.reduce((sum, item) => sum + (item.gia * item.soLuong), 0);
-            let giamGia = Number(document.getElementById('inputGiamGia').value) || 0;
-            let tongCuoiCung = tongTienGoc - giamGia;
-            if (tongCuoiCung < 0) tongCuoiCung = 0;
-            let diemTichLuy = Math.floor(tongCuoiCung / 100000);
+    const { tongCuoiCung, diemTichLuy } = tinhToanThanhToan();
+    const tenKhach = khachHangDangChon ? (khachHangDangChon.tenkhachhang || khachHangDangChon.hovaten) : 'Khách lẻ vãng lai';
+    const sdtKhach = khachHangDangChon ? (khachHangDangChon.sdt || khachHangDangChon.sodienthoai) : '';
 
-            let chiTietArr = gioHang.map(i => `${i.ten} (x${i.soLuong})`);
-            const chitietdonhang = chiTietArr.join('; ');
+    if (!confirm(`Xác nhận chốt đơn thanh toán: ${tongCuoiCung.toLocaleString('vi-VN')} đ?`)) {
+        return;
+    }
 
-            const { error } = await db.from('hoadon').insert([{
-                makhachhang: makhachhang,
-                chitietdonhang: chitietdonhang,
-                giangia: giamGia,
-                tongtien: tongCuoiCung,
-                diemtichluy: diemTichLuy,
-                ngaylap: new Date().toISOString()
-            }]);
-
-            if (error) {
-                alert('Lỗi khi chốt đơn hàng!');
-                return;
-            }
-
-            alert(`Chốt đơn thành công!\n- Tổng thanh toán: ${tongCuoiCung.toLocaleString()}đ\n- Tích lũy được: ${diemTichLuy} điểm`);
-            gioHang = [];
-            document.getElementById('inputGiamGia').value = 0;
-            hienThiGioHang();
-            document.getElementById('selectKhachHang').value = "";
+    try {
+        if (khachHangDangChon) {
+            let diemCu = parseInt(khachHangDangChon.tichdiem || khachHangDangChon.điểm) || 0;
+            let diemMoi = diemCu + diemTichLuy;
+            await db.from('khachhang').update({ tichdiem: diemMoi }).eq('id', khachHangDangChon.id);
         }
 
-        loadDuLieuPOS();
-    </script>
+        for (let item of gioHang) {
+            const donHangPayload = {
+                masanpham: item.masanpham,
+                tensanpham: item.ten,
+                soluongban: Number(item.soLuong),
+                dongia: Number(item.gia),
+                thanhtien: Number(item.gia * item.soLuong),
+                tenkhachhang: tenKhach,
+                sdt: sdtKhach,
+                nguoiban: 'Thu ngân POS Mobile'
+            };
 
-    <!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
-    <script src="js/menu-mobile.js"></script>
-    <script>
-        taoMenuMobile('pos');
+            const { error: insertError } = await db.from('donhang').insert([donHangPayload]);
+            if (insertError) {
+                console.error('Lỗi insert donhang:', insertError);
+                alert('Lỗi ghi đơn hàng vào CSDL: ' + insertError.message);
+                return;
+            }
+
+            const spGoc = danhSachSanPhamGoc.find(x => x.id === item.id);
+            if (spGoc) {
+                let tonMoi = (Number(spGoc.soluongton) || 0) - Number(item.soLuong);
+                if (tonMoi < 0) tonMoi = 0;
+                
+                await db.from('danhmucsanpham')
+                    .update({ soluongton: tonMoi })
+                    .eq('id', item.id);
+            }
+        }
+
+        alert(`Chốt đơn thành công!\n- Tổng thanh toán: ${tongCuoiCung.toLocaleString()}đ\n- Tích lũy được: ${diemTichLuy} điểm`);
+        
+        gioHang = [];
+        document.getElementById('inputGiamGia').value = 0;
+        document.getElementById('selectKhachHang').value = "";
+        chonKhachHangTuDropdown();
+        hienThiGioHang();
+        await loadDuLieuPOS();
+
+    } catch (err) {
+        console.error('Lỗi hệ thống khi chốt đơn:', err);
+        alert('Có lỗi xảy ra khi chốt đơn. Vui lòng kiểm tra console.');
+    }
+}
+
+        loadDuLieuPOS();
     </script>
 </body>
 </html>
