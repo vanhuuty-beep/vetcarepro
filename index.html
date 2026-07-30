@@ -145,6 +145,12 @@
     </div>
 
     <script>
+        (function() {
+            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                window.location.replace('mobile/pos.html');
+            }
+        })();
         // Hàm mã hóa mật khẩu SHA-256 để khớp với dữ liệu đã lưu ở trang quản lý nhân viên
         async function maHoaMatKhau(password) {
             const msgBuffer = new TextEncoder().encode(password);
