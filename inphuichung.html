@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>In Phểu Tổng Hợp - VetCare Pro</title>
+    <!-- Thư viện Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/smart-search.js"></script>
+
+    <!-- Gọi file CSS chung -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/style1.css">
+    <link rel="stylesheet" href="css/smart-search.css">
+
+    <style>
+        .search-box {
+            padding: 8px 12px;
+            width: 250px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+            outline: none;
+        }
+        .card-header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-print-general {
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .btn-print-general:hover {
+            background-color: #0369a1;
+        }
+
+        /* --- CẤU HÌNH KHung IN CHUNG KHI GỌI window.print() --- */
+        #printArea {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printArea, #printArea * {
+                visibility: visible !important;
+            }
+            #printArea {
+                display: block !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                font-family: 'Arial', sans-serif !important;
+                color: #111 !important;
+                background: #fff !important;
+                padding: 15px !important;
+                box-sizing: border-box !important;
+            }
+            .print-header {
+                text-align: center;
+                border-bottom: 2px solid #0284c7;
+                padding-bottom: 6px;
+                margin-bottom: 10px;
+            }
+            .print-header h2 { font-size: 15px; margin: 0; color: #0284c7; font-weight: bold; }
+            .print-header p { font-size: 10px; margin: 2px 0; color: #555; }
+            .print-title {
+                text-align: center;
+                margin-bottom: 12px;
+            }
+            .print-title h3 { font-size: 13px; margin: 0; text-transform: uppercase; color: #1e293b; font-weight: bold; }
+            .print-title p { font-size: 10px; margin: 2px 0; color: #64748b; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- THANH MENU BÊN TRÁI -->
+    <div id="menu-container"></div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <div class="main-content">
+        <div class="top-navbar">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+                <h2 style="margin: 0; font-size: 14px; font-weight: bold;">QUẢN LÝ IN PHIẾU TỔNG HỢP</h2>
+            </div>
+            <div class="search-container">
+                <input type="text" id="globalSearchInput" class="search-box" placeholder="🔍 Tìm kiếm nhanh..." autocomplete="off">
+                <div id="searchDropdown" class="search-dropdown"></div>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div class="card">
+                <div class="card-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h3 style="margin: 0;">Trung Tâm In Phôi Phiếu</h3>
+                        <!-- HỘP CHỌN LOẠI PHIẾU CẦN IN -->
+                        <select id="loaiPhieuSelect" class="filter-select" onchange="thayDoiLoaiPhieu()">
+                            <option value="khambenh">1. Phiếu Khám Bệnh</option>
+                            <option value="donthuoc">2. Hóa Đơn & Đơn Thuốc</option>
+                            <option value="phieuchidinh">3. Phiếu Chỉ Định Cận Lâm Sàng</option>
+                            <option value="nhatkylamvaccine">4. Nhật Ký Tiêm Vắc-xin</option>
+                            <option value="nhatkynoitru">5. Hóa Đơn Nội Trú</option>
+                            <option value="nhatkyspa">6. Nhật Ký & Hóa Đơn Spa</option>
+                        </select>
+                    </div>
+                    <div class="card-header-actions">
+                        <input type="text" id="searchInput" class="search-box" placeholder="Lọc danh sách..." onkeyup="locDuLieuBang()">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr id="tableHeader">
+                                <!-- Cột tiêu đề sẽ thay đổi linh hoạt theo loại phiếu -->
+                            </tr>
+                        </thead>
+                        <tbody id="data-table">
+                            <!-- Dữ liệu được nạp tự động -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHUNG IN DÙNG CHUNG CHO TẤT CẢ CÁC LOẠI PHIẾU -->
+    <div id="printArea">
+        <div class="print-header">
+            <h2>VETCARE PRO - PHÒNG KHÁM THÚ Y</h2>
+            <p>Địa chỉ: Đà Nẵng | Điện thoại: 0935.xxx.xxx</p>
+        </div>
+        
+        <div class="print-title">
+            <h3 id="print-form-title">PHIẾU TỔNG HỢP</h3>
+            <p id="print-form-code">Mã: ---</p>
+        </div>
+
+        <!-- Nội dung động được render vào đây khi bấm In -->
+        <div id="print-form-body"></div>
+
+        <div style="display: flex; justify-content: space-between; text-align: center; font-size: 11px; margin-top: 30px;">
+            <div>
+                <p><strong>Khách hàng / Chủ vật nuôi</strong></p>
+                <p style="font-size: 10px; color: #666; font-style: italic;">(Ký và ghi rõ họ tên)</p>
+            </div>
+            <div>
+                <p><strong>Bác sĩ / Nhân viên phụ trách</strong></p>
+                <p style="font-size: 10px; color: #666; font-style: italic;">(Ký và đóng dấu)</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let duLieuHienTai = [];
+        let danhSachKhachHang = {};
+        let danhSachThuCung = {};
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await taiDuLieuThamChieu();
+            await thayDoiLoaiPhieu();
+        });
+
+        // 1. Tải bảng phụ (Khách hàng & Thú cưng) để ghép tên chuẩn xác cho mọi phiếu
+        async function taiDuLieuThamChieu() {
+            const { data: khData } = await db.from('khachhang').select('*');
+            if (khData) {
+                khData.forEach(kh => { danhSachKhachHang[kh.id] = kh.hovaten || kh.ten; });
+            }
+
+            const { data: tcData } = await db.from('thucung').select('*');
+            if (tcData) {
+                tcData.forEach(tc => {
+                    let maKH = tc.makhachhang || tc.makh || tc.khachhang_id;
+                    danhSachThuCung[tc.id] = {
+                        ten: tc.tenthucung || tc.ten,
+                        chu: danhSachKhachHang[maKH] || 'Không rõ chủ'
+                    };
+                });
+            }
+        }
+
+        // 2. Chuyển đổi loại phiếu hiển thị trên bảng
+        async function thayDoiLoaiPhieu() {
+            const loai = document.getElementById('loaiPhieuSelect').value;
+            const headerEl = document.getElementById('tableHeader');
+            document.getElementById('searchInput').value = '';
+
+            let tableName = loai;
+            if (loai === 'donthuoc') tableName = 'hoadonthuoc';
+
+            // Thiết lập cấu trúc cột theo từng bảng
+            if (loai === 'khambenh') {
+                headerEl.innerHTML = `<th>Mã phiếu</th><th>Thú cưng</th><th>Ngày khám</th><th>Chẩn đoán & Điều trị</th><th>Chi phí</th><th>Thao tác</th>`;
+            } else if (loai === 'donthuoc') {
+                headerEl.innerHTML = `<th>Mã đơn</th><th>Mã khám bệnh</th><th>Chi tiết thuốc</th><th>Tổng tiền</th><th>Thao tác</th>`;
+            } else if (loai === 'phieuchidinh') {
+                headerEl.innerHTML = `<th>Mã phiếu</th><th>Mã khám bệnh</th><th>Ngày chỉ định</th><th>Kết luận</th><th>Tổng tiền</th><th>Thao tác</th>`;
+            } else if (loai === 'nhatkylamvaccine') {
+                headerEl.innerHTML = `<th>Mã nhật ký</th><th>Thú cưng</th><th>Vắc-xin</th><th>Ngày tiêm</th><th>Bác sĩ</th><th>Thao tác</th>`;
+            } else if (loai === 'nhatkynoitru') {
+                headerEl.innerHTML = `<th>Mã NKNT</th><th>Mã khám bệnh</th><th>Thời gian vào/ra</th><th>Tổng chi phí</th><th>Trạng thái</th><th>Thao tác</th>`;
+            } else if (loai === 'nhatkyspa') {
+                headerEl.innerHTML = `<th>Mã Spa</th><th>Chủ nuôi</th><th>Thú cưng</th><th>Dịch vụ sử dụng</th><th>Tổng tiền</th><th>Thao tác</th>`;
+            }
+
+            // Truy vấn dữ liệu từ bảng tương ứng trong Supabase
+            const { data, error } = await db.from(tableName).select('*').order('id', { ascending: false });
+            if (!error && data) {
+                duLieuHienTai = data;
+                hienThiBangChung(loai, duLieuHienTai);
+            } else {
+                duLieuHienTai = [];
+                hienThiBangChung(loai, []);
+            }
+        }
+
+        // 3. Đổ dữ liệu ra bảng giao diện
+        function hienThiBangChung(loai, data) {
+            const tbody = document.getElementById('data-table');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777; padding: 20px;">Không có dữ liệu phiếu in</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                if (loai === 'khambenh') {
+                    let petInfo = danhSachThuCung[item.mathucung] || { ten: 'Không rõ', chu: 'Không rõ' };
+                    tbody.innerHTML += `<tr>
+                        <td><b>KB${String(item.id).padStart(4, '0')}</b></td>
+                        <td>Pet: <b>${petInfo.ten}</b><br><small>Chủ: ${petInfo.chu}</small></td>
+                        <td>${item.ngaykham || ''}</td>
+                        <td>${item.chandoan || ''}</td>
+                        <td><b>${Number(item.chiphi || 0).toLocaleString('vi-VN')} đ</b></td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('khambenh', ${item.id})">🖨️ In Phiếu</button></td>
+                    </tr>`;
+                } else if (loai === 'donthuoc') {
+                    tbody.innerHTML += `<tr>
+                        <td><b>HD${String(item.id).padStart(4, '0')}</b></td>
+                        <td>KB${String(item.makhambenh || 0).padStart(4, '0')}</td>
+                        <td>${item.mathucung || item.chitiet || 'Đơn thuốc'}</td>
+                        <td><b>${Number(item.Gia || 0).toLocaleString('vi-VN')} đ</b></td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('donthuoc', ${item.id})">🖨️ In HĐ</button></td>
+                    </tr>`;
+                } else if (loai === 'phieuchidinh') {
+                    tbody.innerHTML += `<tr>
+                        <td><b>PCD${String(item.id).padStart(4, '0')}</b></td>
+                        <td>KB${String(item.makhambenh || 0).padStart(4, '0')}</td>
+                        <td>${item.ngaychidinh ? new Date(item.ngaychidinh).toLocaleString('vi-VN') : ''}</td>
+                        <td>${item.ketluan || ''}</td>
+                        <td><b>${Number(item.thanhtien || 0).toLocaleString('vi-VN')} đ</b></td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('phieuchidinh', ${item.id})">🖨️ In Phiếu</button></td>
+                    </tr>`;
+                } else if (loai === 'nhatkylamvaccine') {
+                    let petInfo = danhSachThuCung[item.mathucung] || { ten: 'Không rõ', chu: 'Không rõ' };
+                    tbody.innerHTML += `<tr>
+                        <td><b>NK${String(item.id).padStart(4, '0')}</b></td>
+                        <td>Pet: <b>${petInfo.ten}</b><br><small>Chủ: ${petInfo.chu}</small></td>
+                        <td>${item.tenvaccine || ''}</td>
+                        <td>${item.ngaytiem || ''}</td>
+                        <td>${item.bacsi || ''}</td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('nhatkylamvaccine', ${item.id})">🖨️ In Phiếu</button></td>
+                    </tr>`;
+                } else if (loai === 'nhatkynoitru') {
+                    tbody.innerHTML += `<tr>
+                        <td><b>NKNT${String(item.id).padStart(4, '0')}</b></td>
+                        <td>KB${String(item.makhambenh || 0).padStart(4, '0')}</td>
+                        <td>Vào: ${item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : ''}</td>
+                        <td><b>${Number(item.tongchiphi || 0).toLocaleString('vi-VN')} đ</b></td>
+                        <td>${item.trangthai || ''}</td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('nhatkynoitru', ${item.id})">🖨️ In HĐ</button></td>
+                    </tr>`;
+                } else if (loai === 'nhatkyspa') {
+                    tbody.innerHTML += `<tr>
+                        <td><b>SPA${String(item.id).padStart(4, '0')}</b></td>
+                        <td>${item.chunuoi || ''}</td>
+                        <td><b>${item.thucung || ''}</b></td>
+                        <td>${item.dichvusudung || ''}</td>
+                        <td><b>${Number(item.tongtien || 0).toLocaleString('vi-VN')} đ</b></td>
+                        <td><button class="btn-print-general" onclick="xuLyInPhieu('nhatkyspa', ${item.id})">🖨️ In HĐ</button></td>
+                    </tr>`;
+                }
+            });
+        }
+
+        // 4. Định dạng và sinh nội dung in chi tiết khi bấm nút In
+        function xuLyInPhieu(loai, id) {
+            const item = duLieuHienTai.find(x => x.id === id);
+            if (!item) return;
+
+            const titleEl = document.getElementById('print-form-title');
+            const codeEl = document.getElementById('print-form-code');
+            const bodyEl = document.getElementById('print-form-body');
+
+            if (loai === 'khambenh') {
+                let petInfo = danhSachThuCung[item.mathucung] || { ten: 'Không rõ', chu: 'Không rõ' };
+                titleEl.innerText = "PHIẾU KẾT QUẢ KHÁM LÂM SÀNG";
+                codeEl.innerText = "Mã phiếu: KB" + String(item.id).padStart(4, '0');
+                bodyEl.innerHTML = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; margin-bottom: 10px; font-size: 11px;">
+                        <div><strong>Chủ sở hữu:</strong> ${petInfo.chu} | <strong>Thú cưng:</strong> ${petInfo.ten}</div>
+                        <div><strong>Ngày khám:</strong> ${item.ngaykham || ''} | <strong>Nhiệt độ:</strong> ${item.nhietdo || '---'} °C</div>
+                    </div>
+                    <div style="margin-bottom: 8px; font-size: 11px;"><strong>Triệu chứng:</strong> ${item.trieuchung || ''}</div>
+                    <div style="margin-bottom: 8px; font-size: 11px;"><strong>Chẩn đoán:</strong> ${item.chandoan || ''}</div>
+                    <div style="margin-bottom: 8px; font-size: 11px;"><strong>Phác đồ điều trị:</strong> ${item.dieutri || ''}</div>
+                    <div style="text-align: right; font-size: 12px; font-weight: bold; margin-top: 10px;">Chi phí: ${Number(item.chiphi || 0).toLocaleString('vi-VN')} đ</div>
+                `;
+            } else if (loai === 'nhatkyspa') {
+                titleEl.innerText = "HÓA ĐƠN DỊCH VỤ SPA";
+                codeEl.innerText = "Mã: SPA" + String(item.id).padStart(4, '0');
+                bodyEl.innerHTML = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; margin-bottom: 10px; font-size: 11px;">
+                        <div><strong>Chủ nuôi:</strong> ${item.chunuoi || ''} | <strong>SĐT:</strong> ${item.sdt || ''}</div>
+                        <div><strong>Thú cưng:</strong> ${item.thucung || ''}</div>
+                    </div>
+                    <div style="margin-bottom: 8px; font-size: 11px;"><strong>Dịch vụ sử dụng:</strong> ${item.dichvusudung || ''}</div>
+                    <div style="text-align: right; font-size: 13px; font-weight: bold; margin-top: 10px; color: #dc2626;">Tổng tiền: ${Number(item.tongtien || 0).toLocaleString('vi-VN')} đ</div>
+                `;
+            } else {
+                // Mẫu chung cho các loại hóa đơn / phiếu khác
+                titleEl.innerText = "HÓA ĐƠN / PHIẾU XÁC NHẬN";
+                codeEl.innerText = "Mã ID: #" + item.id;
+                bodyEl.innerHTML = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; margin-bottom: 10px; font-size: 11px;">
+                        <div><strong>Thông tin chi tiết bản ghi ID #${item.id}</strong></div>
+                    </div>
+                    <pre style="font-family: Arial; font-size: 11px; white-space: pre-wrap;">${JSON.stringify(item, null, 2)}</pre>
+                `;
+            }
+
+            window.print();
+        }
+
+        function locDuLieuBang() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filtered = duLieuHienTai.filter(item => JSON.stringify(item).toLowerCase().includes(keyword));
+            hienThiBangChung(document.getElementById('loaiPhieuSelect').value, filtered);
+        }
+    </script>
+</body>
+</html>

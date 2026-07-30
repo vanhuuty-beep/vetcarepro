@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng Nhập Hệ Thống - VetCare Pro</title>
+    <!-- Thư viện Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/utils.js"></script>
+
+    <!-- Gọi các file CSS chung của hệ thống -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/style1.css">
+
+    <style>
+        body {
+            background-color: #1e56a0; /* Màu nền xanh dương đậm đặc trưng */
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-card {
+            background: #ffffff;
+            padding: 35px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 380px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0284c7;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .login-subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        .form-group-login {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .form-group-login label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #334155;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-with-icon {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-with-icon span {
+            position: absolute;
+            left: 10px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .input-with-icon input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .input-with-icon input:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
+        }
+
+        .btn-dangnhap {
+            width: 100%;
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-dangnhap:hover {
+            background-color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <!-- Tiêu đề & Logo -->
+        <div class="login-logo">
+            <span>🏥</span> VETCARE PRO
+        </div>
+        <div class="login-subtitle">Hệ thống Quản lý Phòng Khám Thú Y</div>
+
+        <!-- Ô Tên Tài Khoản -->
+        <div class="form-group-login">
+            <label>Tên Tài Khoản</label>
+            <div class="input-with-icon">
+                <span>👤</span>
+                <input type="text" id="username" placeholder="Nhập tên tài khoản..." autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Ô Mật Khẩu -->
+        <div class="form-group-login">
+            <label>Mật Khẩu</label>
+            <div class="input-with-icon">
+                <span>🔒</span>
+                <input type="password" id="password" placeholder="Nhập mật khẩu..." autocomplete="current-password">
+            </div>
+        </div>
+
+        <!-- Nút Đăng Nhập -->
+        <button type="button" class="btn-dangnhap" onclick="xuLyDangNhap()">🔑 ĐĂNG NHẬP HỆ THỐNG</button>
+    </div>
+
+    <script>
+        // Hàm mã hóa mật khẩu SHA-256 để khớp với dữ liệu đã lưu ở trang quản lý nhân viên
+        async function maHoaMatKhau(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // Hỗ trợ bấm phím Enter để đăng nhập nhanh
+        document.getElementById('password').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                xuLyDangNhap();
+            }
+        });
+
+        async function xuLyDangNhap() {
+            const user = document.getElementById('username').value.trim();
+            const passPlain = document.getElementById('password').value.trim();
+
+            if (!user || !passPlain) {
+                alert('Vui lòng nhập đầy đủ tên tài khoản và mật khẩu!');
+                return;
+            }
+
+            try {
+                // Mã hóa mật khẩu vừa nhập để đối chiếu với CSDL
+                const passHash = await maHoaMatKhau(passPlain);
+
+                // Kiểm tra thông tin trong bảng 'user' trên Supabase
+                const { data, error } = await db
+                    .from('user')
+                    .select('*')
+                    .eq('tentaikhoan', user)
+                    .eq('matkhau', passHash)
+                    .single();
+
+                if (error || !data) {
+                    alert('Tên đăng nhập hoặc mật khẩu không chính xác!');
+                } else {
+                    if (data.trangthai === 'Khóa') {
+                        alert('Tài khoản của bạn đã bị khóa!');
+                        return;
+                    }
+
+                    alert('Đăng nhập thành công! Xin chào ' + data.tentaikhoan);
+                    sessionStorage.setItem('currentUser', JSON.stringify(data));
+                    
+                    // Chuyển hướng về trang Dashboard chính (ví dụ: index.html)
+                    window.location.href = 'thongke.html'; 
+                }
+            } catch (err) {
+                console.error('Lỗi đăng nhập:', err);
+                alert('Có lỗi xảy ra khi kết nối cơ sở dữ liệu!');
+            }
+        }
+    </script>
+</body>
+</html>
