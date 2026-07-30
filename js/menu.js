@@ -132,19 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
         font-size: 30px !important; /* Làm chữ VetCare Pro to rõ hơn */
         letter-spacing: 0.5px;
     }
-	@media screen and (max-width: 768px) {
-    /* Khi sidebar mở, tạo lớp nền mờ phía sau */
-    .sidebar.active::after {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 280px; /* Bắt đầu từ mép menu */
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 998;
-    }
-}
+	
     </style>`;
 
     const container = document.getElementById('menu-container');
