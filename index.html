@@ -113,15 +113,6 @@
         }
     </style>
 </head>
-    <script>
-        // Tự động chuyển hướng ngay lập tức sang POS Mobile nếu là điện thoại
-        (function() {
-            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobile) {
-                window.location.replace('mobile/pos.html');
-            }
-        })();
-    </script>
 <body>
 
     <div class="login-card">
@@ -154,21 +145,20 @@
     </div>
 
     <script>
-        // --- CHỐT CHẶN 1: KIỂM TRA LÚC VỪA MỞ WEB ---
+        // --- TỰ ĐỘNG BẺ LÁI NẾU ĐÃ ĐĂNG NHẬP TRƯỚC ĐÓ ---
         window.addEventListener('DOMContentLoaded', () => {
             const currentUser = sessionStorage.getItem('currentUser');
-            // CHỈ KHI ĐÃ ĐĂNG NHẬP rồi thì mới tự động chuyển hướng
-            if (currentUser) {
+            if (currentUser && currentUser !== "null" && currentUser !== "undefined") {
                 const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 if (isMobile) {
-                    window.location.replace('mobile/khachhang.html'); // Chuyển vào mobile
+                    window.location.replace('mobile/khachhang.html');
                 } else {
-                    window.location.replace('thongke.html'); // Chuyển vào PC
+                    window.location.replace('thongke.html');
                 }
             }
         });
 
-        // --- CÁC HÀM CŨ CỦA BẠN GIỮ NGUYÊN BÊN DƯỚI ---
+        // Hàm mã hóa mật khẩu SHA-256 để khớp với dữ liệu đã lưu ở trang quản lý nhân viên[cite: 1]
         async function maHoaMatKhau(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -177,6 +167,7 @@
             return hashHex;
         }
 
+        // Hỗ trợ bấm phím Enter để đăng nhập nhanh[cite: 1]
         document.getElementById('password').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 xuLyDangNhap();
@@ -193,7 +184,10 @@
             }
 
             try {
+                // Mã hóa mật khẩu vừa nhập để đối chiếu với CSDL[cite: 1]
                 const passHash = await maHoaMatKhau(passPlain);
+
+                // Kiểm tra thông tin trong bảng 'user' trên Supabase[cite: 1]
                 const { data, error } = await db
                     .from('user')
                     .select('*')
@@ -212,12 +206,14 @@
                     alert('Đăng nhập thành công! Xin chào ' + data.tentaikhoan);
                     sessionStorage.setItem('currentUser', JSON.stringify(data));
                     
-                    // Nhận diện thiết bị để chuyển hướng sau khi bấm đăng nhập thành công
+                    // --- TỰ ĐỘNG NHẬN DIỆN THIẾT BỊ ĐỂ CHUYỂN HƯỚNG ---[cite: 1]
                     const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                     if (isMobile) {
+                        // Nếu là điện thoại: Chuyển thẳng sang giao diện Mobile[cite: 1]
                         window.location.href = 'mobile/khachhang.html';
                     } else {
+                        // Nếu là máy tính (PC): Chuyển sang giao diện quản lý Desktop[cite: 1]
                         window.location.href = 'thongke.html';
                     }
                 }
