@@ -3,7 +3,7 @@ function dangXuatMobile() {
         // Xóa thông tin phiên đăng nhập đã lưu
         sessionStorage.removeItem('currentUser');
         
-        // Chuyển hướng về trang đăng nhập gốc
+        // Chuyển hướng về trang đăng nhập gốc (vì đang ở trong thư mục mobile/ nên cần dùng ../ để lùi ra ngoài)
         window.location.replace('../index.html');
     }
 }
