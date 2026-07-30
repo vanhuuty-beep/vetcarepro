@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function() {
         margin-right: 8px;
     }
     .sidebar-header .menu-text {
-        font-size: 18px !important; /* Làm chữ VetCare Pro to rõ hơn */
+        font-size: 35px !important; /* Làm chữ VetCare Pro to rõ hơn */
         letter-spacing: 0.5px;
     }
     </style>`;
