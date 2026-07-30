@@ -95,6 +95,10 @@
 
     <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ HIỂN THỊ -->
     <script>
+		if (!sessionStorage.getItem('currentUser')) {
+            alert('⛔ Bạn chưa đăng nhập! Vui lòng đăng nhập hệ thống.');
+            window.location.replace('../index.html'); // Đá văng ra ngoài trang đăng nhập gốc
+        }
         let danhSachThuCungGoc = [];
         let mapKhachHang = {}; // Lưu danh sách khách hàng để tra cứu tên chủ nuôi nhanh
 
