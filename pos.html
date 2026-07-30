@@ -427,35 +427,24 @@
                 display: none !important;
             }
         }
-		/* TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (MÀN HÌNH DƯỚI 768px) */
+		
+/* TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (MÀN HÌNH DƯỚI 768px) */
 @media screen and (max-width: 768px) {
-    /* 1. Ẩn menu sidebar mặc định trên mobile */
     .sidebar {
         position: fixed;
-        left: -260px; /* Đẩy hẳn menu ra ngoài màn hình */
+        left: -260px;
         top: 0;
         height: 100vh;
         z-index: 1000;
         transition: left 0.3s ease;
     }
-
-    /* Khi có class active (bấm nút mở menu), sidebar sẽ trượt ra */
     .sidebar.active {
         left: 0;
     }
-
-    /* 2. Mở rộng khung nội dung POS chiếm trọn màn hình điện thoại */
     .main-content, .pos-container {
         width: 100% !important;
         margin-left: 0 !important;
         padding: 10px !important;
-    }
-
-    /* 3. Sắp xếp lại bố cục các sản phẩm và giỏ hàng POS thành dạng dọc (1 cột) */
-    .pos-layout {
-        display: flex;
-        flex-direction: column !important;
-        gap: 15px;
     }
 }
     </style>
