@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khách hàng - Mobile</title>
+    
+    <!-- Thư viện Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <!-- CSS chung -->
+    <link rel="stylesheet" href="../css/style.css">
+	<link rel="stylesheet" href="css/mobile.css">
+	<link rel="stylesheet" href="css/button.css">
+</head>
+<body>
+
+    <div class="mobile-container">
+        <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
+        <div class="top-header">
+            <h3>👤 Quản lý Khách hàng</h3>
+            <a href="../khachhang.html" class="btn-desktop">💻 Bản Desktop</a>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+            <input type="text" id="searchMobile" class="search-box" placeholder="🔍 Tìm tên hoặc SĐT..." onkeyup="timKiemMobile()" style="flex: 1; margin: 0;">
+            <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 10px 14px; font-size: 13px;">➕ Thêm</button>
+        </div>
+        <!-- DANH SÁCH THẺ HIỂN THỊ -->
+        <div id="mobile-list">
+            <div style="text-align: center; color: #666; padding: 20px;">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM KHÁCH HÀNG -->
+    <div id="modalThemKhachHang" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>➕ Thêm Khách Hàng Mới</h4>
+                <button class="btn-close" onclick="dongModalThem()">&times;</button>
+            </div>
+            <form id="formThemKH" onsubmit="luuKhachHangMoi(event)">
+                <div class="form-group">
+                    <label>Họ và tên (*)</label>
+                    <input type="text" id="modalHovaten" class="form-control" placeholder="Nhập họ và tên..." required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="tel" id="modalSodienthoai" class="form-control" placeholder="Nhập số điện thoại...">
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input type="text" id="modalDiachi" class="form-control" placeholder="Nhập địa chỉ...">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="dongModalThem()">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSaveModal">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM THÚ CƯNG (CHO TỪNG KHÁCH HÀNG) -->
+    <div id="modalThemThuCung" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="titleModalPet">Thêm thú cưng mới</h4>
+                <button class="btn-close" onclick="dongModalPet()">&times;</button>
+            </div>
+            <form id="formThemTC" onsubmit="luuThuCungMoi(event)">
+                <div class="form-group">
+                    <label>Tên thú cưng (*):</label>
+                    <input type="text" id="modalTenthucung" class="form-control" placeholder="Nhập tên thú cưng..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Loài:</label>
+                    <input type="text" id="modalLoai" class="form-control" placeholder="Ví dụ: Chó, Mèo...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Giống:</label>
+                        <input type="text" id="modalGiong" class="form-control" placeholder="Ví dụ: Poodle...">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Màu lông:</label>
+                        <input type="text" id="modalMaulong" class="form-control" placeholder="Ví dụ: Vàng, Trắng...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Tuổi:</label>
+                        <input type="text" id="modalTuoi" class="form-control" placeholder="Ví dụ: 2">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Cân nặng (kg):</label>
+                        <input type="text" id="modalCannang" class="form-control" placeholder="Ví dụ: 4.5">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mã chủ nuôi (ID khách hàng):</label>
+                    <input type="text" id="modalMachunuoi" class="form-control" readonly style="background: #f1f5f9; color: #64748b;">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="dongModalPet()">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSavePet">Lưu dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ MODAL -->
+    <script>
+        let danhSachKhachHangGoc = [];
+
+        async function loadKhachHangMobile() {
+            const { data, error } = await db.from('khachhang').select('*').order('id', { ascending: false });
+            if (error) {
+                console.error('Lỗi tải dữ liệu:', error);
+                document.getElementById('mobile-list').innerHTML = `<div style="text-align:center; color:red; padding:20px;">Lỗi tải dữ liệu từ cơ sở dữ liệu</div>`;
+                return;
+            }
+
+            danhSachKhachHangGoc = data || [];
+            hienThiDanhSach(danhSachKhachHangGoc);
+        }
+
+        function hienThiDanhSach(data) {
+            const container = document.getElementById('mobile-list');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">Không tìm thấy khách hàng phù hợp</div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const maKH = formatMaKhachHang ? formatMaKhachHang(item.id) : ('KH' + String(item.id).padStart(4, '0'));
+                const sdtHtml = item.sodienthoai 
+                    ? `<a href="tel:${item.sodienthoai}" style="color: #059669; font-weight: bold; text-decoration: none;">${item.sodienthoai} 📞</a>` 
+                    : 'Chưa có SĐT';
+
+                container.innerHTML += `
+                    <div class="mobile-card">
+                        <div class="card-title">
+                            <span>${item.hovaten || 'Khách lẻ'}</span>
+                            <span style="color: #2563eb; font-size: 13px;">${maKH}</span>
+                        </div>
+                        <div class="card-info">
+                            📞 SĐT: ${sdtHtml}
+                        </div>
+                        <div class="card-info" style="color: #64748b;">
+                            🏠 Địa chỉ: ${item.diachi || '---'}
+                        </div>
+                        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <button class="btn-add-pet" onclick="moModalPet('${item.id}', '${item.hovaten || ''}')">➕ Pet</button>
+                            <div>
+                                <button onclick="moModalSua(${item.id}, '${item.hovaten || ''}', '${item.sodienthoai || ''}', '${item.diachi || ''}')" style="background: #eab308; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
+                                <button onclick="xoaKhachHang(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function timKiemMobile() {
+            const tuKhoa = document.getElementById('searchMobile').value.toLowerCase().trim();
+            const ketQuaLoc = danhSachKhachHangGoc.filter(item => {
+                const ten = (item.hovaten || '').toLowerCase();
+                const sdt = (item.sodienthoai || '').toLowerCase();
+                return ten.includes(tuKhoa) || sdt.includes(tuKhoa);
+            });
+            hienThiDanhSach(ketQuaLoc);
+        }
+
+        // --- CÁC HÀM XỬ LÝ MODAL KHÁCH HÀNG ---
+        function moModalThem() {
+            document.getElementById('modalThemKhachHang').style.display = 'flex';
+            document.getElementById('formThemKH').reset();
+        }
+
+        function dongModalThem() {
+            document.getElementById('modalThemKhachHang').style.display = 'none';
+        }
+
+        async function luuKhachHangMoi(event) {
+            event.preventDefault();
+
+            const hovaten = document.getElementById('modalHovaten').value.trim();
+            const sodienthoai = document.getElementById('modalSodienthoai').value.trim();
+            const diachi = document.getElementById('modalDiachi').value.trim();
+            const btnSave = document.getElementById('btnSaveModal');
+
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+
+            const { error } = await db.from('khachhang').insert([
+                { hovaten: hovaten, sodienthoai: sodienthoai, diachi: diachi }
+            ]);
+
+            btnSave.disabled = false;
+            btnSave.textContent = 'Lưu';
+
+            if (error) {
+                console.error('Lỗi thêm khách hàng:', error);
+                alert('Lỗi khi thêm khách hàng! Vui lòng thử lại.');
+                return;
+            }
+
+            dongModalThem();
+            loadKhachHangMobile();
+        }
+
+        // --- CÁC HÀM XỬ LÝ MODAL THÊM PET ---
+        function moModalPet(khId, khTen) {
+            document.getElementById('modalThemThuCung').style.display = 'flex';
+            document.getElementById('formThemTC').reset();
+            document.getElementById('modalMachunuoi').value = khId;
+            document.getElementById('titleModalPet').textContent = `Thêm Pet cho: ${khTen} (ID: ${khId})`;
+        }
+
+        function dongModalPet() {
+            document.getElementById('modalThemThuCung').style.display = 'none';
+        }
+
+        async function luuThuCungMoi(event) {
+            event.preventDefault();
+
+            const tenthucung = document.getElementById('modalTenthucung').value.trim();
+            const loai = document.getElementById('modalLoai').value.trim();
+            const giong = document.getElementById('modalGiong').value.trim();
+            const maulong = document.getElementById('modalMaulong').value.trim();
+            const tuoi = document.getElementById('modalTuoi').value.trim();
+            const cannang = document.getElementById('modalCannang').value.trim();
+            const makhachhang = document.getElementById('modalMachunuoi').value.trim();
+
+            const btnSave = document.getElementById('btnSavePet');
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+
+            const { error } = await db.from('thucung').insert([{
+                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang
+            }]);
+
+            btnSave.disabled = false;
+            btnSave.textContent = 'Lưu dữ liệu';
+
+            if (error) {
+                console.error(error);
+                alert('Lỗi khi thêm thú cưng!');
+                return;
+            }
+
+            alert('Thêm thú cưng thành công!');
+            dongModalPet();
+        }
+
+        // Khởi chạy tải dữ liệu ban đầu
+        loadKhachHangMobile();
+		// --- CÁC HÀM XỬ LÝ SỬA & XÓA KHÁCH HÀNG ---
+        function moModalSua(id, hovaten, sodienthoai, diachi) {
+            document.getElementById('modalSuaKhachHang').style.display = 'flex';
+            document.getElementById('suaId').value = id;
+            document.getElementById('suaHovaten').value = hovaten;
+            document.getElementById('suaSodienthoai').value = sodienthoai !== 'null' ? sodienthoai : '';
+            document.getElementById('suaDiachi').value = diachi !== 'null' ? diachi : '';
+        }
+
+        function dongModalSua() {
+            document.getElementById('modalSuaKhachHang').style.display = 'none';
+        }
+
+        async function capNhatKhachHang(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('suaId').value;
+            const hovaten = document.getElementById('suaHovaten').value.trim();
+            const sodienthoai = document.getElementById('suaSodienthoai').value.trim();
+            const diachi = document.getElementById('suaDiachi').value.trim();
+            const btnSave = document.getElementById('btnSaveSua');
+
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+
+            const { error } = await db.from('khachhang')
+                .update({ hovaten: hovaten, sodienthoai: sodienthoai, diachi: diachi })
+                .eq('id', id);
+
+            btnSave.disabled = false;
+            btnSave.textContent = 'Cập nhật';
+
+            if (error) {
+                console.error('Lỗi cập nhật khách hàng:', error);
+                alert('Lỗi khi cập nhật khách hàng! Vui lòng thử lại.');
+                return;
+            }
+
+            dongModalSua();
+            loadKhachHangMobile();
+        }
+
+        async function xoaKhachHang(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa khách hàng này không?')) {
+                return;
+            }
+
+            const { error } = await db.from('khachhang').delete().eq('id', id);
+
+            if (error) {
+                console.error('Lỗi xóa khách hàng:', error);
+                alert('Không thể xóa khách hàng này (có thể đang có dữ liệu thú cưng hoặc liên quan liên kết).');
+                return;
+            }
+
+            alert('Đã xóa khách hàng thành công!');
+            loadKhachHangMobile();
+        }
+    </script>
+
+    <!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
+    <script src="js/menu-mobile.js"></script>
+    <script>
+        taoMenuMobile('khachhang');
+    </script>
+	<!-- MODAL SỬA KHÁCH HÀNG -->
+    <div id="modalSuaKhachHang" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>✏️ Sửa thông tin Khách hàng</h4>
+                <button class="btn-close" onclick="dongModalSua()">&times;</button>
+            </div>
+            <form id="formSuaKH" onsubmit="capNhatKhachHang(event)">
+                <input type="hidden" id="suaId">
+                <div class="form-group">
+                    <label>Họ và tên (*)</label>
+                    <input type="text" id="suaHovaten" class="form-control" placeholder="Nhập họ và tên..." required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="tel" id="suaSodienthoai" class="form-control" placeholder="Nhập số điện thoại...">
+                </div>
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input type="text" id="suaDiachi" class="form-control" placeholder="Nhập địa chỉ...">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="dongModalSua()">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSaveSua">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

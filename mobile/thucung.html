@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Thú cưng - Mobile</title>
+    
+    <!-- Thư viện Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/utils.js"></script>
+
+    <!-- CSS chung và CSS riêng mobile -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+			<link rel="stylesheet" href="css/button.css">
+
+</head>
+<body>
+
+    <div class="mobile-container">
+        <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
+        <div class="top-header">
+            <h3>🐾 Quản lý Thú cưng</h3>
+            <a href="../thucung.html" class="btn-desktop">💻 Bản Desktop</a>
+        </div>
+
+       <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+            <input type="text" id="searchMobile" class="search-box" placeholder="🔍 Tìm tên thú cưng, loài hoặc giống..." onkeyup="timKiemThuCung()" style="flex: 1; margin: 0;">
+            <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 10px 14px; font-size: 13px;">➕ Pet</button>
+        </div>
+
+        <!-- DANH SÁCH THẺ HIỂN THỊ -->
+        <div id="mobile-list">
+            <div style="text-align: center; color: #666; padding: 20px;">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM THÚ CƯNG -->
+    <div id="modalThemThuCung" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Thêm thú cưng mới</h4>
+                <button class="btn-close" onclick="dongModalThem()">&times;</button>
+            </div>
+            <form id="formThemTC" onsubmit="luuThuCungMoi(event)">
+                
+                <div class="form-group">
+                    <label>Tên thú cưng (*):</label>
+                    <input type="text" id="modalTenthucung" class="form-control" placeholder="Nhập tên thú cưng..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Loài:</label>
+                    <input type="text" id="modalLoai" class="form-control" placeholder="Ví dụ: Chó, Mèo...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Giống:</label>
+                        <input type="text" id="modalGiong" class="form-control" placeholder="Ví dụ: Poodle...">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Màu lông:</label>
+                        <input type="text" id="modalMaulong" class="form-control" placeholder="Ví dụ: Vàng, Trắng...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Tuổi:</label>
+                        <input type="text" id="modalTuoi" class="form-control" placeholder="Ví dụ: 2">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Cân nặng (kg):</label>
+                        <input type="text" id="modalCannang" class="form-control" placeholder="VD: 4.5">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mã chủ nuôi (ID khách hàng):</label>
+                    <input type="text" id="modalMachunuoi" class="form-control" placeholder="Nhập ID chủ nuôi...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="dongModalThem()">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSaveModal">Lưu dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ HIỂN THỊ -->
+    <script>
+        let danhSachThuCungGoc = [];
+        let mapKhachHang = {}; // Lưu danh sách khách hàng để tra cứu tên chủ nuôi nhanh
+
+        async function loadDuLieu() {
+            // 1. Tải trước danh sách khách hàng để map tên chủ nuôi
+            const { data: khData } = await db.from('khachhang').select('id, hovaten');
+            if (khData) {
+                khData.forEach(kh => {
+                    mapKhachHang[kh.id] = kh.hovaten || 'Khách lẻ';
+                });
+            }
+
+            // 2. Tải danh sách thú cưng
+            const { data, error } = await db.from('thucung').select('*').order('id', { ascending: false });
+            if (error) {
+                console.error('Lỗi tải dữ liệu:', error);
+                document.getElementById('mobile-list').innerHTML = `<div style="text-align:center; color:red; padding:20px;">Lỗi tải dữ liệu từ cơ sở dữ liệu</div>`;
+                return;
+            }
+
+            danhSachThuCungGoc = data || [];
+            hienThiDanhSach(danhSachThuCungGoc);
+        }
+
+        function hienThiDanhSach(data) {
+            const container = document.getElementById('mobile-list');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">Không tìm thấy thú cưng phù hợp</div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const maTC = 'TC' + String(item.id).padStart(4, '0');
+                const idChuNuoi = item.makhachhang || item.machunuoi;
+                const tenChuNuoi = idChuNuoi && mapKhachHang[idChuNuoi] ? mapKhachHang[idChuNuoi] : 'Chưa có chủ nuôi';
+
+                container.innerHTML += `
+                    <div class="mobile-card">
+                        <div class="card-title">
+                            <span>🐾 ${item.tenthucung || 'Chưa đặt tên'}</span>
+                            <span style="color: #2563eb; font-size: 13px;">${maTC}</span>
+                        </div>
+                        <div class="card-info" style="color: #059669; font-weight: bold;">
+                            👤 Chủ nuôi: ${tenChuNuoi} (ID: ${idChuNuoi || '---'})
+                        </div>
+                        <div class="card-info">
+                            🧬 Loài/Giống: ${item.loai || ''} - ${item.giong || item.giongloai || '---'}
+                        </div>
+                        <div class="card-info" style="color: #64748b;">
+                            ⚖️ Cân nặng: ${item.cannang ? item.cannang + ' kg' : '---'} | 🎨 Màu: ${item.maulong || '---'}
+                        </div>
+                        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <button class="btn-kham-nhanh" onclick="chuyenSangKhamBenh('${item.id}')">🩺 Khám bệnh</button>
+                            <div>
+                                <button onclick="moModalSuaPet(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi || ''}', '${item.cannang || ''}', '${idChuNuoi || ''}')" style="background: #eab308; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
+                                <button onclick="xoaThuCung(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function timKiemThuCung() {
+            const tuKhoa = document.getElementById('searchMobile').value.toLowerCase().trim();
+            const ketQuaLoc = danhSachThuCungGoc.filter(item => {
+                const ten = (item.tenthucung || '').toLowerCase();
+                const loai = (item.loai || '').toLowerCase();
+                const giong = (item.giong || item.giongloai || '').toLowerCase();
+                const idChu = String(item.makhachhang || item.machunuoi || '').toLowerCase();
+                const tenChu = (mapKhachHang[item.makhachhang || item.machunuoi] || '').toLowerCase();
+                
+                return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || idChu.includes(tuKhoa) || tenChu.includes(tuKhoa);
+            });
+            hienThiDanhSach(ketQuaLoc);
+        }
+
+        function chuyenSangKhamBenh(petId) {
+            window.location.href = `khambenh.html?auto_open=true&pet_id=${petId}`;
+        }
+
+        // --- CÁC HÀM XỬ LÝ MODAL ---
+        function moModalThem() {
+            document.getElementById('modalThemThuCung').style.display = 'flex';
+            document.getElementById('formThemTC').reset();
+        }
+
+        function dongModalThem() {
+            document.getElementById('modalThemThuCung').style.display = 'none';
+        }
+
+        async function luuThuCungMoi(event) {
+            event.preventDefault();
+
+            const tenthucung = document.getElementById('modalTenthucung').value.trim();
+            const loai = document.getElementById('modalLoai').value.trim();
+            const giong = document.getElementById('modalGiong').value.trim();
+            const maulong = document.getElementById('modalMaulong').value.trim();
+            const tuoi = document.getElementById('modalTuoi').value.trim();
+            const cannang = document.getElementById('modalCannang').value.trim();
+            const makhachhang = document.getElementById('modalMachunuoi').value.trim();
+
+            const btnSave = document.getElementById('btnSaveModal');
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+
+            const { error } = await db.from('thucung').insert([{
+                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang
+            }]);
+
+            btnSave.disabled = false;
+            btnSave.textContent = 'Lưu dữ liệu';
+
+            if (error) {
+                console.error('Lỗi thêm thú cưng:', error);
+                alert('Lỗi khi thêm thú cưng!');
+                return;
+            }
+
+            dongModalThem();
+            loadDuLieu();
+        }
+
+        // Khởi chạy tải dữ liệu
+        loadDuLieu();
+		// --- CÁC HÀM XỬ LÝ SỬA & XÓA THÚ CƯNG ---
+        function moModalSuaPet(id, tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang) {
+            document.getElementById('modalSuaThuCung').style.display = 'flex';
+            document.getElementById('suaPetId').value = id;
+            document.getElementById('suaTenthucung').value = tenthucung;
+            document.getElementById('suaLoai').value = loai !== 'null' ? loai : '';
+            document.getElementById('suaGiong').value = giong !== 'null' ? giong : '';
+            document.getElementById('suaMaulong').value = maulong !== 'null' ? maulong : '';
+            document.getElementById('suaTuoi').value = tuoi !== 'null' ? tuoi : '';
+            document.getElementById('suaCannang').value = cannang !== 'null' ? cannang : '';
+            document.getElementById('suaMachunuoi').value = makhachhang !== 'null' ? makhachhang : '';
+        }
+
+        function dongModalSuaPet() {
+            document.getElementById('modalSuaThuCung').style.display = 'none';
+        }
+
+        async function capNhatThuCungMoi(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('suaPetId').value;
+            const tenthucung = document.getElementById('suaTenthucung').value.trim();
+            const loai = document.getElementById('suaLoai').value.trim();
+            const giong = document.getElementById('suaGiong').value.trim();
+            const maulong = document.getElementById('suaMaulong').value.trim();
+            const tuoi = document.getElementById('suaTuoi').value.trim();
+            const cannang = document.getElementById('suaCannang').value.trim();
+            const makhachhang = document.getElementById('suaMachunuoi').value.trim();
+
+            const btnSave = document.getElementById('btnSaveSuaPet');
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+
+            const { error } = await db.from('thucung')
+                .update({ tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang })
+                .eq('id', id);
+
+            btnSave.disabled = false;
+            btnSave.textContent = 'Cập nhật';
+
+            if (error) {
+                console.error('Lỗi cập nhật thú cưng:', error);
+                alert('Lỗi khi cập nhật thú cưng! Vui lòng thử lại.');
+                return;
+            }
+
+            dongModalSuaPet();
+            loadDuLieu();
+        }
+
+        async function xoaThuCung(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa thú cưng này không?')) {
+                return;
+            }
+
+            const { error } = await db.from('thucung').delete().eq('id', id);
+
+            if (error) {
+                console.error('Lỗi xóa thú cưng:', error);
+                alert('Không thể xóa thú cưng này (có thể đang có dữ liệu khám bệnh liên quan).');
+                return;
+            }
+
+            alert('Đã xóa thú cưng thành công!');
+            loadDuLieu();
+        }
+    </script>
+
+    <!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
+    <script src="js/menu-mobile.js"></script>
+    <script>
+        taoMenuMobile('thucung');
+    </script>
+	<!-- MODAL SỬA THÚ CƯNG -->
+    <div id="modalSuaThuCung" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>✏️ Sửa thông tin Thú cưng</h4>
+                <button class="btn-close" onclick="dongModalSuaPet()">&times;</button>
+            </div>
+            <form id="formSuaTC" onsubmit="capNhatThuCungMoi(event)">
+                <input type="hidden" id="suaPetId">
+                <div class="form-group">
+                    <label>Tên thú cưng (*):</label>
+                    <input type="text" id="suaTenthucung" class="form-control" placeholder="Nhập tên thú cưng..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Loài:</label>
+                    <input type="text" id="suaLoai" class="form-control" placeholder="Ví dụ: Chó, Mèo...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Giống:</label>
+                        <input type="text" id="suaGiong" class="form-control" placeholder="Ví dụ: Poodle...">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Màu lông:</label>
+                        <input type="text" id="suaMaulong" class="form-control" placeholder="Ví dụ: Vàng, Trắng...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Tuổi:</label>
+                        <input type="text" id="suaTuoi" class="form-control" placeholder="Ví dụ: 2">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Cân nặng (kg):</label>
+                        <input type="text" id="suaCannang" class="form-control" placeholder="VD: 4.5">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mã chủ nuôi (ID khách hàng):</label>
+                    <input type="text" id="suaMachunuoi" class="form-control" placeholder="Nhập ID chủ nuôi...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="dongModalSuaPet()">Hủy</button>
+                    <button type="submit" class="btn-save" id="btnSaveSuaPet">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
