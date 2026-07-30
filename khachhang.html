@@ -121,45 +121,138 @@
         let mapLichSuKham = {};
 
         async function fetchKhachHang() {
-            // 1. Tải danh sách thú cưng để thống kê theo khách hàng
+            // 1. Tải danh sách thú cưng và lập bản đồ ánh xạ (ID thú cưng -> Mã khách hàng)[cite: 1]
             const { data: tcData } = await db.from('thucung').select('*');
+            let petToKhach = {};
             if (tcData) {
                 tcData.forEach(tc => {
-                    let maKH = tc.makhachhang || tc.makh || tc.khachhang_id;
+                    let maKH = tc.makhachhang || tc.makh || tc.khachhang_id || tc.id_khachhang;
                     if (!mapThuCung[maKH]) mapThuCung[maKH] = [];
                     mapThuCung[maKH].push(tc);
+                    petToKhach[tc.id] = maKH;
                 });
             }
 
-            // 2. Tải danh sách khám bệnh để tính tổng chi tiêu và lần khám gần nhất
-            const { data: kbData } = await db.from('khambenh').select('*');
-            if (kbData && tcData) {
-                // Tạo bảng map từ mathucung -> makhachhang
-                let petToKhach = {};
-                tcData.forEach(tc => {
-                    petToKhach[tc.id] = tc.makhachhang || tc.makh || tc.khachhang_id;
-                });
-
-                kbData.forEach(kb => {
-                    let maKH = petToKhach[kb.mathucung];
-                    if (maKH) {
-                        if (!mapLichSuKham[maKH]) {
-                            mapLichSuKham[maKH] = { tongTien: 0, lanKhamGanNhat: null, soLan: 0 };
-                        }
-                        mapLichSuKham[maKH].tongTien += parseFloat(kb.tongchiphi || kb.thanhtien || 0);
-                        mapLichSuKham[maKH].soLan += 1;
-
-                        let ngayKham = kb.ngaykham || kb.created_at;
-                        if (ngayKham) {
-                            if (!mapLichSuKham[maKH].lanKhamGanNhat || new Date(ngayKham) > new Date(mapLichSuKham[maKH].lanKhamGanNhat)) {
-                                mapLichSuKham[maKH].lanKhamGanNhat = ngayKham;
-                            }
-                        }
+            // Lấy giá vắc-xin từ kho theo tên để đối chiếu dự phòng nếu nhật ký tiêm không lưu giá
+            let giaVaccineMap = {};
+            const { data: khoVcData } = await db.from('khovaccine').select('*');
+            if (khoVcData) {
+                khoVcData.forEach(v => {
+                    if (v.tenvaccine) {
+                        giaVaccineMap[v.tenvaccine.trim().toLowerCase()] = parseFloat(v.giaban) || 0;
                     }
                 });
             }
 
-            // 3. Tải danh sách khách hàng chính
+            let thongKeChiTieu = {};
+
+            // Hàm cộng tiền quy đổi chuẩn xác về mã khách hàng thông qua thú cưng hoặc mã trực tiếp
+            function congTienTheoPetHoacKH(row, soTienTruyXuat, ngayTruyXuat) {
+                let maKH = row.makhachhang || row.makh || row.khachhang_id;
+                
+                if (!maKH && row.mathucung) {
+                    maKH = petToKhach[row.mathucung];
+                }
+                if (!maKH && row.makhambenh && window.khamToPet && window.khamToPet[row.makhambenh]) {
+                    let petId = window.khamToPet[row.makhambenh];
+                    maKH = petToKhach[petId];
+                }
+
+                if (!maKH) return;
+
+                if (!thongKeChiTieu[maKH]) {
+                    thongKeChiTieu[maKH] = { tongTien: 0, lanKhamGanNhat: null, soLan: 0 };
+                }
+
+                let tien = parseFloat(soTienTruyXuat) || 0;
+                thongKeChiTieu[maKH].tongTien += tien;
+                if (tien > 0 || ngayTruyXuat) {
+                    thongKeChiTieu[maKH].soLan += 1;
+                }
+
+                let ngay = ngayTruyXuat;
+                if (ngay) {
+                    if (!thongKeChiTieu[maKH].lanKhamGanNhat || new Date(ngay) > new Date(thongKeChiTieu[maKH].lanKhamGanNhat)) {
+                        thongKeChiTieu[maKH].lanKhamGanNhat = ngay;
+                    }
+                }
+            }
+
+            // 2. Tải dữ liệu khám bệnh[cite: 1]
+            window.khamToPet = {};
+            const { data: kbData } = await db.from('khambenh').select('*');
+            if (kbData) {
+                kbData.forEach(kb => {
+                    if (kb.mathucung) {
+                        window.khamToPet[kb.id] = kb.mathucung;
+                    }
+                    let chiPhi = kb.tongchiphi || kb.thanhtien || kb.chiphi || 0;
+                    congTienTheoPetHoacKH(kb, chiPhi, kb.ngaykham || kb.created_at);
+                });
+            }
+
+            // 3. Tải dữ liệu Tiêm vaccine (nhatkylamvaccine)[cite: 1]
+            const { data: vcData } = await db.from('nhatkylamvaccine').select('*');
+            if (vcData) {
+                vcData.forEach(vc => {
+                    let chiPhi = vc.giatien || vc.tongtien || vc.chiphi || vc.gia || 0;
+                    if (chiPhi === 0 && vc.tenvaccine) {
+                        let keyName = vc.tenvaccine.trim().toLowerCase();
+                        chiPhi = giaVaccineMap[keyName] || 0;
+                    }
+                    let ngay = vc.ngaytiem || vc.created_at;
+                    congTienTheoPetHoacKH(vc, chiPhi, ngay);
+                });
+            }
+
+            // 4. Tải dữ liệu Mua hàng POS / Petshop (donhang)[cite: 1]
+            const { data: dhData } = await db.from('donhang').select('*');
+            if (dhData) {
+                dhData.forEach(dh => {
+                    let chiPhi = dh.tongtien || dh.total || dh.thanhtien || 0;
+                    congTienTheoPetHoacKH(dh, chiPhi, dh.ngaytao || dh.created_at);
+                });
+            }
+
+            // 5. Tải dữ liệu Nội trú (nhatkynoitru)[cite: 1]
+            const { data: ntData } = await db.from('nhatkynoitru').select('*');
+            if (ntData) {
+                ntData.forEach(nt => {
+                    let chiPhi = nt.thanhtien || nt.tongchiphi || nt.chiphi || 0;
+                    congTienTheoPetHoacKH(nt, chiPhi, nt.ngayvao || nt.created_at);
+                });
+            }
+
+            // 6. Tải dữ liệu Đơn thuốc (hoadonthuoc)[cite: 1]
+            const { data: dtData } = await db.from('hoadonthuoc').select('*');
+            if (dtData) {
+                dtData.forEach(dt => {
+                    let chiPhi = dt.thanhtien || dt.tongtien || dt.Gia || 0;
+                    congTienTheoPetHoacKH(dt, chiPhi, dt.created_at);
+                });
+            }
+			// Bổ sung tải dữ liệu Phiếu chỉ định (phieuchidinh)
+            const { data: pcdData } = await db.from('phieuchidinh').select('*');
+            if (pcdData) {
+                pcdData.forEach(pcd => {
+                    let chiPhi = pcd.thanhtien || pcd.tongtien || 0;
+                    let ngay = pcd.ngaychidinh || pcd.created_at;
+                    congTienTheoPetHoacKH(pcd, chiPhi, ngay);
+                });
+            }
+
+            // 7. Tải dữ liệu Spa (nhatkyspa)[cite: 1]
+            const { data: spaData } = await db.from('nhatkyspa').select('*');
+            if (spaData) {
+                spaData.forEach(sp => {
+                    let chiPhi = sp.tongtien || sp.giatien || 0;
+                    congTienTheoPetHoacKH(sp, chiPhi, sp.created_at);
+                });
+            }
+
+            mapLichSuKham = thongKeChiTieu;
+
+            // 8. Tải danh sách khách hàng chính từ Supabase[cite: 1]
             const { data, error } = await db.from('khachhang').select('*').order('id', { ascending: true });
             if (error) {
                 console.error('Lỗi tải dữ liệu:', error);
@@ -184,17 +277,14 @@
                     ? `<a href="tel:${item.sodienthoai}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${item.sodienthoai} 📞</a>` 
                     : '---';
 
-                // Lấy thông tin thú cưng của khách
                 const dsPet = mapThuCung[item.id] || [];
                 const soLuongPet = dsPet.length;
                 const tenPetText = soLuongPet > 0 ? dsPet.map(p => p.tenthucung).join(', ') : 'Chưa có thú cưng';
 
-                // Lấy thông tin lịch sử khám & chi tiêu
                 const lichSu = mapLichSuKham[item.id] || { tongTien: 0, lanKhamGanNhat: null, soLan: 0 };
                 const tongChiTieuText = Number(lichSu.tongTien).toLocaleString('vi-VN') + ' đ';
                 const lanKhamText = lichSu.lanKhamGanNhat ? new Date(lichSu.lanKhamGanNhat).toLocaleDateString('vi-VN') : '---';
 
-                // Phân loại khách hàng tự động
                 let loaiKhachHtml = `<span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: #e0f2fe; color: #0369a1; font-weight: 500;">Mới</span>`;
                 if (lichSu.soLan > 0) {
                     if (lichSu.tongTien >= 5000000) {
