@@ -23,3 +23,7 @@ function formatTien(value) {
     if (value == null) return "0 đ";
     return Number(value).toLocaleString('vi-VN') + " đ";
 }
+// Nếu màn hình nhỏ hơn 768px (điện thoại) và không phải đang ở trang mobile-menu
+    if (window.innerWidth <= 768 && !window.location.href.includes('mobile-menu.html')) {
+        // Tùy chọn: Bạn có thể thêm nút chuyển đổi hoặc tự động tối ưu hiển thị
+    }

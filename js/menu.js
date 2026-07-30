@@ -1,13 +1,4 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 0. Tự động chuyển trang mobile-menu nếu là điện thoại và không ở trang menu sẵn
-    if (window.innerWidth <= 768) {
-        const currentPath = window.location.pathname;
-        if (!currentPath.includes('mobile-menu.html') && !currentPath.includes('index.html')) {
-            // Nếu muốn tự động mở menu di động khi truy cập web bằng điện thoại, hãy bỏ dấu gạch chéo kép ở dòng dưới:
-            // window.location.href = 'mobile-menu.html';
-        }
-    }
-
     // 0. Lấy thông tin user đang đăng nhập từ sessionStorage
     let currentUser = null;
     try {
@@ -29,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
     `;
 
-    // 1. CHÈN MENU BÊN TRÁI (KÈM GIAO DIỆN RESPONSIVE CHO MOBILE)
+    // 1. CHÈN MENU BÊN TRÁI
     const menuHTML = `
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -73,119 +64,159 @@ document.addEventListener("DOMContentLoaded", function() {
             <li class="menu-item sub-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
             <li class="menu-item sub-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
             
+            <!-- Hiển thị menu hệ thống theo phân quyền -->
             ${quanLyUserMenuHtml}
         </ul>
     </div>
 
-    <!-- THANH MENU BOTTOM DƯỚI ĐÁY CHO MOBILE (TỰ ĐỘNG HIỆN KHI Ở TRÊN ĐIỆN THOẠI) -->
-    <div class="mobile-bottom-nav">
-        <a href="pos.html">
-            <i class="fa fa-bolt"></i>
-            <span>POS</span>
-        </a>
-        <a href="khachhang.html">
-            <i class="fa fa-users"></i>
-            <span>Khách hàng</span>
-        </a>
-        <a href="thucung.html">
-            <i class="fa fa-paw"></i>
-            <span>Thú cưng</span>
-        </a>
-        <a href="mobile-menu.html">
-            <i class="fa fa-bars"></i>
-            <span>Menu</span>
-        </a>
-    </div>
-
+    <!-- STYLE ĐIỂM NHẤN CHO NÚT POS TRÊN SIDEBAR -->
     <style>
-        /* CSS Responsive ẩn sidebar trên điện thoại và hiện thanh menu đáy */
-        @media screen and (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -280px;
-                top: 0;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-            .sidebar.active {
-                left: 0;
-            }
-            .main-content, .pos-container {
-                width: 100% !important;
-                margin-left: 0 !important;
-                padding-bottom: 70px !important;
-            }
-            .mobile-bottom-nav {
-                display: flex !important;
-            }
+        /* TĂNG KÍCH THƯỚC VÀ ĐỘ ĐẬM CHO TOÀN BỘ CHỮ TRONG MENU SIDEBAR */
+        .sidebar .menu-text, 
+        .sidebar .menu-category,
+        .sidebar li {
+            font-size: 15px !important;
+            font-weight: 700 !important;
         }
 
-        @media screen and (min-width: 769px) {
-            .mobile-bottom-nav {
-                display: none !important;
-            }
+        .sidebar .menu-category {
+            font-size: 12px !important; /* Giữ phân nhóm nhỏ gọn hơn một chút nhưng vẫn đậm */
+            font-weight: 800 !important;
         }
 
-        .mobile-bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100%; height: 60px;
-            background: #ffffff;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 9999;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid #eee;
-        }
-        .mobile-bottom-nav a {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #666;
-            font-size: 11px;
-        }
-        .mobile-bottom-nav a i { font-size: 20px; margin-bottom: 2px; }
-
-        .sidebar-header {
-            font-size: 20px !important;
-            font-weight: bold !important;
-            padding: 18px 15px !important;
-        }
-        .sidebar-header .menu-text {
-            font-size: 26px !important;
-        }
         .menu-pos-highlight {
             background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
             color: #ffffff !important;
             border-radius: 6px;
             margin: 4px 8px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            animation: pulsePos 2s infinite;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        
+        .menu-pos-highlight:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.5);
+        }
+        .menu-pos-highlight .pos-badge {
+            background-color: #dc2626;
+            color: white;
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: auto;
+            animation: blinkBadge 1s infinite alternate;
+        }
+        @keyframes blinkBadge {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.7; transform: scale(1.1); }
+        }
+        @keyframes pulsePos {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+		/* TĂNG KÍCH THƯỚC LOGO VETCARE PRO */
+    .sidebar-header {
+        font-size: 20px !important; /* Tăng kích thước tổng thể header logo */
+        font-weight: bold !important;
+        padding: 18px 15px !important;
+    }
+    .sidebar-header span:first-child {
+        font-size: 22px !important; /* Làm icon hình chân thú (🐾) to lên */
+        margin-right: 8px;
+    }
+    .sidebar-header .menu-text {
+        font-size: 30px !important; /* Làm chữ VetCare Pro to rõ hơn */
+        letter-spacing: 0.5px;
+    }
     </style>`;
 
     const container = document.getElementById('menu-container');
     if (container) {
         container.innerHTML = menuHTML;
-        
-        // Active tự động theo trang hiện tại
+
+        // Tự động active trang hiện tại trên menu
         const currentPage = window.location.pathname.split("/").pop();
         if (currentPage.includes('khachhang')) {
             document.getElementById('menu-khachhang')?.classList.add('active');
         } else if (currentPage.includes('thucung')) {
             document.getElementById('menu-thucung')?.classList.add('active');
+        } else if (currentPage.includes('khambenh')) {
+            document.getElementById('menu-khambenh')?.classList.add('active');
+        } else if (currentPage.includes('phieuchidinh')) {
+            document.getElementById('menu-phieuchidinh')?.classList.add('active');
+        } else if (currentPage.includes('donthuoc')) {
+            document.getElementById('menu-donthuoc')?.classList.add('active');
+        } else if (currentPage.includes('khothuoc')) {
+            document.getElementById('menu-khothuoc')?.classList.add('active');
+        } else if (currentPage.includes('dichvu')) {
+            document.getElementById('menu-dichvu')?.classList.add('active');
+        } else if (currentPage.includes('khovaccine')) {
+            document.getElementById('menu-khovaccine')?.classList.add('active');
+        } else if (currentPage.includes('nhatkylamvaccine')) {
+            document.getElementById('menu-nhatkylamvaccine')?.classList.add('active');
+        } else if (currentPage.includes('noitru')) {
+            document.getElementById('menu-noitru')?.classList.add('active');
+        } else if (currentPage.includes('nhatkynoitru')) {
+            document.getElementById('menu-nhatkynoitru')?.classList.add('active');
         } else if (currentPage.includes('pos')) {
             document.getElementById('menu-pos')?.classList.add('active');
+        } else if (currentPage.includes('danhmucsanpham')) {
+            document.getElementById('menu-danhmucsanpham')?.classList.add('active');
+        } else if (currentPage.includes('nhatkykho')) {
+            document.getElementById('menu-nhatkykho')?.classList.add('active');
+        } else if (currentPage.includes('donhang')) {
+            document.getElementById('menu-donhang')?.classList.add('active');
+        } else if (currentPage.includes('spa')) {
+            document.getElementById('menu-spa')?.classList.add('active');
+        } else if (currentPage.includes('nhatkyspa')) {
+            document.getElementById('menu-nhatkyspa')?.classList.add('active');
+        } else if (currentPage.includes('lichhen')) {
+            document.getElementById('menu-lichhen')?.classList.add('active');
+        } else if (currentPage.includes('thongke')) {
+            document.getElementById('menu-thongke')?.classList.add('active');
+        } else if (currentPage.includes('intem')) {
+            document.getElementById('menu-intem')?.classList.add('active');
+        } else if (currentPage.includes('quanlyuser')) {
+            document.getElementById('menu-quanlyuser')?.classList.add('active');
+        } else if (currentPage.includes('lienhe')) {
+            document.getElementById('menu-lienhe')?.classList.add('active');
+        } else {
+            document.getElementById('menu-index')?.classList.add('active');
         }
+    }
+
+    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN (ĐÃ NỚI RỘNG KHOẢNG CÁCH VÀ ĐẨY NÚT ĐĂNG XUẤT SÁT GÓC PHẢI)
+    const topnavContainer = document.getElementById('topnav-container');
+    if (topnavContainer) {
+        topnavContainer.innerHTML = `
+            <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="toggle-btn" onclick="toggleSidebar()" style="cursor: pointer; background: none; border: none; font-size: 18px;">☰</button>
+                    <h2 style="margin: 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 20px; margin-right: 10px;">
+                    <div class="search-container" style="position: relative; margin: 0;">
+                        <input type="text" id="globalSearchInput" class="search-box" placeholder="🔍 Tìm tên KH, SĐT, thú cưng..." autocomplete="off" style="padding: 7px 12px; width: 240px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;">
+                        <div id="searchDropdown" class="search-dropdown"></div>
+                    </div>
+                    <button onclick="dangXuat()" style="background-color: #dc2626; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        🚪 Đăng Xuất
+                    </button>
+                </div>
+            </div>
+        `;
     }
 });
 
+// 3. HÀM XỬ LÝ ĐĂNG XUẤT DÙNG CHUNG
 function dangXuat() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?')) {
         sessionStorage.removeItem('currentUser');
         window.location.href = 'index.html';
     }
 }
-

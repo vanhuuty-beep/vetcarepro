@@ -427,36 +427,6 @@
                 display: none !important;
             }
         }
-		@media screen and (max-width: 768px) {
-    /* 1. Ẩn menu sidebar mặc định trên mobile */
-    .sidebar {
-        position: fixed;
-        left: -260px; /* Đẩy hẳn menu ra ngoài màn hình */
-        top: 0;
-        height: 100vh;
-        z-index: 1000;
-        transition: left 0.3s ease;
-    }
-
-    /* Khi có class active (bấm nút mở menu), sidebar sẽ trượt ra */
-    .sidebar.active {
-        left: 0;
-    }
-
-    /* 2. Mở rộng khung nội dung POS chiếm trọn màn hình điện thoại */
-    .main-content, .pos-container {
-        width: 100% !important;
-        margin-left: 0 !important;
-        padding: 10px !important;
-    }
-
-    /* 3. Sắp xếp lại bố cục các sản phẩm và giỏ hàng POS thành dạng dọc (1 cột) */
-    .pos-layout {
-        display: flex;
-        flex-direction: column !important;
-        gap: 15px;
-    }
-}
     </style>
 </head>
 <body>
@@ -466,13 +436,7 @@
 
     <!-- NỘI DUNG CHÍNH MÀN HÌNH POS -->
     <div class="main-content">
-        <div class="top-navbar">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-                <h2 style="margin: 0; font-size: 14px; font-weight: bold;"> MÀN HÌNH BÁN HÀNG POS & TÍCH ĐIỂM</h2>
-            </div>
-            <div style="font-size: 12px; color: #475569; font-weight: 500;">Thu ngân: Đang hoạt động</div>
-        </div>
+        <div id="topnav-container"></div>
 
         <div class="pos-container">
             <!-- CỘT 1: TÌM KIẾM & LƯỚI SẢN PHẨM -->
