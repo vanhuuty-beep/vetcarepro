@@ -12,7 +12,7 @@
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
-	<script src="out.js"></script>
+	
 
     <!-- CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
@@ -121,7 +121,16 @@
             </form>
         </div>
     </div>
-
+<script>
+        // Hàm xử lý đăng xuất cho mobile
+        function dangXuatMobile() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                sessionStorage.removeItem('currentUser');
+                // Quay về trang đăng nhập ngoài thư mục gốc
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
     <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ MODAL -->
     <script>
 		
