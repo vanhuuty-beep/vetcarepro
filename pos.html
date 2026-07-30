@@ -679,7 +679,12 @@
                 hienThiLuoiSanPham(data);
             }
         }
-
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+}
         function hienThiLuoiSanPham(data) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
