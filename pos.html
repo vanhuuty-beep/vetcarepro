@@ -428,7 +428,7 @@
             }
         }
 		
-/* TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (MÀN HÌNH DƯỚI 768px) */
+/* TỐI ƯU GIAO DIỆN TRÊN ĐIỆN THOẠI (MÀN HÌNH DƯỚI 768px) TRANG POS */
 @media screen and (max-width: 768px) {
     .sidebar {
         position: fixed;
@@ -441,10 +441,37 @@
     .sidebar.active {
         left: 0;
     }
-    .main-content, .pos-container {
+    
+    /* Ép khung POS hiển thị dạng dọc liền mạch, không bị chia khoảng trắng lớn */
+    .pos-container {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 8px !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .main-content {
         width: 100% !important;
         margin-left: 0 !important;
-        padding: 10px !important;
+        padding: 0 !important;
+    }
+
+    /* Thu gọn lưới sản phẩm trên mobile để dễ nhìn */
+    .product-grid {
+        max-height: 320px !important;
+    }
+
+    /* Giữ phần giỏ hàng và nút thanh toán ngay ngắn bên dưới */
+    .cart-section {
+        height: auto !important;
+        margin-bottom: 70px !important;
+    }
+    
+    .cart-table-wrapper {
+        max-height: 220px !important;
     }
 }
     </style>
