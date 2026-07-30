@@ -193,8 +193,16 @@
                     alert('Đăng nhập thành công! Xin chào ' + data.tentaikhoan);
                     sessionStorage.setItem('currentUser', JSON.stringify(data));
                     
-                    // Chuyển hướng về trang Dashboard chính (ví dụ: index.html)
-                    window.location.href = 'thongke.html'; 
+                    // --- TỰ ĐỘNG NHẬN DIỆN THIẾT BỊ ĐỂ CHUYỂN HƯỚNG ---
+                    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    if (isMobile) {
+                        // Nếu là điện thoại: Chuyển thẳng sang giao diện POS Mobile
+                        window.location.href = 'mobile/khachhang.html';
+                    } else {
+                        // Nếu là máy tính (PC): Chuyển sang giao diện quản lý Desktop
+                        window.location.href = 'thongke.html';
+                    }
                 }
             } catch (err) {
                 console.error('Lỗi đăng nhập:', err);
