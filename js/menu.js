@@ -233,15 +233,4 @@ function dangXuat() {
         window.location.href = 'index.html';
     }
 }
-// TỰ ĐỘNG ĐÓNG MENU KHI CHẠM RA NGOÀI MÀN HÌNH TRÊN MOBILE
-document.addEventListener("click", function(event) {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.querySelector('.toggle-btn');
-    
-    // Nếu menu đang mở (có class active) và người dùng bấm ra ngoài sidebar lẫn nút 3 gạch
-    if (sidebar && sidebar.classList.contains('active')) {
-        if (!sidebar.contains(event.target) && (!toggleBtn || !toggleBtn.contains(event.target))) {
-            sidebar.classList.remove('active');
-        }
-    }
-});
+
