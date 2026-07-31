@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
-    <script src="../js/env.js"></script>
+	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -88,6 +88,10 @@
                     <label>Mã chủ nuôi (ID khách hàng):</label>
                     <input type="text" id="modalMachunuoi" class="form-control" placeholder="Nhập ID chủ nuôi...">
                 </div>
+                <div class="form-group">
+                    <label>Hình ảnh thú cưng:</label>
+                    <input type="file" id="modalHinhAnhPet" accept="image/*" capture="environment" class="form-control" style="font-size: 11px; padding: 6px;">
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="dongModalThem()">Hủy</button>
                     <button type="submit" class="btn-save" id="btnSaveModal">Lưu dữ liệu</button>
@@ -105,6 +109,7 @@
             </div>
             <form id="formSuaTC" onsubmit="capNhatThuCungMoi(event)">
                 <input type="hidden" id="suaPetId">
+                <input type="hidden" id="suaHinhanhOld">
                 <div class="form-group">
                     <label>Tên thú cưng (*):</label>
                     <input type="text" id="suaTenthucung" class="form-control" placeholder="Nhập tên thú cưng..." required>
@@ -136,6 +141,10 @@
                 <div class="form-group">
                     <label>Mã chủ nuôi (ID khách hàng):</label>
                     <input type="text" id="suaMachunuoi" class="form-control" placeholder="Nhập ID chủ nuôi...">
+                </div>
+                <div class="form-group">
+                    <label>Hình ảnh thú cưng:</label>
+                    <input type="file" id="suaHinhAnhPet" accept="image/*" capture="environment" class="form-control" style="font-size: 11px; padding: 6px;">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="dongModalSuaPet()">Hủy</button>
@@ -238,29 +247,42 @@
                 const idChuNuoi = item.makhachhang || item.machunuoi;
                 const tenChuNuoi = idChuNuoi && mapKhachHang[idChuNuoi] ? mapKhachHang[idChuNuoi] : 'Chưa có chủ nuôi';
 
+                let imgHtml = '';
+                if (item.hinhanh && item.hinhanh.trim() !== '') {
+                    imgHtml = `<img src="${item.hinhanh}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; flex-shrink: 0;" alt="Ảnh pet">`;
+                } else {
+                    imgHtml = `<div style="width: 55px; height: 55px; background: #f1f5f9; border-radius: 6px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #64748b; flex-shrink: 0;">Không ảnh</div>`;
+                }
+
                 container.innerHTML += `
-                    <div class="mobile-card">
-                        <div class="card-title">
-                            <span>🐾 ${item.tenthucung || 'Chưa đặt tên'}</span>
-                            <span style="color: #2563eb; font-size: 13px;">${maTC}</span>
+                    <div class="mobile-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            ${imgHtml}
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <span style="font-weight: bold; font-size: 12px; color: #1e293b;">🐾 ${item.tenthucung || 'Chưa đặt tên'}</span>
+                                    <span style="color: #2563eb; font-size: 11px; font-weight: bold;">${maTC}</span>
+                                </div>
+                                <div style="font-size: 11px; color: #059669; font-weight: bold; margin-bottom: 2px;">
+                                    👤 Chủ nuôi: ${tenChuNuoi} (ID: ${idChuNuoi || '---'})
+                                </div>
+                                <div style="font-size: 11px; color: #334155; margin-bottom: 2px;">
+                                    🧬 Loài/Giống: ${item.loai || ''} - ${item.giong || item.giongloai || '---'}
+                                </div>
+                                <div style="font-size: 10px; color: #64748b;">
+                                    ⚖️ Cân nặng: ${item.cannang ? item.cannang + ' kg' : '---'} | 🎨 Màu: ${item.maulong || '---'}
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-info" style="color: #059669; font-weight: bold;">
-                            👤 Chủ nuôi: ${tenChuNuoi} (ID: ${idChuNuoi || '---'})
-                        </div>
-                        <div class="card-info">
-                            🧬 Loài/Giống: ${item.loai || ''} - ${item.giong || item.giongloai || '---'}
-                        </div>
-                        <div class="card-info" style="color: #64748b;">
-                            ⚖️ Cân nặng: ${item.cannang ? item.cannang + ' kg' : '---'} | 🎨 Màu: ${item.maulong || '---'}
-                        </div>
-                        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px;">
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 6px; flex-wrap: wrap; gap: 4px;">
                             <div style="display: flex; gap: 4px;">
-                                <button class="btn-kham-nhanh" style="background: #0ea5e9; color: #fff; padding: 3px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="chuyenSangKhamBenh('${item.id}')">🩺 Khám</button>
-                                <button style="background: #10b981; color: #fff; padding: 3px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="moModalTiemNhanh(${item.id})">💉 Tiêm vaccine</button>
+                                <button class="btn-kham-nhanh" style="background: #0ea5e9; color: #fff; padding: 3px 6px; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;" onclick="chuyenSangKhamBenh('${item.id}')">🩺 Khám</button>
+                                <button style="background: #10b981; color: #fff; padding: 3px 6px; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;" onclick="moModalTiemNhanh(${item.id})">💉 Tiêm vaccine</button>
                             </div>
                             <div>
-                                <button onclick="moModalSuaPet(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi || ''}', '${item.cannang || ''}', '${idChuNuoi || ''}')" style="background: #eab308; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
-                                <button onclick="xoaThuCung(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Xóa</button>
+                                <button onclick="moModalSuaPet(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi || ''}', '${item.cannang || ''}', '${idChuNuoi || ''}', '${item.hinhanh || ''}')" style="background: #eab308; color: #fff; border: none; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right: 4px; font-weight: bold;">✏️ Sửa</button>
+                                <button onclick="xoaThuCung(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">🗑️ Xóa</button>
                             </div>
                         </div>
                     </div>
@@ -286,7 +308,7 @@
             window.location.href = `khambenh.html?auto_open=true&pet_id=${petId}`;
         }
 
-        // --- HÀM XỬ LÝ MODAL TIÊM VACCINE GIỐNG Y HỆT ---
+        // --- HÀM XỬ LÝ MODAL TIÊM VACCINE ---
         function moModalTiemNhanh(petId) {
             document.getElementById('modalVaccine').style.display = 'flex';
             document.getElementById('formTiemNhanh').reset();
@@ -352,13 +374,27 @@
             const tuoi = document.getElementById('modalTuoi').value.trim();
             const cannang = document.getElementById('modalCannang').value.trim();
             const makhachhang = document.getElementById('modalMachunuoi').value.trim();
+            
+            const fileInput = document.getElementById('modalHinhAnhPet');
+            let hinhanhUrl = '';
 
             const btnSave = document.getElementById('btnSaveModal');
             btnSave.disabled = true;
             btnSave.textContent = 'Đang lưu...';
 
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileName = `pet_${Date.now()}_${file.name}`;
+                const { error: uploadError } = await db.storage.from('images').upload(fileName, file);
+
+                if (!uploadError) {
+                    const { data: publicUrlData } = db.storage.from('images').getPublicUrl(fileName);
+                    hinhanhUrl = publicUrlData.publicUrl;
+                }
+            }
+
             const { error } = await db.from('thucung').insert([{
-                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang
+                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang, hinhanh: hinhanhUrl
             }]);
 
             btnSave.disabled = false;
@@ -376,7 +412,7 @@
 
         loadDuLieu();
 
-        function moModalSuaPet(id, tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang) {
+        function moModalSuaPet(id, tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang, hinhanh) {
             document.getElementById('modalSuaThuCung').style.display = 'flex';
             document.getElementById('suaPetId').value = id;
             document.getElementById('suaTenthucung').value = tenthucung;
@@ -386,6 +422,8 @@
             document.getElementById('suaTuoi').value = tuoi !== 'null' ? tuoi : '';
             document.getElementById('suaCannang').value = cannang !== 'null' ? cannang : '';
             document.getElementById('suaMachunuoi').value = makhachhang !== 'null' ? makhachhang : '';
+            document.getElementById('suaHinhanhOld').value = hinhanh !== 'null' ? hinhanh : '';
+            document.getElementById('suaHinhAnhPet').value = '';
         }
 
         function dongModalSuaPet() {
@@ -403,13 +441,27 @@
             const tuoi = document.getElementById('suaTuoi').value.trim();
             const cannang = document.getElementById('suaCannang').value.trim();
             const makhachhang = document.getElementById('suaMachunuoi').value.trim();
+            
+            const fileInput = document.getElementById('suaHinhAnhPet');
+            let hinhanhUrl = document.getElementById('suaHinhanhOld').value;
 
             const btnSave = document.getElementById('btnSaveSuaPet');
             btnSave.disabled = true;
             btnSave.textContent = 'Đang lưu...';
 
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileName = `pet_${Date.now()}_${file.name}`;
+                const { error: uploadError } = await db.storage.from('images').upload(fileName, file);
+
+                if (!uploadError) {
+                    const { data: publicUrlData } = db.storage.from('images').getPublicUrl(fileName);
+                    hinhanhUrl = publicUrlData.publicUrl;
+                }
+            }
+
             const { error } = await db.from('thucung')
-                .update({ tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang })
+                .update({ tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang, hinhanh: hinhanhUrl })
                 .eq('id', id);
 
             btnSave.disabled = false;
