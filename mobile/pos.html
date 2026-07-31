@@ -30,7 +30,7 @@
         .btn-desktop { background: #3b82f6; color: white; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .search-box { border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
         .search-box:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        .product-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
+        .product-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .product-card:hover { border-color: #3b82f6; background: #f8fafc; }
     </style>
 </head>
@@ -52,9 +52,9 @@
             <button type="button" class="btn-add" onclick="moCameraQuetMa()" style="white-space: nowrap; margin: 0; padding: 8px 12px; font-size: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">📷 Quét</button>
         </div>
 
-        <!-- DANH SÁCH SẢN PHẨM DẠNG LƯỚI -->
+        <!-- DANH SÁCH SẢN PHẨM DẠNG LƯỚI CÓ ẢNH -->
         <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 6px;">📦 Chọn sản phẩm:</div>
-        <div id="product-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 160px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;">
+        <div id="product-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;">
             <div style="grid-column: span 2; text-align: center; color: #666; font-size: 11px; padding: 15px;">Đang tải sản phẩm từ cơ sở dữ liệu...</div>
         </div>
 
@@ -242,13 +242,18 @@
                 const tenSP = sp.tensanpham || 'Sản phẩm';
                 const giaSP = Number(sp.giaban || 0);
                 const tonKho = sp.soluongton || 0;
+                // Hỗ trợ các tên cột chứa ảnh thường dùng như hinhanh, anh, image
+                const anhSP = sp.hinhanh || sp.anh || sp.image || 'https://via.placeholder.com/35';
 
                 grid.innerHTML += `
                     <div class="product-card" onclick="themVaoGioHang(${sp.id})">
-                        <div style="font-weight: bold; font-size: 11px; color: #1e293b; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${tenSP}</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px;">
-                            <span style="color: #059669; font-weight: bold;">${giaSP.toLocaleString()}đ</span>
-                            <span style="color: #64748b;">Tồn: ${tonKho}</span>
+                        <img src="${anhSP}" alt="img" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; flex-shrink: 0;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: bold; font-size: 11px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tenSP}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; margin-top: 1px;">
+                                <span style="color: #059669; font-weight: bold;">${giaSP.toLocaleString()}đ</span>
+                                <span style="color: #64748b;">Tồn: ${tonKho}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -514,77 +519,77 @@
         }
 
         async function chotVaTichDiem() {
-    if (gioHang.length === 0) {
-        alert('Giỏ hàng đang trống!');
-        return;
-    }
-
-    const { tongCuoiCung, diemTichLuy } = tinhToanThanhToan();
-    const tenKhach = khachHangDangChon ? (khachHangDangChon.tenkhachhang || khachHangDangChon.hovaten) : 'Khách lẻ vãng lai';
-    const sdtKhach = khachHangDangChon ? (khachHangDangChon.sdt || khachHangDangChon.sodienthoai) : '';
-
-    if (!confirm(`Xác nhận chốt đơn thanh toán: ${tongCuoiCung.toLocaleString('vi-VN')} đ?`)) {
-        return;
-    }
-
-    try {
-        if (khachHangDangChon) {
-            let diemCu = parseInt(khachHangDangChon.tichdiem || khachHangDangChon.điểm) || 0;
-            let diemMoi = diemCu + diemTichLuy;
-            await db.from('khachhang').update({ tichdiem: diemMoi }).eq('id', khachHangDangChon.id);
-        }
-
-        for (let item of gioHang) {
-            const donHangPayload = {
-                masanpham: item.masanpham,
-                tensanpham: item.ten,
-                soluongban: Number(item.soLuong),
-                dongia: Number(item.gia),
-                thanhtien: Number(item.gia * item.soLuong),
-                tenkhachhang: tenKhach,
-                sdt: sdtKhach,
-                nguoiban: 'Thu ngân POS Mobile'
-            };
-
-            const { error: insertError } = await db.from('donhang').insert([donHangPayload]);
-            if (insertError) {
-                console.error('Lỗi insert donhang:', insertError);
-                alert('Lỗi ghi đơn hàng vào CSDL: ' + insertError.message);
+            if (gioHang.length === 0) {
+                alert('Giỏ hàng đang trống!');
                 return;
             }
 
-            const spGoc = danhSachSanPhamGoc.find(x => x.id === item.id);
-            if (spGoc) {
-                let tonMoi = (Number(spGoc.soluongton) || 0) - Number(item.soLuong);
-                if (tonMoi < 0) tonMoi = 0;
+            const { tongCuoiCung, diemTichLuy } = tinhToanThanhToan();
+            const tenKhach = khachHangDangChon ? (khachHangDangChon.tenkhachhang || khachHangDangChon.hovaten) : 'Khách lẻ vãng lai';
+            const sdtKhach = khachHangDangChon ? (khachHangDangChon.sdt || khachHangDangChon.sodienthoai) : '';
+
+            if (!confirm(`Xác nhận chốt đơn thanh toán: ${tongCuoiCung.toLocaleString('vi-VN')} đ?`)) {
+                return;
+            }
+
+            try {
+                if (khachHangDangChon) {
+                    let diemCu = parseInt(khachHangDangChon.tichdiem || khachHangDangChon.điểm) || 0;
+                    let diemMoi = diemCu + diemTichLuy;
+                    await db.from('khachhang').update({ tichdiem: diemMoi }).eq('id', khachHangDangChon.id);
+                }
+
+                for (let item of gioHang) {
+                    const donHangPayload = {
+                        masanpham: item.masanpham,
+                        tensanpham: item.ten,
+                        soluongban: Number(item.soLuong),
+                        dongia: Number(item.gia),
+                        thanhtien: Number(item.gia * item.soLuong),
+                        tenkhachhang: tenKhach,
+                        sdt: sdtKhach,
+                        nguoiban: 'Thu ngân POS Mobile'
+                    };
+
+                    const { error: insertError } = await db.from('donhang').insert([donHangPayload]);
+                    if (insertError) {
+                        console.error('Lỗi insert donhang:', insertError);
+                        alert('Lỗi ghi đơn hàng vào CSDL: ' + insertError.message);
+                        return;
+                    }
+
+                    const spGoc = danhSachSanPhamGoc.find(x => x.id === item.id);
+                    if (spGoc) {
+                        let tonMoi = (Number(spGoc.soluongton) || 0) - Number(item.soLuong);
+                        if (tonMoi < 0) tonMoi = 0;
+                        
+                        await db.from('danhmucsanpham')
+                            .update({ soluongton: tonMoi })
+                            .eq('id', item.id);
+                    }
+                }
+
+                alert(`Chốt đơn thành công!\n- Tổng thanh toán: ${tongCuoiCung.toLocaleString()}đ\n- Tích lũy được: ${diemTichLuy} điểm`);
                 
-                await db.from('danhmucsanpham')
-                    .update({ soluongton: tonMoi })
-                    .eq('id', item.id);
+                gioHang = [];
+                document.getElementById('inputGiamGia').value = 0;
+                document.getElementById('selectKhachHang').value = "";
+                chonKhachHangTuDropdown();
+                hienThiGioHang();
+                await loadDuLieuPOS();
+
+            } catch (err) {
+                console.error('Lỗi hệ thống khi chốt đơn:', err);
+                alert('Có lỗi xảy ra khi chốt đơn. Vui lòng kiểm tra console.');
             }
         }
-
-        alert(`Chốt đơn thành công!\n- Tổng thanh toán: ${tongCuoiCung.toLocaleString()}đ\n- Tích lũy được: ${diemTichLuy} điểm`);
-        
-        gioHang = [];
-        document.getElementById('inputGiamGia').value = 0;
-        document.getElementById('selectKhachHang').value = "";
-        chonKhachHangTuDropdown();
-        hienThiGioHang();
-        await loadDuLieuPOS();
-
-    } catch (err) {
-        console.error('Lỗi hệ thống khi chốt đơn:', err);
-        alert('Có lỗi xảy ra khi chốt đơn. Vui lòng kiểm tra console.');
-    }
-}
 
         loadDuLieuPOS();
     </script>
 	<!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
     <script src="js/menu-mobile.js"></script>
     <script>
-        taoMenuMobile('khambenh');
+        taoMenuMobile('pos');
     </script>
 </body>
 </html>
