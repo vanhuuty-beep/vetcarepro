@@ -32,8 +32,12 @@ function taoMenuMobile(trangHienTai) {
                 flex: 1;
                 padding: 0;
             }
-            .mobile-bottom-nav a span, .mobile-bottom-nav .nav-btn-more span { font-size: 18px; margin-bottom: 2px; }
-            .mobile-bottom-nav a.active { color: #2563eb; font-weight: bold; }
+            /* Tăng kích thước icon menu chính từ 18px lên 22px */
+            .mobile-bottom-nav a span, .mobile-bottom-nav .nav-btn-more span { font-size: 22px; margin-bottom: 2px; }
+            
+            /* Đồng bộ sang tông màu xanh lá */
+            .mobile-bottom-nav a.active { color: #10b981; font-weight: bold; }
+            .mobile-bottom-nav a:hover, .mobile-bottom-nav .nav-btn-more:hover { color: #10b981; }
             
             /* CSS Popup Menu Thêm */
             .more-menu-overlay {
@@ -80,7 +84,8 @@ function taoMenuMobile(trangHienTai) {
                 align-items: center;
                 gap: 4px;
             }
-            .more-item span { font-size: 20px; }
+            /* Tăng kích thước icon trong popup Thêm từ 20px lên 24px */
+            .more-item span { font-size: 24px; }
             .more-item:active { background: #e2e8f0; }
 
             /* Đẩy nội dung lên trên để không bị thanh menu che mất */
