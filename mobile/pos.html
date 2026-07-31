@@ -21,17 +21,41 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
     <link rel="stylesheet" href="css/button.css">
-    <style>
+   <style>
         *, *::before, *::after { box-sizing: border-box; }
         body { background: #f8fafc; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        .mobile-container { max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; padding: 10px; padding-bottom: 80px; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
-        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
-        .top-header h3 { margin: 0; font-size: 16px; color: #1e293b; }
-        .btn-desktop { background: #3b82f6; color: white; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .search-box { border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
-        .search-box:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        .product-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .product-card:hover { border-color: #3b82f6; background: #f8fafc; }
+        .mobile-container { max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; padding: 6px 8px; padding-bottom: 90px; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 6px 8px; background: #1e3a8a; border-radius: 4px; }
+        .top-header h3 { margin: 0; font-size: 14px; color: white; }
+        .btn-desktop { background: #3b82f6; color: white; text-decoration: none; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .search-box { border: 1px solid #cbd5e1; border-radius: 4px; outline: none; }
+        
+        /* Thu gọn khung sản phẩm chỉ còn 120px để tiết kiệm diện tích tuyệt đối */
+        #product-grid {
+            max-height: 120px !important;
+            overflow-y: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 3px !important;
+            padding-right: 2px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 4px;
+            margin-bottom: 4px;
+        }
+
+        .product-card { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 4px; 
+            padding: 4px 6px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            width: 100% !important;
+        }
     </style>
 </head>
 <body>
@@ -39,7 +63,7 @@
     <div class="mobile-container">
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
-            <h3 style="color: white;">💳 Bán hàng POS</h3>
+            <h3>💳 Bán hàng POS</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
                 <a href="../pos.html" class="btn-desktop">💻 Desktop</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
@@ -47,24 +71,24 @@
         </div>
 
         <!-- THANH TÌM KIẾM VÀ NÚT QUÉT MÃ -->
-        <div style="display: flex; gap: 6px; margin-bottom: 10px; align-items: center;">
+        <div style="display: flex; gap: 6px; margin-bottom: 8px; align-items: center;">
             <input type="text" id="searchPOS" class="search-box" placeholder="🔍 Gõ tên hoặc mã barcode..." onkeyup="timKiemSanPham()" style="flex: 1; margin: 0; padding: 8px; font-size: 12px;">
             <button type="button" class="btn-add" onclick="moCameraQuetMa()" style="white-space: nowrap; margin: 0; padding: 8px 12px; font-size: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">📷 Quét</button>
         </div>
 
-        <!-- DANH SÁCH SẢN PHẨM DẠNG LƯỚI CÓ ẢNH -->
-        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 6px;">📦 Chọn sản phẩm:</div>
-        <div id="product-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px;">
-            <div style="grid-column: span 2; text-align: center; color: #666; font-size: 11px; padding: 15px;">Đang tải sản phẩm từ cơ sở dữ liệu...</div>
+        <!-- DANH SÁCH SẢN PHẨM -->
+        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 4px;">📦 Chọn sản phẩm:</div>
+        <div id="product-grid">
+            <div style="text-align: center; color: #666; font-size: 11px; padding: 15px;">Đang tải sản phẩm từ cơ sở dữ liệu...</div>
         </div>
 
         <!-- THÔNG TIN KHÁCH HÀNG & NÚT THÊM NHANH -->
-        <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                 <label style="font-size: 11px; font-weight: bold; color: #475569;">Khách hàng:</label>
-                <button type="button" onclick="moModalThemKhachHangPOS()" style="background: none; border: none; color: #2563eb; font-size: 11px; font-weight: bold; cursor: pointer; padding: 0;">+ Thêm khách hàng mới</button>
+                <button type="button" onclick="moModalThemKhachHangPOS()" style="background: none; border: none; color: #2563eb; font-size: 11px; font-weight: bold; cursor: pointer; padding: 0;">+ Thêm khách mới</button>
             </div>
-            <select id="selectKhachHang" class="form-control" onchange="chonKhachHangTuDropdown()" style="font-size: 11px; padding: 6px; height: auto; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 4px;">
+            <select id="selectKhachHang" class="form-control" onchange="chonKhachHangTuDropdown()" style="font-size: 11px; padding: 5px; height: auto; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 2px;">
                 <option value="">-- Khách lẻ / Vãng lai --</option>
             </select>
             <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b;">
@@ -74,41 +98,41 @@
         </div>
 
         <!-- GIỎ HÀNG -->
-        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 6px;">💰 Giỏ hàng:</div>
-        <div id="gioHangContainer" style="margin-bottom: 10px; max-height: 140px; overflow-y: auto;">
-            <div style="text-align: center; color: #777; padding: 12px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>
+        <div style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 4px;">💰 Giỏ hàng:</div>
+        <div id="gioHangContainer" style="margin-bottom: 8px; max-height: 120px; overflow-y: auto;">
+            <div style="text-align: center; color: #777; padding: 10px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>
         </div>
 
         <!-- HÓA ĐƠN CHỜ / BILL TẠM -->
-        <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: bold; font-size: 11px; color: #334155;">📋 Bill tạm đang lưu: <span id="soLuongBillTam" style="color: #2563eb;">0</span></div>
+        <div style="background: #f1f5f9; padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: bold; font-size: 11px; color: #334155;">📋 Bill tạm: <span id="soLuongBillTam" style="color: #2563eb;">0</span></div>
             <select id="selectBillTam" class="form-control" style="font-size: 11px; padding: 4px; width: 140px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px;" onchange="taiBillTam(this.value)">
                 <option value="">-- Chọn bill chờ --</option>
             </select>
         </div>
 
         <!-- TỔNG KẾT & THANH TOÁN -->
-        <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; color: #475569; align-items: center;">
+        <div style="background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #475569; align-items: center;">
                 <span>Giảm giá / Voucher:</span>
                 <input type="number" id="inputGiamGia" value="0" placeholder="0" style="width: 90px; padding: 3px 6px; font-size: 11px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px;" oninput="tinhToanThanhToan()">
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; color: #475569;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; color: #475569;">
                 <span>Tiền hàng gốc:</span>
                 <span id="tongTienHang" style="font-weight: bold;">0 đ</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #059669;">
-                <span>Điểm tích lũy nhận được:</span>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; color: #059669;">
+                <span>Điểm tích lũy nhận:</span>
                 <span id="diemTichLuyHienThi" style="font-weight: bold;">0 Điểm</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #2563eb; border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 4px;">
-                <span>Tổng Tiền Cuối Cùng:</span>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #2563eb; border-top: 1px solid #e2e8f0; padding-top: 5px; margin-top: 3px;">
+                <span>Tổng Tiền:</span>
                 <span id="tongThanhToan">0 đ</span>
             </div>
             
-            <div style="display: flex; gap: 8px; margin-top: 10px;">
-                <button type="button" style="flex: 1; padding: 9px 4px; font-size: 11px; font-weight: bold; background: #64748b; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="luuTamBill()">💾 Lưu tạm bill</button>
-                <button type="button" id="btnChotDon" style="flex: 1.3; padding: 9px 4px; font-size: 11px; font-weight: bold; background: #059669; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="chotVaTichDiem()">💳 Chốt & Tích điểm</button>
+            <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button type="button" style="flex: 1; padding: 7px 4px; font-size: 11px; font-weight: bold; background: #64748b; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="luuTamBill()">💾 Lưu tạm</button>
+                <button type="button" id="btnChotDon" style="flex: 1.3; padding: 7px 4px; font-size: 11px; font-weight: bold; background: #059669; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="chotVaTichDiem()">💳 Chốt đơn</button>
             </div>
         </div>
     </div>
@@ -173,14 +197,14 @@
 
             if (typeof db === 'undefined' || !db) {
                 console.error('Biến kết nối Supabase `db` chưa được khởi tạo!');
-                document.getElementById('product-grid').innerHTML = `<div style="grid-column: span 2; text-align:center; color:red; font-size:11px;">Lỗi: Chưa kết nối được Supabase</div>`;
+                document.getElementById('product-grid').innerHTML = `<div style="text-align:center; color:red; font-size:11px;">Lỗi: Chưa kết nối được Supabase</div>`;
                 return;
             }
 
             const { data: spData, error } = await db.from('danhmucsanpham').select('*');
             if (error) {
                 console.error('Lỗi tải sản phẩm:', error);
-                document.getElementById('product-grid').innerHTML = `<div style="grid-column: span 2; text-align:center; color:red; font-size:11px;">Lỗi tải sản phẩm: ${error.message}</div>`;
+                document.getElementById('product-grid').innerHTML = `<div style="text-align:center; color:red; font-size:11px;">Lỗi tải sản phẩm: ${error.message}</div>`;
                 return;
             }
 
@@ -234,7 +258,7 @@
             grid.innerHTML = '';
 
             if (data.length === 0) {
-                grid.innerHTML = `<div style="grid-column: span 2; text-align:center; color:#777; font-size:11px;">Không tìm thấy sản phẩm</div>`;
+                grid.innerHTML = `<div style="text-align:center; color:#777; font-size:11px; padding: 10px;">Không tìm thấy sản phẩm</div>`;
                 return;
             }
 
@@ -242,7 +266,6 @@
                 const tenSP = sp.tensanpham || 'Sản phẩm';
                 const giaSP = Number(sp.giaban || 0);
                 const tonKho = sp.soluongton || 0;
-                // Hỗ trợ các tên cột chứa ảnh thường dùng như hinhanh, anh, image
                 const anhSP = sp.hinhanh || sp.anh || sp.image || 'https://via.placeholder.com/35';
 
                 grid.innerHTML += `
@@ -323,7 +346,7 @@
             container.innerHTML = '';
 
             if (gioHang.length === 0) {
-                container.innerHTML = `<div style="text-align: center; color: #777; padding: 12px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #777; padding: 10px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Giỏ hàng trống</div>`;
                 document.getElementById('tongTienHang').textContent = '0 đ';
                 document.getElementById('tongThanhToan').textContent = '0 đ';
                 document.getElementById('diemTichLuyHienThi').textContent = '0 Điểm';
@@ -336,7 +359,7 @@
                 tongTien += thanhTien;
 
                 container.innerHTML += `
-                    <div style="background: #ffffff; padding: 6px 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: #ffffff; padding: 5px 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 2; overflow: hidden; padding-right: 4px;">
                             <div style="font-weight: bold; font-size: 11px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.ten}</div>
                             <div style="color: #059669; font-size: 10px;">${item.gia.toLocaleString()}đ</div>
