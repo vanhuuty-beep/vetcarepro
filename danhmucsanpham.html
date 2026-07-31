@@ -19,7 +19,7 @@
     <style>
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -35,6 +35,7 @@
         }
         .stat-card:nth-child(2) { border-left-color: #059669; }
         .stat-card:nth-child(3) { border-left-color: #d97706; }
+        .stat-card:nth-child(4) { border-left-color: #0284c7; }
         
         .stat-title {
             font-size: 11px;
@@ -128,11 +129,6 @@
             border-radius: 4px;
             border: 1px solid #cbd5e1;
         }
-        .barcode-img {
-            height: 28px;
-            max-width: 110px;
-            object-fit: contain;
-        }
     </style>
 </head>
 <body>
@@ -145,7 +141,7 @@
        <div id="topnav-container"></div>
 
         <div class="content-body">
-            <!-- 3 KHỐI THỐNG KÊ PHÍA TRÊN -->
+            <!-- 4 KHỐI THỐNG KÊ PHÍA TRÊN (CÓ BỔ SUNG LỢI NHUẬN) -->
             <div class="stats-container">
                 <div class="stat-card">
                     <div>
@@ -167,6 +163,13 @@
                         <div class="stat-value" id="statGiaTriKho" style="color: #2563eb;">0 đ</div>
                     </div>
                     <div class="stat-icon">💰</div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">Lợi nhuận dự kiến (Lời/Lỗ)</div>
+                        <div class="stat-value" id="statLoiNhuan" style="color: #059669;">0 đ</div>
+                    </div>
+                    <div class="stat-icon">📈</div>
                 </div>
             </div>
 
@@ -313,17 +316,24 @@
             const soMatHang = data.length;
             let tongTon = 0;
             let giaTriKho = 0;
+            let loiNhuanDuKien = 0;
 
             data.forEach(item => {
                 const ton = parseInt(item.soluongton) || 0;
                 const giaNhap = parseFloat(item.gianhap) || 0;
+                const giaBan = parseFloat(item.giaban) || 0;
+                
                 tongTon += ton;
                 giaTriKho += (ton * giaNhap);
+                
+                // Tính lợi nhuận dự kiến = (Giá bán - Giá nhập) * Tồn kho
+                loiNhuanDuKien += (giaBan - giaNhap) * ton;
             });
 
             document.getElementById('statSoMatHang').innerText = soMatHang;
             document.getElementById('statTongTon').innerText = tongTon;
             document.getElementById('statGiaTriKho').innerText = giaTriKho.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('statLoiNhuan').innerText = loiNhuanDuKien.toLocaleString('vi-VN') + ' đ';
         }
 
         function hienThiBang(data) {
@@ -503,7 +513,6 @@
             }
         }
 
-        // Xóa trực tiếp từ bảng danh sách
         async function xoaSanPham(id) {
             if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi hệ thống không?')) {
                 const { error } = await db.from('danhmucsanpham').delete().eq('id', id);
@@ -516,7 +525,6 @@
             }
         }
 
-        // Xóa từ bên trong Modal sửa
         async function xoaSanPhamTuModal() {
             const id = document.getElementById('editingId').value;
             if (!id) return;
