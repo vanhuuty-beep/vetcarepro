@@ -71,6 +71,7 @@
                         <thead>
                             <tr>
                                 <th>Mã KH</th>
+                                <th>Mã QR</th>
                                 <th>Khách hàng & SĐT</th>
                                 <th>Địa chỉ</th>
                                 <th>Thú cưng</th>
@@ -232,7 +233,8 @@
                     congTienTheoPetHoacKH(dt, chiPhi, dt.created_at);
                 });
             }
-			// Bổ sung tải dữ liệu Phiếu chỉ định (phieuchidinh)
+
+            // Bổ sung tải dữ liệu Phiếu chỉ định (phieuchidinh)
             const { data: pcdData } = await db.from('phieuchidinh').select('*');
             if (pcdData) {
                 pcdData.forEach(pcd => {
@@ -268,15 +270,23 @@
             tableBody.innerHTML = '';
             
             if(data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">Không tìm thấy khách hàng phù hợp</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#777;">Không tìm thấy khách hàng phù hợp</td></tr>`;
                 return;
             }
 
             data.forEach(item => {
                 const maKhachHang = formatMaKhachHang(item.id);
-                const soDienThoaiHtml = item.sodienthoai 
-                    ? `<a href="tel:${item.sodienthoai}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${item.sodienthoai} 📞</a>` 
+                
+                // Tự động kiểm tra và thêm số 0 ở đầu SĐT nếu thiếu, đồng thời tạo liên kết bấm gọi
+                let rawSdt = String(item.sodienthoai || '').trim();
+                let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
+                const soDienThoaiHtml = displaySdt 
+                    ? `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>` 
                     : '---';
+
+                // Tạo URL mã QR dựa trên ID và SĐT khách hàng
+                const qrText = encodeURIComponent(`KH_${item.id}_${item.hovaten}_${displaySdt}`);
+                const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${qrText}`;
 
                 const dsPet = mapThuCung[item.id] || [];
                 const soLuongPet = dsPet.length;
@@ -297,6 +307,9 @@
 
                 tableBody.innerHTML += `<tr>
                     <td><strong>${maKhachHang}</strong></td>
+                    <td style="text-align: center;">
+                        <img src="${qrImageUrl}" alt="Mã QR KH" style="width: 55px; height: 55px; border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px; background: #fff;" title="Mã QR khách hàng #${item.id}">
+                    </td>
                     <td>
                         <b>${item.hovaten || ''}</b><br>
                         <span style="font-size: 12px;">${soDienThoaiHtml}</span>
