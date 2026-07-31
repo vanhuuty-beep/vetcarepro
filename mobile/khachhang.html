@@ -33,7 +33,6 @@
 
         <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
             <input type="text" id="searchMobile" class="search-box" placeholder="🔍 Tìm tên hoặc SĐT..." onkeyup="timKiemMobile()" style="flex: 1; margin: 0;">
-            <!-- Đã thu nhỏ nút Thêm ở đây -->
             <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 6px 10px; font-size: 12px;">➕ Thêm</button>
         </div>
         <!-- DANH SÁCH THẺ HIỂN THỊ -->
@@ -70,7 +69,7 @@
         </div>
     </div>
 
-    <!-- MODAL THÊM THÚ CƯNG (CHO TỪNG KHÁCH HÀNG) -->
+    <!-- MODAL THÊM THÚ CƯNG (CÓ TRƯỜNG HÌNH ẢNH) -->
     <div id="modalThemThuCung" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -111,6 +110,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Hình ảnh thú cưng:</label>
+                    <input type="file" id="modalHinhAnhPet" accept="image/*" capture="environment" class="form-control" style="font-size: 11px; padding: 6px;">
+                </div>
+
+                <div class="form-group">
                     <label>Mã chủ nuôi (ID khách hàng):</label>
                     <input type="text" id="modalMachunuoi" class="form-control" readonly style="background: #f1f5f9; color: #64748b;">
                 </div>
@@ -128,7 +132,6 @@
         function dangXuatMobile() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 sessionStorage.removeItem('currentUser');
-                // Quay về trang đăng nhập ngoài thư mục gốc
                 window.location.href = '../index.html';
             }
         }
@@ -177,7 +180,6 @@
                             🏠 Địa chỉ: ${item.diachi || '---'}
                         </div>
                         <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                            <!-- Đã thu nhỏ nút Pet, Sửa, Xóa tại đây -->
                             <button class="btn-add-pet" onclick="moModalPet('${item.id}', '${item.hovaten || ''}')" style="padding: 3px 8px; font-size: 11px;">➕ Pet</button>
                             <div>
                                 <button onclick="moModalSua(${item.id}, '${item.hovaten || ''}', '${item.sodienthoai || ''}', '${item.diachi || ''}')" style="background: #eab308; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
@@ -237,7 +239,7 @@
             loadKhachHangMobile();
         }
 
-        // --- CÁC HÀM XỬ LÝ MODAL THÊM PET ---
+        // --- CÁC HÀM XỬ LÝ MODAL THÊM PET (CÓ UPLOAD ẢNH LÊN SUPABASE) ---
         function moModalPet(khId, khTen) {
             document.getElementById('modalThemThuCung').style.display = 'flex';
             document.getElementById('formThemTC').reset();
@@ -259,13 +261,28 @@
             const tuoi = document.getElementById('modalTuoi').value.trim();
             const cannang = document.getElementById('modalCannang').value.trim();
             const makhachhang = document.getElementById('modalMachunuoi').value.trim();
+            
+            const fileInput = document.getElementById('modalHinhAnhPet');
+            let hinhanhUrl = '';
 
             const btnSave = document.getElementById('btnSavePet');
             btnSave.disabled = true;
             btnSave.textContent = 'Đang lưu...';
 
+            // Xử lý upload ảnh nếu người dùng có chọn hoặc chụp ảnh
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const fileName = `pet_${Date.now()}_${file.name}`;
+                const { error: uploadError } = await db.storage.from('images').upload(fileName, file);
+
+                if (!uploadError) {
+                    const { data: publicUrlData } = db.storage.from('images').getPublicUrl(fileName);
+                    hinhanhUrl = publicUrlData.publicUrl;
+                }
+            }
+
             const { error } = await db.from('thucung').insert([{
-                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang
+                tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang, hinhanh: hinhanhUrl
             }]);
 
             btnSave.disabled = false;
@@ -283,7 +300,8 @@
 
         // Khởi chạy tải dữ liệu ban đầu
         loadKhachHangMobile();
-		// --- CÁC HÀM XỬ LÝ SỬA & XÓA KHÁCH HÀNG ---
+
+        // --- CÁC HÀM XỬ LÝ SỬA & XÓA KHÁCH HÀNG ---
         function moModalSua(id, hovaten, sodienthoai, diachi) {
             document.getElementById('modalSuaKhachHang').style.display = 'flex';
             document.getElementById('suaId').value = id;
