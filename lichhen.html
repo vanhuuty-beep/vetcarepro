@@ -220,7 +220,11 @@
                     <td style="font-weight: 600; color: #1e3a8a;">${ngayHenFormatted}</td>
                     <td>
                         <b>${item.tenchunuoi || '---'}</b><br>
-                        <span style="color: #555; font-size: 12px;">${item.sdt || 'Không có SĐT'}</span>
+                        <span style="font-size: 12px;">
+                            <a href="tel:${item.sdt ? (item.sdt.startsWith('0') ? item.sdt : '0' + item.sdt) : ''}" style="color: #0284c7; text-decoration: none; font-weight: bold;" title="Bấm để gọi điện">
+                                📞 ${item.sdt ? (item.sdt.startsWith('0') ? item.sdt : '0' + item.sdt) : 'Không có SĐT'}
+                            </a>
+                        </span>
                     </td>
                     <td>${item.diachi || '---'}</td>
                     <td style="font-size: 12px; max-width: 250px; word-break: break-word;">${item.noidung || '---'}</td>
