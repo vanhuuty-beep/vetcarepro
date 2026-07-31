@@ -128,8 +128,9 @@
                 </div>
 
                 <div style="margin-bottom: 6px;">
-    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (File hoặc Link ảnh):</label>
-    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" style="font-size: 11px; padding: 5px; margin-bottom: 4px;">
+    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (Chụp ảnh trực tiếp hoặc chọn file):</label>
+    <!-- Thêm capture="environment" để bật trực tiếp camera sau trên mobile -->
+    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" capture="environment" style="font-size: 11px; padding: 5px; margin-bottom: 4px;">
     <input type="text" id="hinhanhUrl" class="form-control" placeholder="Hoặc dán đường dẫn (URL) hình ảnh vào đây...">
 </div>
 
