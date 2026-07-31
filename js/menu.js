@@ -18,11 +18,22 @@ document.addEventListener("DOMContentLoaded", function() {
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
     `;
 
-    // 1. CHÈN MENU BÊN TRÁI 
+    // Lấy ngày tháng hiện tại định dạng tiếng Việt
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
+    const ngayHienTai = now.toLocaleDateString('vi-VN', options);
+
+    // 1. CHÈN MENU BÊN TRÁI (CÓ NGÀY THÁNG, SUBMENU VÀ ICON ĐỒNG BỘ)
     const menuHTML = `
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <span>🐾</span> <span class="menu-text">VetCare Pro</span>
+        <div class="sidebar-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div style="display: flex; align-items: center;">
+                <span>🐾</span> <span class="menu-text">VetCare Pro</span>
+            </div>
+            <!-- Hiển thị ngày tháng dưới logo -->
+            <div id="sidebar-date" style="font-size: 11px; font-weight: normal; color: rgba(255, 255, 255, 0.85); padding-left: 32px;">
+                📅 ${ngayHienTai}
+            </div>
         </div>
         
         <li class="menu-item sub-item menu-pos-highlight" id="menu-pos" onclick="window.location.href='pos.html'">
@@ -39,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <!-- NHÓM 1: KHÁM & ĐIỀU TRỊ (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <span>🩺 Khám & Điều trị</span> <span class="arrow">▼</span>
+                <div class="menu-label-wrap"><span class="group-icon">🩺</span> <span class="menu-text">Khám & Điều trị</span></div> <span class="arrow">▼</span>
             </li>
             <ul class="submenu-container">
                 <li class="menu-item" id="menu-khambenh" onclick="window.location.href='khambenh.html'"><span>🏥</span> <span class="menu-text">Khám bệnh</span></li>
@@ -49,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <!-- NHÓM 2: KHO & VẮC-XIN (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <span>📦 Kho & Vắc-xin</span> <span class="arrow">▼</span>
+                <div class="menu-label-wrap"><span class="group-icon">📦</span> <span class="menu-text">Kho & Vắc-xin</span></div> <span class="arrow">▼</span>
             </li>
             <ul class="submenu-container">
                 <li class="menu-item" id="menu-khothuoc" onclick="window.location.href='khothuoc.html'"><span>💊</span> <span class="menu-text">Kho thuốc</span></li>
@@ -60,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <!-- NHÓM 3: LƯU TRÚ (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <span>🏨 Quản lý Lưu trú</span> <span class="arrow">▼</span>
+                <div class="menu-label-wrap"><span class="group-icon">🏨</span> <span class="menu-text">Quản lý Lưu trú</span></div> <span class="arrow">▼</span>
             </li>
             <ul class="submenu-container">
                 <li class="menu-item" id="menu-noitru" onclick="window.location.href='noitru.html'"><span>🏨</span> <span class="menu-text">Nội trú</span></li>
@@ -69,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <!-- NHÓM 4: PETSHOP & KHO HÀNG (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <span>🛍️ Petshop & Bán hàng</span> <span class="arrow">▼</span>
+                <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
             </li>
             <ul class="submenu-container">
                 <li class="menu-item" id="menu-danhmucsanpham" onclick="window.location.href='danhmucsanpham.html'"><span>📦</span> <span class="menu-text">Thêm sản phẩm</span></li>
@@ -80,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             <!-- NHÓM 5: SPA & LÀM ĐẸP (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <span>✨ Quản lý Spa</span> <span class="arrow">▼</span>
+                <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
             </li>
             <ul class="submenu-container">
                 <li class="menu-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
@@ -93,12 +104,17 @@ document.addEventListener("DOMContentLoaded", function() {
         </ul>
     </div>
 
-    <!-- STYLE: ĐÃ XÓA NỀN TRẮNG/BÓNG, GIỮ NGUYÊN HIỆU ỨNG CHUỘT -->
+    <!-- STYLE HOÀN CHỈNH: CÂN ĐỐI, KHÔNG MẤT CHỮ, ĐỒNG BỘ ICON VÀ TRONG SUỐT -->
     <style>
+        .sidebar {
+            width: 275px !important;
+            min-width: 275px !important;
+        }
+
         .sidebar .menu-text, 
         .sidebar .menu-category,
         .sidebar li {
-            font-size: 15px !important;
+            font-size: 14px !important;
             font-weight: 700 !important;
         }
 
@@ -107,31 +123,61 @@ document.addEventListener("DOMContentLoaded", function() {
             font-weight: 800 !important;
         }
 
-        /* NÚT DROPDOWN: TRONG SUỐT HOÀN TOÀN, CHỈ ĐỔI MÀU KHI RÊ CHUỘT */
+        /* Đồng bộ kích thước icon thẳng hàng tuyệt đối */
+        .sidebar .menu-list > li > span:first-child,
+        .sidebar .menu-pos-highlight .pos-icon {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+            font-size: 16px !important;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Nút dropdown nhóm menu trong suốt, không bóng trắng */
         .menu-dropdown-toggle {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 10px 12px;
             cursor: pointer;
             color: #ffffff;
             font-weight: 800 !important;
             font-size: 13px !important;
-            background: none !important; /* Xóa sạch nền trắng mờ */
-            border: none !important;     /* Xóa đường viền */
-            margin: 4px 10px;
+            background: none !important;
+            border: none !important;
+            margin: 4px 8px;
             border-radius: 6px;
             transition: background 0.2s ease;
             user-select: none;
         }
-        /* Hiệu ứng khi rê chuột vào đổi sáng nhẹ */
+        
+        .menu-dropdown-toggle .menu-label-wrap {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            gap: 8px;
+        }
+
+        .menu-dropdown-toggle .group-icon {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+            font-size: 16px !important;
+            flex-shrink: 0;
+        }
+
         .menu-dropdown-toggle:hover {
             background: rgba(255, 255, 255, 0.1) !important;
             color: #ffffff;
         }
+        
         .menu-dropdown-toggle .arrow {
             font-size: 10px;
             transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 6px;
         }
         
         /* Danh sách con */
@@ -146,6 +192,14 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         .menu-dropdown-toggle.active-parent .arrow {
             transform: rotate(180deg);
+        }
+
+        .submenu-container .menu-item span:first-child {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+            font-size: 16px !important;
+            margin-right: 8px;
         }
 
         .menu-pos-highlight {
@@ -185,14 +239,14 @@ document.addEventListener("DOMContentLoaded", function() {
         .sidebar-header {
             font-size: 20px !important;
             font-weight: bold !important;
-            padding: 18px 15px !important;
+            padding: 15px 15px 10px 15px !important;
         }
         .sidebar-header span:first-child {
             font-size: 22px !important;
             margin-right: 8px;
         }
         .sidebar-header .menu-text {
-            font-size: 30px !important;
+            font-size: 26px !important;
             letter-spacing: 0.5px;
         }
     </style>`;
@@ -221,9 +275,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN
+    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN (CÓ NÚT CHUYỂN GIAO DIỆN MOBILE)
     const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
+        const currentPage = window.location.pathname.split("/").pop() || 'thongke.html';
+
         topnavContainer.innerHTML = `
             <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -231,12 +287,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     <h2 style="margin: 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 20px; margin-right: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px;">
                     <div class="search-container" style="position: relative; margin: 0;">
-                        <input type="text" id="globalSearchInput" class="search-box" placeholder="🔍 Tìm tên KH, SĐT, thú cưng..." autocomplete="off" style="padding: 7px 12px; width: 240px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;">
+                        <input type="text" id="globalSearchInput" class="search-box" placeholder="🔍 Tìm tên KH, SĐT, thú cưng..." autocomplete="off" style="padding: 7px 12px; width: 220px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;">
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
-                    <button onclick="dangXuat()" style="background-color: #dc2626; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <a href="mobile/${currentPage}" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
+                        📱 Giao diện Mobile
+                    </a>
+
+                    <button onclick="dangXuat()" style="background-color: #dc2626; color: white; border: none; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         🚪 Đăng Xuất
                     </button>
                 </div>
