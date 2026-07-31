@@ -12,7 +12,7 @@
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
-
+<script src="out.js"></script>
     <!-- CSS chung và CSS riêng mobile -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
@@ -25,12 +25,16 @@
         <div class="top-header">
             <h3>📋 Quản lý Chỉ định</h3>
             <a href="../phieuchidinh.html" class="btn-desktop">💻 Bản Desktop</a>
+			<button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+    <span>🚪</span> Thoát
+</button>
         </div>
 
         <!-- THANH TÌM KIẾM VÀ NÚT THÊM NẰM CÙNG 1 DÒNG -->
         <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
             <input type="text" id="searchMobile" class="search-box" placeholder="🔍 Tìm mã khám, kết luận hoặc dịch vụ..." onkeyup="timKiemChiDinh()" style="flex: 1; margin: 0;">
-            <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 10px 14px; font-size: 13px;">➕ Chỉ định</button>
+            <!-- Đã thu nhỏ nút Chỉ định ở đây -->
+            <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 6px 10px; font-size: 12px;">➕ Chỉ định</button>
         </div>
 
         <!-- DANH SÁCH THẺ HIỂN THỊ -->
@@ -157,10 +161,18 @@
             </form>
         </div>
     </div>
-
+<script>
+        // Hàm xử lý đăng xuất cho mobile
+        function dangXuatMobile() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                sessionStorage.removeItem('currentUser');
+                // Quay về trang đăng nhập ngoài thư mục gốc
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
     <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ MODAL -->
     <script>
-        
         let danhSachChiDinhGoc = [];
         let danhSachDichVuGoc = []; 
         let mapKhamBenh = {}; 
@@ -256,8 +268,9 @@
                             💡 Kết luận: ${item.ketluan || '---'} | 💰 Tổng tiền: ${item.tongtien ? Number(item.tongtien).toLocaleString() + 'đ' : '---'}
                         </div>
                         <div class="card-footer" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
-                            <button onclick="moModalSuaChiDinh(${item.id}, '${maKB || ''}', '${item.ngaychidinh || ''}', '${item.trangthai || 'Chờ thực hiện'}', '${encodeURIComponent(item.ketluan || '')}', '${encodeURIComponent(item.chitietdichvu || '')}')" style="background: #eab308; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
-                            <button onclick="xoaChiDinh(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">🗑️ Xóa</button>
+                            <!-- Đã thu nhỏ nút Sửa, Xóa tại đây -->
+                            <button onclick="moModalSuaChiDinh(${item.id}, '${maKB || ''}', '${item.ngaychidinh || ''}', '${item.trangthai || 'Chờ thực hiện'}', '${encodeURIComponent(item.ketluan || '')}', '${encodeURIComponent(item.chitietdichvu || '')}')" style="background: #eab308; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
+                            <button onclick="xoaChiDinh(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Xóa</button>
                         </div>
                     </div>
                 `;

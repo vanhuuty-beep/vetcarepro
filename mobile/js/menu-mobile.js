@@ -8,15 +8,17 @@ function taoMenuMobile(trangHienTai) {
                 transform: translateX(-50%);
                 width: 100%;
                 max-width: 480px;
-                height: 55px;
+                height: 60px;
                 background: #ffffff;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
                 display: flex;
                 justify-content: space-around;
                 align-items: center;
                 z-index: 9999;
                 border-top: 1px solid #e2e8f0;
                 box-sizing: border-box;
+                border-top-left-radius: 16px;
+                border-top-right-radius: 16px;
             }
             .mobile-bottom-nav a, .mobile-bottom-nav .nav-btn-more {
                 display: flex;
@@ -32,19 +34,19 @@ function taoMenuMobile(trangHienTai) {
                 flex: 1;
                 padding: 0;
             }
-            /* Tăng kích thước icon menu chính từ 18px lên 22px */
-            .mobile-bottom-nav a span, .mobile-bottom-nav .nav-btn-more span { font-size: 22px; margin-bottom: 2px; }
+            /* Tăng kích thước icon menu chính lên 26px cho rõ và bắt mắt hơn */
+            .mobile-bottom-nav a span, .mobile-bottom-nav .nav-btn-more span { font-size: 26px; margin-bottom: 2px; }
             
-            /* Đồng bộ sang tông màu xanh lá */
-            .mobile-bottom-nav a.active { color: #10b981; font-weight: bold; }
-            .mobile-bottom-nav a:hover, .mobile-bottom-nav .nav-btn-more:hover { color: #10b981; }
+            /* Tông xám kết hợp hiệu ứng da trời nhẹ khi active */
+            .mobile-bottom-nav a.active { color: #0284c7; font-weight: bold; }
+            .mobile-bottom-nav a:hover, .mobile-bottom-nav .nav-btn-more:hover { color: #0284c7; }
             
             /* CSS Popup Menu Thêm */
             .more-menu-overlay {
                 display: none;
                 position: fixed;
                 top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.5);
+                background: rgba(0,0,0,0.4);
                 z-index: 10000;
                 align-items: flex-end;
                 justify-content: center;
@@ -53,8 +55,8 @@ function taoMenuMobile(trangHienTai) {
                 background: #ffffff;
                 width: 100%;
                 max-width: 480px;
-                border-top-left-radius: 16px;
-                border-top-right-radius: 16px;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
                 padding: 15px;
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
                 animation: slideUp 0.25s ease-out;
@@ -70,13 +72,13 @@ function taoMenuMobile(trangHienTai) {
                 margin-top: 10px;
             }
             .more-item {
-                background: #f8fafc;
+                background: #f1f5f9;
                 border: 1px solid #e2e8f0;
-                border-radius: 8px;
+                border-radius: 12px;
                 padding: 12px 8px;
                 text-align: center;
                 text-decoration: none;
-                color: #1e293b;
+                color: #334155;
                 font-size: 11px;
                 font-weight: bold;
                 display: flex;
@@ -84,12 +86,11 @@ function taoMenuMobile(trangHienTai) {
                 align-items: center;
                 gap: 4px;
             }
-            /* Tăng kích thước icon trong popup Thêm từ 20px lên 24px */
-            .more-item span { font-size: 24px; }
+            .more-item span { font-size: 26px; }
             .more-item:active { background: #e2e8f0; }
 
             /* Đẩy nội dung lên trên để không bị thanh menu che mất */
-            body { padding-bottom: 70px !important; }
+            body { padding-bottom: 75px !important; }
         </style>
 
         <div class="mobile-bottom-nav">
@@ -124,10 +125,10 @@ function taoMenuMobile(trangHienTai) {
                     <button type="button" onclick="toggleMoreMenu()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
                 </div>
                 <div class="more-grid">
-                    <a href="noitru.html" class="more-item">
-                        <span>🏨</span>Nội trú
+                    <a href="nhatkyvaccine.html" class="more-item">
+                        <span>💉</span>Tiêm VX
                     </a>
-                    <a href="themsp.html" class="more-item">
+                    <a href="danhmucsanpham.html" class="more-item">
                         <span>📦</span>Thêm sản phẩm
                     </a>
                     <a href="../thongke.html" class="more-item">
@@ -138,7 +139,6 @@ function taoMenuMobile(trangHienTai) {
         </div>
     `;
     
-    // Tự động gắn menu vào cuối thẻ body khi tải trang
     document.body.insertAdjacentHTML('beforeend', menuHTML);
 }
 
