@@ -128,10 +128,10 @@
                 </div>
 
                 <div style="margin-bottom: 6px;">
-                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (hinhanh):</label>
-                    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" style="font-size: 11px; padding: 5px;">
-                    <input type="hidden" id="hinhanhUrl">
-                </div>
+    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (File hoặc Link ảnh):</label>
+    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" style="font-size: 11px; padding: 5px; margin-bottom: 4px;">
+    <input type="text" id="hinhanhUrl" class="form-control" placeholder="Hoặc dán đường dẫn (URL) hình ảnh vào đây...">
+</div>
 
                 <div style="margin-bottom: 8px;">
                     <label style="font-size: 11px; font-weight: bold; color: #475569;">Mô tả sản phẩm (mota):</label>
@@ -250,104 +250,100 @@
         }
 
         function moModalSua(id) {
-            const item = danhSachSanPhamToanCuc.find(x => x.id === id);
-            if (!item) return;
+    const item = danhSachSanPhamToanCuc.find(x => x.id === id);
+    if (!item) return;
 
-            document.getElementById('modalTitle').innerText = '✏️ Cập Nhật Hàng Hóa';
-            document.getElementById('editId').value = item.id;
-            document.getElementById('tensanpham').value = item.tensanpham || '';
-            document.getElementById('mabarcode').value = item.mabarcode || ('86' + Math.floor(10000000 + Math.random() * 90000000));
-            document.getElementById('nhomsanpham').value = item.nhomsanpham || item.danhmuc || '';
-            document.getElementById('donvi').value = item.donvi || item.donvitinh || '';
-            document.getElementById('gianhap').value = item.gianhap || 0;
-            document.getElementById('giaban').value = item.giaban || 0;
-            document.getElementById('soluongton').value = item.soluongton !== undefined ? item.soluongton : (item.tonkho || 0);
-            document.getElementById('mota').value = item.mota || '';
-            document.getElementById('hinhanhUrl').value = item.hinhanh || item.image || '';
+    document.getElementById('modalTitle').innerText = '✏️ Cập Nhật Hàng Hóa';
+    document.getElementById('editId').value = item.id;
+    document.getElementById('tensanpham').value = item.tensanpham || '';
+    document.getElementById('mabarcode').value = item.mabarcode || ('86' + Math.floor(10000000 + Math.random() * 90000000));
+    document.getElementById('nhomsanpham').value = item.nhomsanpham || item.danhmuc || '';
+    document.getElementById('donvi').value = item.donvi || item.donvitinh || '';
+    document.getElementById('gianhap').value = item.gianhap || 0;
+    document.getElementById('giaban').value = item.giaban || 0;
+    document.getElementById('soluongton').value = item.soluongton !== undefined ? item.soluongton : (item.tonkho || 0);
+    document.getElementById('mota').value = item.mota || '';
+    
+    // Gán vào ô nhập link ảnh
+    document.getElementById('hinhanhUrl').value = item.hinhanh || item.image || '';
+    document.getElementById('hinhanhFile').value = ''; // Reset file input
 
-            document.getElementById('modalSanPham').style.display = 'flex';
-        }
+    document.getElementById('modalSanPham').style.display = 'flex';
+}
 
         function dongModal() {
             document.getElementById('modalSanPham').style.display = 'none';
         }
 
         async function luuSanPham(event) {
-            event.preventDefault();
+    event.preventDefault();
 
-            const id = document.getElementById('editId').value;
-            const tensanpham = document.getElementById('tensanpham').value.trim();
-            let mabarcode = document.getElementById('mabarcode').value.trim();
-            const nhomsanpham = document.getElementById('nhomsanpham').value;
-            const donvi = document.getElementById('donvi').value.trim();
-            const gianhap = parseFloat(document.getElementById('gianhap').value) || 0;
-            const giaban = parseFloat(document.getElementById('giaban').value) || 0;
-            const soluongton = parseInt(document.getElementById('soluongton').value) || 0;
-            const mota = document.getElementById('mota').value.trim();
-            
-            let hinhanh = document.getElementById('hinhanhUrl').value;
-            const fileInput = document.getElementById('hinhanhFile');
+    const id = document.getElementById('editId').value;
+    const tensanpham = document.getElementById('tensanpham').value.trim();
+    let mabarcode = document.getElementById('mabarcode').value.trim();
+    const nhomsanpham = document.getElementById('nhomsanpham').value;
+    const donvi = document.getElementById('donvi').value.trim();
+    const gianhap = parseFloat(document.getElementById('gianhap').value) || 0;
+    const giaban = parseFloat(document.getElementById('giaban').value) || 0;
+    const soluongton = parseInt(document.getElementById('soluongton').value) || 0;
+    const mota = document.getElementById('mota').value.trim();
+    
+    // Lấy giá trị ảnh cũ nếu có sẵn
+    let hinhanh = document.getElementById('hinhanhUrl').value;
+    const fileInput = document.getElementById('hinhanhFile');
 
-            const btn = document.getElementById('btnSaveSanPham');
-            btn.disabled = true;
-            btn.textContent = 'Đang lưu...';
+    const btn = document.getElementById('btnSaveSanPham');
+    btn.disabled = true;
+    btn.textContent = 'Đang lưu...';
 
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `sp_${Date.now()}.${fileExt}`;
-                const filePath = `${fileName}`;
+    // Xử lý đọc file ảnh tải lên thành Base64 để lưu vào cơ sở dữ liệu an toàn
+    if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        hinhanh = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
 
-                const { data: uploadData, error: uploadError } = await db.storage.from('sanpham').upload(filePath, file);
-                
-                if (!uploadError) {
-                    const { data: publicURLData } = db.storage.from('sanpham').getPublicUrl(filePath);
-                    if (publicURLData) {
-                        hinhanh = publicURLData.publicUrl;
-                    }
-                } else {
-                    console.warn('Lỗi upload ảnh lên Storage:', uploadError.message);
-                }
-            }
+    if (!mabarcode || !mabarcode.startsWith('86')) {
+        mabarcode = '86' + Math.floor(10000000 + Math.random() * 90000000);
+    }
 
-            if (!mabarcode || !mabarcode.startsWith('86')) {
-                mabarcode = '86' + Math.floor(10000000 + Math.random() * 90000000);
-            }
+    const payload = {
+        tensanpham: tensanpham,
+        mabarcode: mabarcode,
+        nhomsanpham: nhomsanpham,
+        donvi: donvi,
+        gianhap: gianhap,
+        giaban: giaban,
+        soluongton: soluongton,
+        mota: mota,
+        hinhanh: hinhanh
+    };
 
-            const payload = {
-                tensanpham: tensanpham,
-                mabarcode: mabarcode,
-                nhomsanpham: nhomsanpham,
-                donvi: donvi,
-                gianhap: gianhap,
-                giaban: giaban,
-                soluongton: soluongton,
-                mota: mota,
-                hinhanh: hinhanh
-            };
+    let error = null;
+    if (id) {
+        const res = await db.from('danhmucsanpham').update(payload).eq('id', id);
+        error = res.error;
+    } else {
+        const res = await db.from('danhmucsanpham').insert([payload]);
+        error = res.error;
+    }
 
-            let error = null;
-            if (id) {
-                const res = await db.from('danhmucsanpham').update(payload).eq('id', id);
-                error = res.error;
-            } else {
-                const res = await db.from('danhmucsanpham').insert([payload]);
-                error = res.error;
-            }
+    btn.disabled = false;
+    btn.textContent = '💾 Lưu sản phẩm';
 
-            btn.disabled = false;
-            btn.textContent = '💾 Lưu sản phẩm';
+    if (error) {
+        console.error('Lỗi lưu sản phẩm:', error);
+        alert('Lỗi khi lưu dữ liệu: ' + error.message);
+        return;
+    }
 
-            if (error) {
-                console.error('Lỗi lưu sản phẩm:', error);
-                alert('Lỗi khi lưu dữ liệu: ' + error.message);
-                return;
-            }
-
-            alert(id ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
-            dongModal();
-            await loadDanhSachSanPham();
-        }
+    alert(id ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
+    dongModal();
+    await loadDanhSachSanPham();
+}
 
         async function xoaSanPham(id) {
             if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) return;
