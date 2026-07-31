@@ -6,7 +6,7 @@
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="js/env.js"></script>
-  <script src="js/config.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/menu.js"></script>
@@ -215,15 +215,17 @@
                     bgBadge = '#fee2e2';
                 }
 
+                // Tự động thêm số 0 ở đầu nếu SĐT bị mất số 0
+                let rawSdt = String(item.sdt || '').trim();
+                let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
+
                 tableBody.innerHTML += `<tr>
                     <td><strong>#${item.id}</strong></td>
                     <td style="font-weight: 600; color: #1e3a8a;">${ngayHenFormatted}</td>
                     <td>
                         <b>${item.tenchunuoi || '---'}</b><br>
                         <span style="font-size: 12px;">
-                            <a href="tel:${item.sdt ? (item.sdt.startsWith('0') ? item.sdt : '0' + item.sdt) : ''}" style="color: #0284c7; text-decoration: none; font-weight: bold;" title="Bấm để gọi điện">
-                                📞 ${item.sdt ? (item.sdt.startsWith('0') ? item.sdt : '0' + item.sdt) : 'Không có SĐT'}
-                            </a>
+                            ${displaySdt ? `<a href="tel:${displaySdt}" style="color: #0284c7; text-decoration: none; font-weight: bold;" title="Bấm để gọi điện">📞 ${displaySdt}</a>` : 'Không có SĐT'}
                         </span>
                     </td>
                     <td>${item.diachi || '---'}</td>
