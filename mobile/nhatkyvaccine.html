@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
-    <script src="../js/env.js"></script>
+	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -25,19 +25,18 @@
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; background: #1e3a8a; padding: 10px; border-radius: 6px; }
         .top-header h3 { margin: 0; font-size: 16px; color: white; }
         .btn-desktop { background: #3b82f6; color: white; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .form-control { width: 100%; padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box; margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
         .vaccine-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         
-        /* CĂN CHỈNH THANH TÌM KIẾM VÀ NÚT THÊM CÂN ĐỐI */
         .search-container { 
             display: flex; 
             gap: 6px; 
             margin-bottom: 10px; 
-            align-items: stretch; /* Giúp 2 phần tử có chiều cao bằng nhau */
+            align-items: stretch; 
         }
         .search-box { 
             flex: 1; 
-            height: 36px; /* Cố định chiều cao khớp hoàn toàn với nút */
+            height: 36px; 
             padding: 0 10px; 
             font-size: 12px; 
             border: 1px solid #cbd5e1; 
@@ -47,7 +46,7 @@
         }
         .search-box:focus { border-color: #2563eb; }
         .btn-them-custom {
-            height: 36px; /* Cố định chiều cao khớp với ô tìm kiếm */
+            height: 36px; 
             padding: 0 14px;
             background: #059669; 
             color: white; 
@@ -62,7 +61,6 @@
             justify-content: center;
         }
 
-        /* CSS Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content-custom { background: #fff; width: 90%; max-width: 380px; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
     </style>
@@ -109,8 +107,11 @@
                     <input type="number" id="mathucung" class="form-control" placeholder="Nhập ID thú cưng..." required>
                 </div>
                 <div style="margin-bottom: 6px;">
-                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Tên Vaccine (*):</label>
-                    <input type="text" id="tenvaccine" class="form-control" placeholder="Ví dụ: Rabies, Vanguard 5..." required>
+                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Tên Vaccine từ kho (*):</label>
+                    <select id="chonKhoVaccine" class="form-control" style="margin-bottom: 4px;" required>
+                        <option value="">-- Chọn vắc-xin từ kho --</option>
+                    </select>
+                    <input type="text" id="tenvaccine" class="form-control" placeholder="Hoặc tên vaccine..." required>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                     <div>
@@ -142,7 +143,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT XỬ LÝ NHẬT KÝ VACCINE VÀ TÌM KIẾM -->
+    <!-- SCRIPT XỬ LÝ NHẬT KÝ VACCINE VÀ KHO VACCINE -->
     <script>
         let danhSachVaccineToanCuc = [];
 
@@ -150,6 +151,32 @@
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 sessionStorage.removeItem('currentUser');
                 window.location.href = '../index.html';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadKhoVaccineDropdown();
+            loadDanhSachVaccine();
+        });
+
+        async function loadKhoVaccineDropdown() {
+            if (typeof db === 'undefined' || !db) return;
+            const { data, error } = await db.from('khovaccine').select('*');
+            if (!error && data) {
+                const selectEl = document.getElementById('chonKhoVaccine');
+                selectEl.innerHTML = '<option value="">-- Chọn vắc-xin từ kho --</option>';
+                data.forEach(v => {
+                    const tenV = v.tenvaccine || v.ten || '';
+                    const slNhap = v.soluongnhap !== undefined ? v.soluongnhap : 0;
+                    selectEl.innerHTML += `<option value="${tenV}">${tenV} (SL: ${slNhap})</option>`;
+                });
+
+                selectEl.onchange = function() {
+                    const val = this.value;
+                    if (val) {
+                        document.getElementById('tenvaccine').value = val;
+                    }
+                };
             }
         }
 
@@ -241,6 +268,7 @@
             document.getElementById('editId').value = item.id;
             document.getElementById('mathucung').value = item.mathucung || '';
             document.getElementById('tenvaccine').value = item.tenvaccine || '';
+            document.getElementById('chonKhoVaccine').value = item.tenvaccine || '';
             document.getElementById('ngaytiem').value = item.ngaytiem || '';
             document.getElementById('ngaynhaclai').value = item.ngaynhaclai || '';
             document.getElementById('bacsi').value = item.bacsi || '';
@@ -313,8 +341,6 @@
             alert('Đã xóa thành công!');
             await loadDanhSachVaccine();
         }
-
-        loadDanhSachVaccine();
     </script>
 
     <!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
