@@ -2,220 +2,207 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng Nhập Hệ Thống - VetCare Pro</title>
-    <!-- Thư viện Supabase JS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- CÁC THẺ META CHUẨN SEO -->
+    <title>Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp</title>
+    <meta name="description" content="Phòng khám thú y VetCare Pro cung cấp dịch vụ khám chữa bệnh thú cưng, tiêm phòng vaccine, siêu âm, xét nghiệm, spa cắt tỉa lông uy tín tại Đà Nẵng. Đặt lịch khám ngay!">
+    <meta name="keywords" content="phòng khám thú y, chăm sóc thú cưng, khám bệnh cho chó mèo, tiêm phòng vaccine thú y, spa thú cưng đà nẵng, vetcare pro">
+    <meta name="author" content="VetCare Pro">
+    
+    <!-- Thẻ Open Graph (SEO mạng xã hội Facebook, Zalo) -->
+    <meta property="og:title" content="Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp">
+    <meta property="og:description" content="Hệ thống y tế thú cưng toàn diện. Đặt lịch khám nhanh chóng, không cần tài khoản!">
+    <meta property="og:type" content="website">
+
+    <!-- Thư viện hệ thống -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/env.js"></script>
     <script src="js/config.js"></script>
     <script src="js/supabase.js"></script>
-    <script src="js/utils.js"></script>
     
-    <!-- Gọi file CSS chung ở thư mục gốc -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/mobile.css">
-    <link rel="stylesheet" href="css/style1.css">
-    <link rel="stylesheet" href="css/smart-search.css">
-
     <style>
-        body {
-            background-color: #1e56a0;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
+        body { 
+            background: #f1f5f9; 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0 0 70px 0; 
+            color: #1e293b; 
+        }
+        .container { 
+            max-width: 420px; 
+            margin: 20px auto; 
+            padding: 0 12px; 
+            box-sizing: border-box;
+        }
+        .header-title { 
+            text-align: center; 
+            margin-bottom: 18px; 
+        }
+        /* Thẻ H1 chuẩn SEO cho tên thương hiệu/trang chính */
+        .header-title h1 { 
+            color: #0284c7; 
+            margin: 0 0 4px 0; 
+            font-size: 20px; 
+        }
+        .header-title p { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin: 0; 
         }
 
-        .login-card {
+        /* Khung phân luồng chức năng */
+        .action-box {
             background: #ffffff;
-            padding: 35px 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .action-box p {
+            margin: 0 0 12px 0;
+            font-weight: bold;
+            color: #1e293b;
+            font-size: 13px;
+        }
+        .btn-action {
+            display: block;
             width: 100%;
-            max-width: 380px;
+            padding: 11px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            text-decoration: none;
             box-sizing: border-box;
             text-align: center;
         }
+        .btn-owner { background: #0284c7; color: white; }
+        .btn-admin { background: #334155; color: white; }
+        .btn-booking { background: #10b981; color: white; margin-bottom: 0; }
 
-        .login-logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: #0284c7;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+        .info-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
+            border: 1px solid #e2e8f0;
         }
-
-        .login-subtitle {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 25px;
+        /* Thẻ H2 chuẩn SEO cho các đề mục nội dung */
+        .info-card h2 { 
+            color: #0284c7; 
+            font-size: 14px; 
+            margin-top: 0; 
+            margin-bottom: 8px; 
+            border-bottom: 2px solid #e0f2fe;
+            padding-bottom: 5px;
         }
-
-        .form-group-login {
-            text-align: left;
-            margin-bottom: 15px;
+        .info-card p, .info-card ul { 
+            font-size: 13px; 
+            line-height: 1.6; 
+            color: #334155; 
+            margin: 0 0 10px 0; 
         }
+        .info-card ul { padding-left: 18px; }
 
-        .form-group-login label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #334155;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .input-with-icon {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-with-icon span {
-            position: absolute;
-            left: 10px;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .input-with-icon input {
+        /* Thanh menu điều hướng dưới đáy */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
-            padding: 10px 10px 10px 35px;
-            font-size: 13px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            outline: none;
+            max-width: 420px;
+            background: #ffffff;
+            border-top: 1px solid #cbd5e1;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+            z-index: 1000;
             box-sizing: border-box;
         }
-
-        .input-with-icon input:focus {
-            border-color: #0284c7;
-            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
-        }
-
-        .btn-dangnhap {
-            width: 100%;
-            background-color: #0284c7;
-            color: white;
-            border: none;
-            padding: 11px;
-            border-radius: 4px;
-            font-size: 14px;
+        .nav-item {
+            text-align: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background-color 0.2s;
+            flex: 1;
         }
-
-        .btn-dangnhap:hover {
-            background-color: #0369a1;
-        }
+        .nav-item.active { color: #0284c7; }
+        .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="login-logo">
-            <span>🏥</span> VETCARE PRO
-        </div>
-        <div class="login-subtitle">Hệ thống Quản lý Phòng Khám Thú Y</div>
-
-        <div class="form-group-login">
-            <label>Tên Tài Khoản</label>
-            <div class="input-with-icon">
-                <span>👤</span>
-                <input type="text" id="username" placeholder="Nhập tên tài khoản..." autocomplete="off">
-            </div>
+    <div class="container">
+        <div class="header-title">
+            <h1>🐾 VetCare Pro</h1>
+            <p>Hệ thống Y tế & Chăm sóc Thú cưng Chuyên nghiệp</p>
         </div>
 
-        <div class="form-group-login">
-            <label>Mật Khẩu</label>
-            <div class="input-with-icon">
-                <span>🔒</span>
-                <input type="password" id="password" placeholder="Nhập mật khẩu..." autocomplete="current-password">
-            </div>
+        <!-- Khung phân luồng chức năng -->
+        <div class="action-box">
+            <p>Lựa chọn dịch vụ hệ thống</p>
+            <a href="chunuoi/login.html" class="btn-action btn-owner">📱 Đăng Nhập Cổng Chủ Nuôi</a>
+            <a href="chunuoi/datlich.html" class="btn-action btn-booking">📅 Đặt Lịch Khám (Không cần tài khoản)</a>
+            <a href="login.html" class="btn-action btn-admin">🔐 Đăng Nhập Quản Lý (Nhân viên/Bác sĩ)</a>
         </div>
 
-        <button type="button" class="btn-dangnhap" onclick="xuLyDangNhap()">🔑 ĐĂNG NHẬP HỆ THỐNG</button>
+        <!-- Nội dung giới thiệu chuẩn cấu trúc SEO (H2) -->
+        <div class="info-card">
+            <h2>🏥 Về Chúng Tôi</h2>
+            <p>Phòng khám thú y <strong>VetCare Pro</strong> chuyên cung cấp dịch vụ chăm sóc sức khỏe toàn diện, tận tâm cho thú cưng với hệ thống trang thiết bị tiên tiến.</p>
+        </div>
 
-        <div style="margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-            <a href="chunuoi/login.html" style="font-size: 12px; color: #0284c7; text-decoration: none; font-weight: bold;">📱 Bạn là khách hàng? Bấm vào đây để vào Cổng Chủ Nuôi</a>
+        <div class="info-card">
+            <h2>🩺 Dịch Vụ Nổi Bật</h2>
+            <ul>
+                <li>Khám và điều trị nội - ngoại trú chuyên sâu.</li>
+                <li>Tiêm phòng vaccine, tẩy giun định kỳ.</li>
+                <li>Phẫu thuật ngoại khoa an toàn.</li>
+                <li>Siêu âm, xét nghiệm máu, X-quang.</li>
+                <li>Dịch vụ Spa, cắt tỉa lông tạo kiểu.</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <h2>🕒 Thời Gian Làm Việc</h2>
+            <p><strong>Thứ Hai - Chủ Nhật:</strong> 08:00 - 20:00 (Kể cả ngày lễ).</p>
+        </div>
+
+        <div class="info-card">
+            <h2>📞 Liên Hệ & Địa Chỉ</h2>
+            <p>
+                📍 <strong>Địa chỉ:</strong> Số 123, Đường Thú Y, TP. Đà Nẵng<br>
+                ☎️ <strong>Hotline:</strong> 0935.123.456
+            </p>
         </div>
     </div>
 
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const currentUser = sessionStorage.getItem('currentUser');
-            if (currentUser && currentUser !== "null" && currentUser !== "undefined") {
-                const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                    window.location.replace('mobile/khachhang.html');
-                } else {
-                    window.location.replace('page/thongke.html');
-                }
-            }
-        });
+    <!-- Thanh menu điều hướng dưới đáy -->
+    <div class="bottom-nav">
+        <a href="info.html" class="nav-item active">
+            <span class="nav-icon">ℹ️</span>Giới thiệu
+        </a>
+        <a href="chunuoi/booklich.html" class="nav-item">
+            <span class="nav-icon">📅</span>Đặt lịch
+        </a>
+        <a href="chunuoi/login.html" class="nav-item">
+            <span class="nav-icon">👤</span>Chủ nuôi
+        </a>
+        <a href="login.html" class="nav-item">
+            <span class="nav-icon">🔐</span>Quản lý
+        </a>
+    </div>
 
-        async function maHoaMatKhau(password) {
-            const msgBuffer = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
-        }
-
-        document.getElementById('password').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                xuLyDangNhap();
-            }
-        });
-
-        async function xuLyDangNhap() {
-            const user = document.getElementById('username').value.trim();
-            const passPlain = document.getElementById('password').value.trim();
-
-            if (!user || !passPlain) {
-                alert('Vui lòng nhập đầy đủ tên tài khoản và mật khẩu!');
-                return;
-            }
-
-            try {
-                const passHash = await maHoaMatKhau(passPlain);
-
-                const { data, error } = await db
-                    .from('user')
-                    .select('*')
-                    .eq('tentaikhoan', user)
-                    .eq('matkhau', passHash)
-                    .single();
-
-                if (error || !data) {
-                    alert('Tên đăng nhập hoặc mật khẩu không chính xác!');
-                } else {
-                    if (data.trangthai === 'Khóa') {
-                        alert('Tài khoản của bạn đã bị khóa!');
-                        return;
-                    }
-
-                    alert('Đăng nhập thành công! Xin chào ' + data.tentaikhoan);
-                    sessionStorage.setItem('currentUser', JSON.stringify(data));
-                    
-                    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-                    if (isMobile) {
-                        window.location.href = 'mobile/khachhang.html';
-                    } else {
-                        window.location.href = 'page/thongke.html';
-                    }
-                }
-            } catch (err) {
-                console.error('Lỗi đăng nhập:', err);
-                alert('Có lỗi xảy ra khi kết nối cơ sở dữ liệu!');
-            }
-        }
-    </script>
 </body>
 </html>
