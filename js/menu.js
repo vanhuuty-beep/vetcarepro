@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <!-- STYLE HOÀN CHỈNH: CÂN ĐỐI, KHÔNG MẤT CHỮ, ĐỒNG BỘ ICON VÀ TRONG SUỐT -->
     <style>
+        <style>
         .sidebar {
             width: 275px !important;
             min-width: 275px !important;
@@ -123,9 +124,23 @@ document.addEventListener("DOMContentLoaded", function() {
             font-weight: 800 !important;
         }
 
+        /* --- SỬA LỖI MẤT CHỮ TRONG MENU VÀ SUBMENU --- */
+        .sidebar ul li {
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+
+        .sidebar ul li span.menu-text {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
         /* Đồng bộ kích thước icon thẳng hàng tuyệt đối */
         .sidebar .menu-list > li > span:first-child,
-        .sidebar .menu-pos-highlight .pos-icon {
+        .sidebar .menu-pos-highlight .pos-icon,
+        .submenu-container .menu-item span:first-child {
             display: inline-block;
             width: 24px;
             text-align: center;
@@ -134,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function() {
             flex-shrink: 0;
         }
 
-        /* Nút dropdown nhóm menu trong suốt, không bóng trắng */
+        /* Nút dropdown nhóm menu trong suốt */
         .menu-dropdown-toggle {
             display: flex;
             justify-content: space-between;
@@ -194,28 +209,18 @@ document.addEventListener("DOMContentLoaded", function() {
             transform: rotate(180deg);
         }
 
-        .submenu-container .menu-item span:first-child {
-            display: inline-block;
-            width: 24px;
-            text-align: center;
-            font-size: 16px !important;
-            margin-right: 8px;
-        }
-
         .menu-pos-highlight {
             background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
             color: #ffffff !important;
             border-radius: 6px;
             margin: 4px 8px;
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-            animation: pulsePos 2s infinite;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .menu-pos-highlight:hover {
             background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
             transform: translateY(-1px);
-            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.5);
         }
         .menu-pos-highlight .pos-badge {
             background-color: #dc2626;
@@ -225,16 +230,6 @@ document.addEventListener("DOMContentLoaded", function() {
             border-radius: 4px;
             font-weight: bold;
             margin-left: auto;
-            animation: blinkBadge 1s infinite alternate;
-        }
-        @keyframes blinkBadge {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0.7; transform: scale(1.1); }
-        }
-        @keyframes pulsePos {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
         .sidebar-header {
             font-size: 20px !important;
