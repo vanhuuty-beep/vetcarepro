@@ -264,10 +264,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN
-    const topnavContainer = document.getElementById('topnav-container');
+     const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
-        const currentPage = window.location.pathname.split("/").pop() || 'thongke.html';
-
         topnavContainer.innerHTML = `
             <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -281,7 +279,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
                     
-                    <a href="../mobile/${currentPage}" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
+                    <!-- Sửa chỗ này thành trang mobile mặc định mà bạn chắc chắn đã tạo (ví dụ thucung.html hoặc khachhang.html) -->
+                    <a href="../mobile/khachhang.html" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
                         📱 Giao diện Mobile
                     </a>
 
