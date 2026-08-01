@@ -29,28 +29,29 @@
             align-items: flex-start;
             background: #f8fafc;
             border-left: 3px solid #0284c7;
-            padding: 8px;
+            padding: 8px 10px;
             border-radius: 4px;
-            margin-top: 4px;
+            margin-top: 8px;
         }
         .progress-text {
             flex: 1;
-            font-size: 11px;
-            color: #334155;
+            font-size: 12px;
+            color: #1e293b;
             white-space: pre-line;
+            line-height: 1.4;
         }
         .progress-gallery {
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
             justify-content: flex-end;
-            max-width: 120px;
+            max-width: 130px;
         }
         .progress-thumb {
-            width: 50px;
-            height: 50px;
+            width: 55px;
+            height: 55px;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 6px;
             border: 1px solid #cbd5e1;
         }
     </style>
@@ -114,9 +115,9 @@
                 </div>
 
                 <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Chụp ảnh trực tiếp hoặc chọn ảnh:</label>
-                    <!-- THÊM capture="environment" ĐỂ MỞ TRỰC TIẾP CAMERA SAU TRÊN ĐIỆN THOẠI -->
-                    <input type="file" id="hinhAnhFile" accept="image/*" capture="environment" multiple class="form-control" style="font-size: 11px; padding: 5px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Chọn hoặc chụp nhiều ảnh cùng lúc:</label>
+                    <!-- THÊM multiple VÀ capture="environment" ĐỂ CHỌN HOẶC CHỤP NHIỀU ẢNH -->
+                    <input type="file" id="hinhAnhFile" accept="image/*" multiple capture="environment" class="form-control" style="font-size: 11px; padding: 5px;" onchange="previewSelectedFiles(this)">
                     <div id="previewImages" class="preview-img-container"></div>
                 </div>
 
@@ -133,6 +134,21 @@
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 sessionStorage.removeItem('currentUser');
                 window.location.href = '../index.html';
+            }
+        }
+
+        // Xem trước nhiều ảnh trước khi bấm lưu
+        function previewSelectedFiles(input) {
+            const previewContainer = document.getElementById('previewImages');
+            previewContainer.innerHTML = '';
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML += `<img src="${e.target.result}" class="preview-thumb">`;
+                    }
+                    reader.readAsDataURL(file);
+                });
             }
         }
     </script>
@@ -361,6 +377,7 @@
                 }
             }
 
+            // Gộp tất cả các file ảnh được chọn/chụp cùng lúc lên Supabase Storage
             const fileInput = document.getElementById('hinhAnhFile');
             if (fileInput.files && fileInput.files.length > 0) {
                 for (let i = 0; i < fileInput.files.length; i++) {
