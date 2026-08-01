@@ -8,8 +8,8 @@
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
-	<script src="../js/env.js"></script>
+    <!-- Kết nối các file cấu hình -->
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -58,9 +58,9 @@
     <div class="mobile-container">
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
-            <h3>🏥 Nhật Ký Nội Trú</h3>
+            <h3>🏥 Quản Lý Nội Trú</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
-                <a href="../page/thongke.html" class="btn-desktop">💻 Desktop</a>
+                <a href="../nhatkynoitru.html" class="btn-desktop">💻 Desktop</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
             </div>
         </div>
@@ -299,8 +299,17 @@
                 document.getElementById('mobile-list').innerHTML = `<div style="text-align:center; color:red; padding:15px; font-size:11px;">Lỗi tải dữ liệu</div>`;
             } else {
                 danhSachNhatKyGoc = data || [];
-                hienThiBang(danhSachNhatKyGoc);
+                // Lọc ẩn các ca đã xuất viện[cite: 2]
+                locVaHienThiDanhSach(danhSachNhatKyGoc);
             }
+        }
+
+        function locVaHienThiDanhSach(data) {
+            const activeData = data.filter(item => {
+                const tt = (item.trangthai || '').toLowerCase();
+                return !tt.includes('đã xuất viện');
+            });
+            hienThiBang(activeData);
         }
 
         function tinhUocTinh() {
@@ -330,7 +339,7 @@
             container.innerHTML = '';
             
             if(data.length === 0) {
-                container.innerHTML = `<div style="text-align: center; color: #777; padding: 15px; font-size: 11px;">Chưa có nhật ký nội trú nào</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #777; padding: 15px; font-size: 11px;">Không có ca nội trú nào đang hoạt động</div>`;
                 document.getElementById('tongSoNoiTru').innerText = '0 bản ghi';
                 return;
             }
@@ -365,6 +374,8 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f1f5f9; padding-top: 6px;">
                             <span style="font-size: 10px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">● ${item.trangthai || ''}</span>
                             <div style="display: flex; gap: 4px;">
+                                <!-- NÚT LỊCH TRÌNH -->
+                                <button onclick="window.location.href='lichtrinh.html?makhambenh=${item.makhambenh}'" style="background: #0284c7; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Lịch trình</button>
                                 <button onclick="moModalHoaDon(${item.id})" style="background: #059669; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Hóa đơn</button>
                                 <button onclick="moModalSua(${item.id})" style="background: #3b82f6; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Sửa</button>
                                 <button onclick="xoaNhatKyNoiTru(${item.id})" style="background: #ef4444; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Xóa</button>
@@ -378,6 +389,9 @@
         function timKiemNhatKyNoiTru() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachNhatKyGoc.filter(item => {
+                const tt = (item.trangthai || '').toLowerCase();
+                if (tt.includes('đã xuất viện')) return false;
+
                 const maKB = String(item.makhambenh || '').toLowerCase();
                 const bacSi = (item.bacsiphutrach || '').toLowerCase();
                 const maNK = ('nknt' + String(item.id)).toLowerCase();
