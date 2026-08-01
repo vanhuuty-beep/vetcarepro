@@ -134,6 +134,9 @@ function taoMenuMobile(trangHienTai) {
 					<a href="noitru.html" class="more-item">
                         <span>🏨</span>Nội trú
                     </a>
+					<a href="lichtrinh.html" class="more-item">
+                        <span>🏨</span>Lịch trình
+                    </a>
                     <a href="../thongke.html" class="more-item">
                         <span>💻</span>Desktop
                     </a>
