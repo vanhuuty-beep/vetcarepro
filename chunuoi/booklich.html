@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Lịch Khám Nhanh - VetCare Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase.js"></script>
+    <style>
+        body { 
+            background: #f1f5f9; 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0 0 70px 0; 
+            color: #1e293b; 
+        }
+        .container { 
+            max-width: 420px; 
+            margin: 20px auto; 
+            padding: 0 12px; 
+            box-sizing: border-box;
+        }
+        .header-title { 
+            text-align: center; 
+            margin-bottom: 18px; 
+        }
+        .header-title h2 { 
+            color: #0284c7; 
+            margin: 0 0 4px 0; 
+            font-size: 18px; 
+        }
+        .header-title p { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin: 0; 
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .form-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1);
+        }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover {
+            background: #059669;
+        }
+
+        /* Thanh menu đáy cố định */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-top: 1px solid #cbd5e1;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        .nav-item {
+            text-align: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .nav-item.active { color: #0284c7; }
+        .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-title">
+            <h2>📅 Đặt Lịch Khám Nhanh</h2>
+            <p>Không cần đăng nhập - Phòng khám sẽ gọi điện xác nhận</p>
+        </div>
+
+        <div class="form-card">
+            <div class="form-group">
+                <label>Họ và tên chủ nuôi (*)</label>
+                <input type="text" id="tenkhachhang" placeholder="Ví dụ: Nguyễn Văn A">
+            </div>
+
+            <div class="form-group">
+                <label>Số điện thoại liên hệ (*)</label>
+                <input type="tel" id="sodienthoai" placeholder="Ví dụ: 0912345678">
+            </div>
+
+            <div class="form-group">
+                <label>Tên thú cưng / Loài (*)</label>
+                <input type="text" id="tenthucung" placeholder="Ví dụ: Mimi (Chó Poodle)">
+            </div>
+
+            <div class="form-group">
+                <label>Ngày hẹn khám (*)</label>
+                <input type="date" id="ngayhen">
+            </div>
+
+            <div class="form-group">
+                <label>Triệu chứng / Yêu cầu khám</label>
+                <textarea id="trieuchung" rows="3" placeholder="Ví dụ: Bé bỏ ăn, nôn mửa..."></textarea>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="guiLichHen()">🚀 Gửi Lịch Hẹn Ngay</button>
+        </div>
+    </div>
+
+    <!-- Thanh menu đáy -->
+    <div class="bottom-nav">
+        <a href="../info.html" class="nav-item">
+            <span class="nav-icon">ℹ️</span>Giới thiệu
+        </a>
+        <a href="datlich.html" class="nav-item active">
+            <span class="nav-icon">📅</span>Đặt lịch
+        </a>
+        <a href="login.html" class="nav-item">
+            <span class="nav-icon">👤</span>Chủ nuôi
+        </a>
+        <a href="../login.html" class="nav-item">
+            <span class="nav-icon">🔐</span>Quản lý
+        </a>
+    </div>
+
+    <script>
+        // Tự động gán ngày hôm nay vào ô chọn ngày
+        document.addEventListener("DOMContentLoaded", () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('ngayhen').value = today;
+        });
+
+        async function guiLichHen() {
+            const tenkhachhang = document.getElementById('tenkhachhang').value.trim();
+            const sodienthoai = document.getElementById('sodienthoai').value.trim();
+            const tenthucung = document.getElementById('tenthucung').value.trim();
+            const ngayhen = document.getElementById('ngayhen').value;
+            const trieuchung = document.getElementById('trieuchung').value.trim();
+
+            if (!tenkhachhang || !sodienthoai || !tenthucung || !ngayhen) {
+                alert('Vui lòng điền đầy đủ các thông tin bắt buộc (*)!');
+                return;
+            }
+
+            try {
+                // Kiểm tra xem số điện thoại khách đã có trong bảng khachhang chưa
+                let { data: existingKH } = await db.from('khachhang').select('id').eq('sodienthoai', sodienthoai).maybeSingle();
+                
+                let makhachhang = null;
+                if (existingKH) {
+                    makhachhang = existingKH.id;
+                } else {
+                    // Nếu chưa có, tự động tạo mới khách hàng ẩn
+                    const { data: newKH, err: khErr } = await db.from('khachhang').insert([
+                        { tenkhachhang: tenkhachhang, sodienthoai: sodienthoai }
+                    ]).select().single();
+                    
+                    if (!khErr && newKH) {
+                        makhachhang = newKH.id;
+                    }
+                }
+
+                // Lưu lịch hẹn vào bảng lichhen
+                const { error: insertErr } = await db.from('lichhen').insert([
+                    {
+                        makhachhang: makhachhang,
+                        tenkhachhang: tenkhachhang,
+                        sodienthoai: sodienthoai,
+                        tenthucung: tenthucung,
+                        ngayhen: ngayhen,
+                        trieuchung: trieuchung,
+                        trangthai: 'Chờ xác nhận'
+                    }
+                ]);
+
+                if (insertErr) {
+                    throw insertErr;
+                }
+
+                alert('🎉 Gửi lịch hẹn thành công! Phòng khám sẽ liên hệ lại với bạn qua số điện thoại sớm nhất.');
+                
+                // Reset form sau khi gửi thành công
+                document.getElementById('tenkhachhang').value = '';
+                document.getElementById('sodienthoai').value = '';
+                document.getElementById('tenthucung').value = '';
+                document.getElementById('trieuchung').value = '';
+
+            } catch (error) {
+                console.error('Lỗi đặt lịch:', error);
+                alert('Có lỗi xảy ra khi gửi lịch hẹn. Vui lòng thử lại sau!');
+            }
+        }
+    </script>
+</body>
+</html>

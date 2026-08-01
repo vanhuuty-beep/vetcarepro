@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- CÁC THẺ META CHUẨN SEO -->
+    <title>Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp</title>
+    <meta name="description" content="Phòng khám thú y VetCare Pro cung cấp dịch vụ khám chữa bệnh thú cưng, tiêm phòng vaccine, siêu âm, xét nghiệm, spa cắt tỉa lông uy tín tại Đà Nẵng. Đặt lịch khám ngay!">
+    <meta name="keywords" content="phòng khám thú y, chăm sóc thú cưng, khám bệnh cho chó mèo, tiêm phòng vaccine thú y, spa thú cưng đà nẵng, vetcare pro">
+    <meta name="author" content="VetCare Pro">
+    
+    <!-- Thẻ Open Graph (SEO mạng xã hội Facebook, Zalo) -->
+    <meta property="og:title" content="Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp">
+    <meta property="og:description" content="Hệ thống y tế thú cưng toàn diện. Đặt lịch khám nhanh chóng, không cần tài khoản!">
+    <meta property="og:type" content="website">
+
+    <!-- Thư viện hệ thống -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/env.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    
+    <style>
+        body { 
+            background: #f1f5f9; 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0 0 70px 0; 
+            color: #1e293b; 
+        }
+        .container { 
+            max-width: 420px; 
+            margin: 20px auto; 
+            padding: 0 12px; 
+            box-sizing: border-box;
+        }
+        .header-title { 
+            text-align: center; 
+            margin-bottom: 18px; 
+        }
+        /* Thẻ H1 chuẩn SEO cho tên thương hiệu/trang chính */
+        .header-title h1 { 
+            color: #0284c7; 
+            margin: 0 0 4px 0; 
+            font-size: 20px; 
+        }
+        .header-title p { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin: 0; 
+        }
+
+        /* Khung phân luồng chức năng */
+        .action-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .action-box p {
+            margin: 0 0 12px 0;
+            font-weight: bold;
+            color: #1e293b;
+            font-size: 13px;
+        }
+        .btn-action {
+            display: block;
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            text-decoration: none;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .btn-owner { background: #0284c7; color: white; }
+        .btn-admin { background: #334155; color: white; }
+        .btn-booking { background: #10b981; color: white; margin-bottom: 0; }
+
+        .info-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
+            border: 1px solid #e2e8f0;
+        }
+        /* Thẻ H2 chuẩn SEO cho các đề mục nội dung */
+        .info-card h2 { 
+            color: #0284c7; 
+            font-size: 14px; 
+            margin-top: 0; 
+            margin-bottom: 8px; 
+            border-bottom: 2px solid #e0f2fe;
+            padding-bottom: 5px;
+        }
+        .info-card p, .info-card ul { 
+            font-size: 13px; 
+            line-height: 1.6; 
+            color: #334155; 
+            margin: 0 0 10px 0; 
+        }
+        .info-card ul { padding-left: 18px; }
+
+        /* Thanh menu điều hướng dưới đáy */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-top: 1px solid #cbd5e1;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        .nav-item {
+            text-align: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .nav-item.active { color: #0284c7; }
+        .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-title">
+            <h1>🐾 VetCare Pro</h1>
+            <p>Hệ thống Y tế & Chăm sóc Thú cưng Chuyên nghiệp</p>
+        </div>
+
+        <!-- Khung phân luồng chức năng -->
+        <div class="action-box">
+            <p>Lựa chọn dịch vụ hệ thống</p>
+            <a href="chunuoi/login.html" class="btn-action btn-owner">📱 Đăng Nhập Cổng Chủ Nuôi</a>
+            <a href="chunuoi/datlich.html" class="btn-action btn-booking">📅 Đặt Lịch Khám (Không cần tài khoản)</a>
+            <a href="login.html" class="btn-action btn-admin">🔐 Đăng Nhập Quản Lý (Nhân viên/Bác sĩ)</a>
+        </div>
+
+        <!-- Nội dung giới thiệu chuẩn cấu trúc SEO (H2) -->
+        <div class="info-card">
+            <h2>🏥 Về Chúng Tôi</h2>
+            <p>Phòng khám thú y <strong>VetCare Pro</strong> chuyên cung cấp dịch vụ chăm sóc sức khỏe toàn diện, tận tâm cho thú cưng với hệ thống trang thiết bị tiên tiến.</p>
+        </div>
+
+        <div class="info-card">
+            <h2>🩺 Dịch Vụ Nổi Bật</h2>
+            <ul>
+                <li>Khám và điều trị nội - ngoại trú chuyên sâu.</li>
+                <li>Tiêm phòng vaccine, tẩy giun định kỳ.</li>
+                <li>Phẫu thuật ngoại khoa an toàn.</li>
+                <li>Siêu âm, xét nghiệm máu, X-quang.</li>
+                <li>Dịch vụ Spa, cắt tỉa lông tạo kiểu.</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <h2>🕒 Thời Gian Làm Việc</h2>
+            <p><strong>Thứ Hai - Chủ Nhật:</strong> 08:00 - 20:00 (Kể cả ngày lễ).</p>
+        </div>
+
+        <div class="info-card">
+            <h2>📞 Liên Hệ & Địa Chỉ</h2>
+            <p>
+                📍 <strong>Địa chỉ:</strong> Số 123, Đường Thú Y, TP. Đà Nẵng<br>
+                ☎️ <strong>Hotline:</strong> 0935.123.456
+            </p>
+        </div>
+    </div>
+
+    <!-- Thanh menu điều hướng dưới đáy -->
+    <div class="bottom-nav">
+        <a href="info.html" class="nav-item active">
+            <span class="nav-icon">ℹ️</span>Giới thiệu
+        </a>
+        <a href="chunuoi/booklich.html" class="nav-item">
+            <span class="nav-icon">📅</span>Đặt lịch
+        </a>
+        <a href="chunuoi/login.html" class="nav-item">
+            <span class="nav-icon">👤</span>Chủ nuôi
+        </a>
+        <a href="login.html" class="nav-item">
+            <span class="nav-icon">🔐</span>Quản lý
+        </a>
+    </div>
+
+</body>
+</html>

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Kiểm tra xem user hiện tại có phải là Admin hay không
     const isAdmin = currentUser && currentUser.vaitro === 'Admin';
 
-    // Phần menu Hệ thống phân quyền động
+    // Phần menu Hệ thống phân quyền động (Vì đang ở trong thư mục page nên trỏ thẳng file cùng cấp)
     const quanLyUserMenuHtml = isAdmin ? `
         <li class="menu-item" id="menu-quanlyuser" onclick="window.location.href='quanlyuser.html'"><span>🔐</span> <span class="menu-text">Quản lý nhân viên</span></li>
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
     const ngayHienTai = now.toLocaleDateString('vi-VN', options);
 
-    // 1. CHÈN MENU BÊN TRÁI (CÓ NGÀY THÁNG, SUBMENU VÀ ICON ĐỒNG BỘ)
+    // 1. CHÈN MENU BÊN TRÁI (CÓ NGÀY THÁNG, SUBMENU VÀ ĐƯỜNG DẪN CHUẨN TRONG PAGE)
     const menuHTML = `
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
@@ -104,9 +104,8 @@ document.addEventListener("DOMContentLoaded", function() {
         </ul>
     </div>
 
-    <!-- STYLE HOÀN CHỈNH: CÂN ĐỐI, KHÔNG MẤT CHỮ, ĐỒNG BỘ ICON VÀ TRONG SUỐT -->
+    <!-- STYLE CHUẨN KHÔNG LẶP THẺ -->
     <style>
-        <style>
         .sidebar {
             width: 275px !important;
             min-width: 275px !important;
@@ -124,7 +123,6 @@ document.addEventListener("DOMContentLoaded", function() {
             font-weight: 800 !important;
         }
 
-        /* --- SỬA LỖI MẤT CHỮ TRONG MENU VÀ SUBMENU --- */
         .sidebar ul li {
             display: flex !important;
             align-items: center !important;
@@ -137,7 +135,6 @@ document.addEventListener("DOMContentLoaded", function() {
             opacity: 1 !important;
         }
 
-        /* Đồng bộ kích thước icon thẳng hàng tuyệt đối */
         .sidebar .menu-list > li > span:first-child,
         .sidebar .menu-pos-highlight .pos-icon,
         .submenu-container .menu-item span:first-child {
@@ -149,7 +146,6 @@ document.addEventListener("DOMContentLoaded", function() {
             flex-shrink: 0;
         }
 
-        /* Nút dropdown nhóm menu trong suốt */
         .menu-dropdown-toggle {
             display: flex;
             justify-content: space-between;
@@ -195,7 +191,6 @@ document.addEventListener("DOMContentLoaded", function() {
             margin-left: 6px;
         }
         
-        /* Danh sách con */
         .submenu-container {
             display: none;
             list-style: none;
@@ -250,9 +245,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (container) {
         container.innerHTML = menuHTML;
 
-        // Tự động active trang hiện tại và mở rộng submenu tương ứng
         const currentPage = window.location.pathname.split("/").pop();
-        
         const activeItem = document.querySelector(`[onclick*='${currentPage}']`);
         if (activeItem) {
             activeItem.classList.add('active');
@@ -270,7 +263,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN (CÓ NÚT CHUYỂN GIAO DIỆN MOBILE)
+    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN
     const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
         const currentPage = window.location.pathname.split("/").pop() || 'thongke.html';
@@ -288,7 +281,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
                     
-                    <a href="mobile/${currentPage}" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
+                    <a href="../mobile/${currentPage}" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
                         📱 Giao diện Mobile
                     </a>
 
@@ -301,7 +294,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// HÀM BẬT/TẮT SUBMENU KHI CLICK
 function toggleSubmenu(element) {
     element.classList.toggle('active-parent');
     const submenu = element.nextElementSibling;
@@ -310,10 +302,9 @@ function toggleSubmenu(element) {
     }
 }
 
-// 3. HÀM XỬ LÝ ĐĂNG XUẤT DÙNG CHUNG
 function dangXuat() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?')) {
         sessionStorage.removeItem('currentUser');
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
     }
 }

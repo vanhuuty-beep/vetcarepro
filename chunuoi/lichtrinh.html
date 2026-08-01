@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Trình Điều Trị - Cổng Chủ Nuôi</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase.js"></script>
+    <style>
+        body { 
+            background: #f1f5f9; 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0 0 70px 0; 
+            color: #1e293b; 
+        }
+        
+        /* Cố định khung chứa thu gọn bằng đúng chiều rộng trang chủ */
+        .container { 
+            max-width: 420px; 
+            margin: 20px auto; 
+            padding: 0 12px; 
+            box-sizing: border-box;
+        }
+
+        .header-title { 
+            text-align: center; 
+            margin-bottom: 18px; 
+        }
+        .header-title h2 { 
+            color: #0284c7; 
+            margin: 0 0 4px 0; 
+            font-size: 18px; 
+        }
+        .header-title p { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin: 0; 
+        }
+
+        /* Thẻ card lịch trình bo tròn chuẩn form trang chủ */
+        .timeline-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
+            border: 1px solid #e2e8f0;
+        }
+        .timeline-time { 
+            font-weight: bold; 
+            color: #d97706; 
+            font-size: 13px; 
+            margin-bottom: 8px; 
+        }
+        .timeline-content { 
+            font-size: 13px; 
+            line-height: 1.6; 
+            color: #334155; 
+        }
+        
+        /* Hình ảnh điều trị thu gọn đẹp mắt */
+        .timeline-img { 
+            width: 100%; 
+            max-height: 180px; 
+            object-fit: contain; 
+            background: #f8fafc;
+            border-radius: 8px; 
+            border: 1px solid #cbd5e1; 
+            margin-top: 10px; 
+        }
+
+        .badge { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            background: #e0f2fe; 
+            color: #0284c7; 
+            margin-bottom: 10px; 
+        }
+
+        /* Thanh menu đáy chuẩn trang chủ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .nav-item {
+            text-align: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .nav-item.active {
+            color: #0284c7;
+        }
+        .nav-icon {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-title">
+            <h2>🐾 Lịch Trình Điều Trị</h2>
+            <p>Theo dõi chi tiết phác đồ chăm sóc hằng ngày</p>
+        </div>
+
+        <div id="list-lich-trinh">
+            <p style="text-align: center; color: #666; margin-top: 40px; font-size: 13px;">Đang tải lịch trình điều trị...</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="trangchu.html" class="nav-item">
+            <span class="nav-icon">🏠</span>Trang chủ
+        </a>
+        <a href="lichsu.html" class="nav-item">
+            <span class="nav-icon">📋</span>Lịch sử khám
+        </a>
+        <a href="datlich.html" class="nav-item">
+            <span class="nav-icon">📅</span>Đặt lịch hẹn
+        </a>
+        <a href="lichtrinh.html" class="nav-item active">
+            <span class="nav-icon">📊</span>Lịch trình
+        </a>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            const ownerData = sessionStorage.getItem('currentPetOwner');
+            if (!ownerData) {
+                alert('Vui lòng đăng nhập trước!');
+                window.location.href = 'login.html';
+                return;
+            }
+            const owner = JSON.parse(ownerData);
+            await taiLichTrinhDieuTri(owner.id);
+        });
+
+        async function taiLichTrinhDieuTri(makhachhang) {
+            const { data: allPets, error: petErr } = await db.from('thucung').select('*');
+            
+            if (petErr || !allPets) {
+                document.getElementById('list-lich-trinh').innerHTML = `<p style="text-align:center; color:#666; font-size:13px;">Lỗi kết nối cơ sở dữ liệu.</p>`;
+                return;
+            }
+
+            const pets = allPets.filter(tc => {
+                let maKH = tc.makhachhang || tc.makh || tc.khachhang_id || tc.id_khachhang;
+                return String(maKH) === String(makhachhang);
+            });
+
+            if (pets.length === 0) {
+                document.getElementById('list-lich-trinh').innerHTML = `<p style="text-align:center; color:#666; margin-top:40px; font-size:13px;">Chưa có thú cưng nào được liên kết.</p>`;
+                return;
+            }
+
+            const petIds = pets.map(p => p.id);
+
+            const { data: khamData } = await db.from('khambenh').select('*').in('mathucung', petIds).order('ngaykham', { ascending: false });
+
+            const container = document.getElementById('list-lich-trinh');
+            container.innerHTML = '';
+
+            if (!khamData || khamData.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; margin-top:40px; font-size:13px;">Chưa có lịch trình điều trị nào gần đây.</p>`;
+                return;
+            }
+
+            khamData.forEach(item => {
+                const petObj = pets.find(p => p.id === item.mathucung);
+                const tenPet = petObj ? petObj.tenthucung : 'Thú cưng';
+
+                let imgHtml = item.hinhanh ? `<img src="${item.hinhanh}" class="timeline-img" alt="Hình ảnh điều trị">` : '';
+
+                container.innerHTML += `
+                    <div class="timeline-card">
+                        <div class="badge">Thú cưng: ${tenPet}</div>
+                        <div class="timeline-time">📅 Ngày khám / điều trị: ${item.ngaykham || '---'}</div>
+                        <div class="timeline-content">
+                            <strong>Triệu chứng:</strong> ${item.trieuchung || 'Không có'}<br>
+                            <strong>Chẩn đoán:</strong> <span style="color: #d97706; font-weight: bold;">${item.chandoan || 'Chưa có'}</span><br>
+                            <strong>Phác đồ / Hướng điều trị:</strong> ${item.dieutri || 'Không có'}
+                        </div>
+                        ${imgHtml}
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
