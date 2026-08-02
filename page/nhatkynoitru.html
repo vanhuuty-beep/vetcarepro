@@ -5,7 +5,7 @@
     <title>Nhật ký Nội trú - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/env.js"></script>
+	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -37,7 +37,9 @@
 
         .modal-container {
             width: 700px;
+            max-width: 100%;
             padding: 20px 24px;
+            box-sizing: border-box;
         }
         .modal-header {
             margin-bottom: 12px;
@@ -81,50 +83,75 @@
             width: 180px;
         }
 
-        /* --- CẤU HÌNH IN CHUẨN KHÔNG BỊ VỠ GIAO DIỆN --- */
-        @media print {
-            body * {
+        /* --- CẤU HÌNH IN CHUẨN KHÔNG BỊ DÍNH MENU & TRÀN LỀ --- */
+       @media print {
+            /* 1. Thiết lập khổ giấy và tăng lề trên/dưới để không bị sát mép */
+            @page {
+                size: A4 portrait;
+                margin: 15mm 10mm;
+            }
+
+            /* 2. Ẩn toàn bộ giao diện quản lý bên ngoài */
+            body, body * {
                 visibility: hidden !important;
             }
 
-            #hoaDonModal, #hoaDonModal * {
-                visibility: visible !important;
+            #menu-container,
+            #topnav-container,
+            .main-content,
+            .card,
+            .modal-overlay {
+                display: none !important;
+                visibility: hidden !important;
             }
 
+            /* 3. Ẩn toàn bộ modal rườm rà, chỉ bật duy nhất vùng #printArea lên */
             #hoaDonModal {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                background: white !important;
                 display: block !important;
-                z-index: 9999 !important;
+                position: static !important;
+                background: none !important;
             }
 
             .modal-container {
+                display: block !important;
+                position: static !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+                background: none !important;
+            }
+
+            /* 4. Ép vùng in #printArea hiển thị tuyệt đối, căn giữa, chống lệch lề hai bên */
+            #printArea, #printArea * {
+                visibility: visible !important;
             }
 
             #printArea {
-                position: relative !important;
+                position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
-                width: 95% !important;
-                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
                 padding: 5px !important;
                 background: #fff !important;
                 color: #000 !important;
-                transform: scale(0.92);
-                transform-origin: top center;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
             }
 
-            .modal-header, .modal-footer, .close-modal {
+            /* Cố định bảng bên trong hóa đơn không bị tràn ngang */
+            #printArea table {
+                width: 100% !important;
+                table-layout: fixed;
+                word-wrap: break-word;
+            }
+
+            /* Ẩn các nút bấm, header, footer của modal web khi in */
+            .modal-header, .modal-footer, .close-modal, button {
                 display: none !important;
             }
         }
@@ -566,11 +593,9 @@
                 if (diffDays <= 0) diffDays = 1;
             }
 
-            // Tính chính xác thành tiền dựa trên số ngày và chi phí ngày
             const chiPhiNgay = parseFloat(item.chiphingay) || 0;
             const tongChiPhiTinhToan = diffDays * chiPhiNgay;
             
-            // Ưu tiên lấy tongchiphi trong DB, nếu không có/bằng 0 thì lấy giá trị tính toán
             const tongChiPhi = (item.tongchiphi !== undefined && item.tongchiphi !== null && item.tongchiphi !== 0) 
                 ? parseFloat(item.tongchiphi) 
                 : tongChiPhiTinhToan;
@@ -589,7 +614,6 @@
             document.getElementById('hdSoNgay').innerText = diffDays;
             document.getElementById('hdChiPhiNgay').innerText = chiPhiNgay.toLocaleString('vi-VN');
             
-            // Đưa giá trị chuẩn xác vào hóa đơn
             document.getElementById('hdTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN');
             document.getElementById('hdTxtTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN') + ' đ';
             document.getElementById('hdTxtTamUng').innerText = tamUng.toLocaleString('vi-VN') + ' đ';
