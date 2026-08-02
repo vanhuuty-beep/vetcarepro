@@ -65,7 +65,7 @@
         <div class="top-header">
             <h3>💳 Bán hàng POS</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
-                <a href="../page/thongke.html"class="btn-desktop">💻 Desktop</a>
+                <a href="../pos.html" class="btn-desktop">💻 Desktop</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
             </div>
         </div>
@@ -82,16 +82,29 @@
             <div style="text-align: center; color: #666; font-size: 11px; padding: 15px;">Đang tải sản phẩm từ cơ sở dữ liệu...</div>
         </div>
 
-        <!-- THÔNG TIN KHÁCH HÀNG & NÚT THÊM NHANH -->
+        <!-- THÔNG TIN KHÁCH HÀNG TÁCH RIÊNG 2 CỘT: TÊN VÀ SĐT -->
         <div style="background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                <label style="font-size: 11px; font-weight: bold; color: #475569;">Khách hàng:</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 11px; font-weight: bold; color: #475569;">Thông tin khách hàng:</label>
                 <button type="button" onclick="moModalThemKhachHangPOS()" style="background: none; border: none; color: #2563eb; font-size: 11px; font-weight: bold; cursor: pointer; padding: 0;">+ Thêm khách mới</button>
             </div>
-            <select id="selectKhachHang" class="form-control" onchange="chonKhachHangTuDropdown()" style="font-size: 11px; padding: 5px; height: auto; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 2px;">
-                <option value="">-- Khách lẻ / Vãng lai --</option>
-            </select>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <!-- Cột 1: Tìm kiếm Tên khách hàng -->
+                <div style="position: relative;">
+                    <label style="font-size: 10px; color: #64748b; display: block; margin-bottom: 1px;">Tên khách hàng:</label>
+                    <input type="text" id="inputTimTenKhach" placeholder="🔍 Gõ tên khách..." onkeyup="goYTimKiemTenKhach(this.value)" style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box;">
+                    <div id="dropdownGoiYTenKhach" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 140px; overflow-y: auto; background: white; border: 1px solid #cbd5e1; border-radius: 0 0 4px 4px; z-index: 999; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                </div>
+
+                <!-- Cột 2: Hiển thị Số điện thoại -->
+                <div>
+                    <label style="font-size: 10px; color: #64748b; display: block; margin-bottom: 1px;">Số điện thoại:</label>
+                    <input type="text" id="posSdt" placeholder="Số điện thoại..." readonly style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f1f5f9; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b; margin-top: 4px;">
                 <span id="khachHangStatus">Khách vãng lai</span>
                 <span id="diemTichLuyHienTai" style="color: #059669; font-weight: bold;">Điểm: 0</span>
             </div>
@@ -214,9 +227,6 @@
         }
 
         async function loadLaiDanhSachKhachHang(selectId = null) {
-            const selectKH = document.getElementById('selectKhachHang');
-            selectKH.innerHTML = '<option value="">-- Khách lẻ / Vãng lai --</option>';
-
             const { data: khData, error } = await db.from('khachhang').select('*');
             if (error) {
                 console.error('Lỗi tải khách hàng:', error);
@@ -225,32 +235,74 @@
 
             if (khData) {
                 danhSachKhachHangGoc = khData;
-                khData.forEach(kh => {
-                    const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
-                    const sdt = kh.sdt || kh.sodienthoai ? ` (${kh.sdt || kh.sodienthoai})` : '';
-                    const selected = (selectId && kh.id == selectId) ? 'selected' : '';
-                    selectKH.innerHTML += `<option value="${kh.id}" ${selected}>${ten}${sdt}</option>`;
-                });
+                if (selectId) {
+                    chonKhachHangMobile(selectId);
+                } else {
+                    resetKhachHangMobile();
+                }
             }
-            chonKhachHangTuDropdown();
         }
 
-        function chonKhachHangTuDropdown() {
-            const id = document.getElementById('selectKhachHang').value;
-            if (!id) {
-                khachHangDangChon = null;
-                document.getElementById('khachHangStatus').innerText = 'Khách vãng lai';
-                document.getElementById('diemTichLuyHienTai').innerText = 'Điểm: 0';
+        // TÌM KIẾM TÊN KHÁCH HÀNG THÔNG MINH BẰNG Ô INPUT RIÊNG
+        function goYTimKiemTenKhach(tuKhoa) {
+            const boxGoiY = document.getElementById('dropdownGoiYTenKhach');
+            const keyword = tuKhoa.toLowerCase().trim();
+
+            if (!keyword) {
+                boxGoiY.style.display = 'none';
                 return;
             }
 
+            const ketQua = danhSachKhachHangGoc.filter(kh => {
+                const ten = (kh.tenkhachhang || kh.hovaten || '').toLowerCase();
+                const sdt = (kh.sdt || kh.sodienthoai || '').toLowerCase();
+                return ten.includes(keyword) || sdt.includes(keyword);
+            });
+
+            if (ketQua.length === 0) {
+                boxGoiY.style.display = 'block';
+                boxGoiY.innerHTML = `<div style="padding: 6px 8px; font-size: 11px; color: #64748b; text-align: center;">Không tìm thấy khách hàng</div>`;
+                return;
+            }
+
+            boxGoiY.style.display = 'block';
+            boxGoiY.innerHTML = '';
+            ketQua.forEach(kh => {
+                const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
+                const sdt = kh.sdt || kh.sodienthoai || 'Không có SĐT';
+                boxGoiY.innerHTML += `
+                    <div onclick="chonKhachHangMobile(${kh.id})" style="padding: 6px 8px; font-size: 11px; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+                        <b>${ten}</b> - <span style="color: #2563eb;">${sdt}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function chonKhachHangMobile(id) {
             const kh = danhSachKhachHangGoc.find(x => x.id == id);
             if (kh) {
                 khachHangDangChon = kh;
+                const ten = kh.tenkhachhang || kh.hovaten || '';
+                const sdt = kh.sdt || kh.sodienthoai || '';
+                
+                // Tách riêng: Ô trái là Tên, Ô phải là SĐT
+                document.getElementById('inputTimTenKhach').value = ten;
+                document.getElementById('posSdt').value = sdt;
+                document.getElementById('dropdownGoiYTenKhach').style.display = 'none';
+
                 document.getElementById('khachHangStatus').innerText = 'Thành viên';
                 const diem = kh.tichdiem || kh.điểm || 0;
                 document.getElementById('diemTichLuyHienTai').innerText = `Điểm: ${diem}`;
             }
+        }
+
+        function resetKhachHangMobile() {
+            khachHangDangChon = null;
+            document.getElementById('inputTimTenKhach').value = '';
+            document.getElementById('posSdt').value = '';
+            document.getElementById('dropdownGoiYTenKhach').style.display = 'none';
+            document.getElementById('khachHangStatus').innerText = 'Khách vãng lai';
+            document.getElementById('diemTichLuyHienTai').innerText = 'Điểm: 0';
         }
 
         function hienThiLuoiSanPham(data) {
@@ -388,6 +440,7 @@
             let tongCuoiCung = tongTienGoc - giamGia;
             if (tongCuoiCung < 0) tongCuoiCung = 0;
 
+            // Quy tắc: 10.000 VNĐ = 1 điểm
             let diemTichLuy = Math.floor(tongCuoiCung / 10000);
 
             document.getElementById('tongThanhToan').textContent = tongCuoiCung.toLocaleString() + ' đ';
@@ -475,7 +528,7 @@
                 return;
             }
 
-            const makhachhang = document.getElementById('selectKhachHang').value || '';
+            const makhachhang = khachHangDangChon ? khachHangDangChon.id : '';
             const tenKhach = khachHangDangChon ? (khachHangDangChon.tenkhachhang || khachHangDangChon.hovaten) : 'Khách vãng lai';
             const giamGia = Number(document.getElementById('inputGiamGia').value) || 0;
             const tongTien = document.getElementById('tongThanhToan').innerText;
@@ -500,8 +553,7 @@
             gioHang = [];
             document.getElementById('inputGiamGia').value = 0;
             hienThiGioHang();
-            document.getElementById('selectKhachHang').value = "";
-            chonKhachHangTuDropdown();
+            resetKhachHangMobile();
             capNhatDanhSachBillTamSelect();
         }
 
@@ -529,8 +581,11 @@
                 }
 
                 gioHang = [...bill.gioHang];
-                document.getElementById('selectKhachHang').value = bill.makhachhang || '';
-                chonKhachHangTuDropdown();
+                if (bill.makhachhang) {
+                    chonKhachHangMobile(bill.makhachhang);
+                } else {
+                    resetKhachHangMobile();
+                }
                 document.getElementById('inputGiamGia').value = bill.giamGia || 0;
                 
                 hienThiGioHang();
@@ -556,6 +611,7 @@
             }
 
             try {
+                // Tự động cộng dồn điểm vào cột tichdiem của bảng khachhang
                 if (khachHangDangChon) {
                     let diemCu = parseInt(khachHangDangChon.tichdiem || khachHangDangChon.điểm) || 0;
                     let diemMoi = diemCu + diemTichLuy;
@@ -596,8 +652,7 @@
                 
                 gioHang = [];
                 document.getElementById('inputGiamGia').value = 0;
-                document.getElementById('selectKhachHang').value = "";
-                chonKhachHangTuDropdown();
+                resetKhachHangMobile();
                 hienThiGioHang();
                 await loadDuLieuPOS();
 
