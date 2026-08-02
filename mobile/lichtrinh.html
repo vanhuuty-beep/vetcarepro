@@ -54,6 +54,36 @@
             border-radius: 6px;
             border: 1px solid #cbd5e1;
         }
+
+        /* --- CSS CHO THANH PHÂN TRANG (PAGINATION) --- */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 20px 0 10px 0;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .page-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+        .page-btn:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -77,6 +107,9 @@
         <div id="mobile-list">
             <div style="text-align: center; color: #666; padding: 20px;">Đang tải lịch trình điều trị...</div>
         </div>
+
+        <!-- KHUNG CHỨA CÁC NÚT PHÂN TRANG -->
+        <div id="paginationContainer" class="pagination-container"></div>
     </div>
 
     <!-- MODAL THÊM / SỬA TIẾN TRÌNH LỊCH TRÌNH -->
@@ -116,7 +149,6 @@
 
                 <div style="margin-bottom: 8px;">
                     <label style="font-size: 11px; font-weight: bold; color: #475569;">Chọn hoặc chụp nhiều ảnh cùng lúc:</label>
-                    <!-- THÊM multiple VÀ capture="environment" ĐỂ CHỌN HOẶC CHỤP NHIỀU ẢNH -->
                     <input type="file" id="hinhAnhFile" accept="image/*" multiple capture="environment" class="form-control" style="font-size: 11px; padding: 5px;" onchange="previewSelectedFiles(this)">
                     <div id="previewImages" class="preview-img-container"></div>
                 </div>
@@ -130,6 +162,16 @@
     </div>
 
     <script>
+        let danhSachLichTrinhGoc = [];
+        let danhSachHienThiHienTai = [];
+        let thongTinKhamBenh = {};
+        
+        // --- CẤU HÌNH PHÂN TRANG (Mỗi trang hiển thị tối đa 5 card) ---
+        let trangThaiPhanTrang = {
+            trangHienTai: 1,
+            soDongMoiTrang: 5
+        };
+
         function dangXuatMobile() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 sessionStorage.removeItem('currentUser');
@@ -137,7 +179,6 @@
             }
         }
 
-        // Xem trước nhiều ảnh trước khi bấm lưu
         function previewSelectedFiles(input) {
             const previewContainer = document.getElementById('previewImages');
             previewContainer.innerHTML = '';
@@ -154,9 +195,6 @@
     </script>
 
     <script>
-        let danhSachLichTrinhGoc = [];
-        let thongTinKhamBenh = {};
-
         window.addEventListener('DOMContentLoaded', async () => {
             await taiDuLieuBanDau();
             
@@ -221,19 +259,29 @@
             }
 
             danhSachLichTrinhGoc = data || [];
-            hienThiDanhSachMobile(danhSachLichTrinhGoc);
+            danhSachHienThiHienTai = danhSachLichTrinhGoc;
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSachMobile();
         }
 
-        function hienThiDanhSachMobile(data) {
+        function hienThiDanhSachMobile() {
             const container = document.getElementById('mobile-list');
             container.innerHTML = '';
 
-            if (!data || data.length === 0) {
+            if (!danhSachHienThiHienTai || danhSachHienThiHienTai.length === 0) {
                 container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">Chưa có tiến trình lịch trình nào được tạo</div>`;
+                document.getElementById('paginationContainer').innerHTML = '';
                 return;
             }
 
-            data.forEach(item => {
+            const { trangHienTai, soDongMoiTrang } = trangThaiPhanTrang;
+            const tongSoTrang = Math.ceil(danhSachHienThiHienTai.length / soDongMoiTrang);
+            
+            const viTriBatDau = (trangHienTai - 1) * soDongMoiTrang;
+            const viTriKetThuc = viTriBatDau + soDongMoiTrang;
+            const duLieuTrangNay = danhSachHienThiHienTai.slice(viTriBatDau, viTriKetThuc);
+
+            duLieuTrangNay.forEach(item => {
                 const info = thongTinKhamBenh[item.makhambenh] || { tenPet: 'Ca khám #' + (item.makhambenh || '---'), tenChu: '---', sdtChu: '---' };
                 const ngayCapNhapStr = item.ngaycapnhap ? new Date(item.ngaycapnhap).toLocaleString('vi-VN') : '---';
                 const ghiChu = item.ghichu || 'Chưa cập nhật chi tiết.';
@@ -272,7 +320,6 @@
                             👨‍⚕️ Bác sĩ: ${item.bacsiphutrach || 'Chưa rõ'} | 📅 Cập nhật: ${ngayCapNhapStr}
                         </div>
                         
-                        <!-- NỘI DUNG TIẾN TRÌNH VÀ HÌNH ẢNH NẰM CÙNG 1 HÀNG -->
                         <div class="progress-row">
                             <div class="progress-text">
                                 <strong>📋 Nội dung tiến trình:</strong><br>${ghiChu}
@@ -287,18 +334,55 @@
                     </div>
                 `;
             });
+
+            veNutPhanTrang(tongSoTrang);
+        }
+
+        function veNutPhanTrang(tongSoTrang) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            paginationContainer.innerHTML = '';
+
+            if (tongSoTrang <= 1) return;
+
+            const { trangHienTai } = trangThaiPhanTrang;
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === 1 ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai - 1})">◀ Trước</button>
+            `;
+
+            for (let i = 1; i <= tongSoTrang; i++) {
+                if (i === 1 || i === tongSoTrang || (i >= trangHienTai - 1 && i <= trangHienTai + 1)) {
+                    paginationContainer.innerHTML += `
+                        <button class="page-btn ${i === trangHienTai ? 'active' : ''}" onclick="chuyenTrang(${i})">${i}</button>
+                    `;
+                } else if (i === trangHienTai - 2 || i === trangHienTai + 2) {
+                    paginationContainer.innerHTML += `<span style="color: #64748b; font-size: 12px; padding: 0 2px;">...</span>`;
+                }
+            }
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === tongSoTrang ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai + 1})">Sau ▶</button>
+            `;
+        }
+
+        function chuyenTrang(trangMoi) {
+            trangThaiPhanTrang.trangHienTai = trangMoi;
+            hienThiDanhSachMobile();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function timKiemLichTrinh() {
             const tuKhoa = document.getElementById('searchMobile').value.toLowerCase().trim();
-            const ketQuaLoc = danhSachLichTrinhGoc.filter(item => {
+            danhSachHienThiHienTai = danhSachLichTrinhGoc.filter(item => {
                 const bacSi = (item.bacsiphutrach || '').toLowerCase();
                 const ghiChu = (item.ghichu || '').toLowerCase();
                 const info = thongTinKhamBenh[item.makhambenh] || { tenPet: '', tenChu: '', sdtChu: '' };
                 
                 return bacSi.includes(tuKhoa) || ghiChu.includes(tuKhoa) || info.tenPet.toLowerCase().includes(tuKhoa) || info.tenChu.toLowerCase().includes(tuKhoa) || info.sdtChu.toLowerCase().includes(tuKhoa);
             });
-            hienThiDanhSachMobile(ketQuaLoc);
+            
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSachMobile();
         }
 
         function moModalThem() {
@@ -377,7 +461,6 @@
                 }
             }
 
-            // Gộp tất cả các file ảnh được chọn/chụp cùng lúc lên Supabase Storage
             const fileInput = document.getElementById('hinhAnhFile');
             if (fileInput.files && fileInput.files.length > 0) {
                 for (let i = 0; i < fileInput.files.length; i++) {
