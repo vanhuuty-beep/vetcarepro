@@ -293,12 +293,16 @@
 
     <style>
     @media print {
+        /* Ẩn toàn bộ các thành phần trên trang mặc định */
         body * {
-            visibility: hidden;
+            visibility: hidden !important;
         }
+        
+        /* Chỉ hiển thị duy nhất khung in phiếu chỉ định */
         #printArea, #printArea * {
-            visibility: visible;
+            visibility: visible !important;
         }
+        
         #printArea {
             display: block !important;
             position: absolute;
@@ -311,6 +315,17 @@
             padding: 15px;
             box-sizing: border-box;
         }
+
+        /* ẨN HOÀN TOÀN THANH MENU, ĐIỀU HƯỚNG VÀ GIAO DIỆN QUẢN LÝ KHI IN */
+        #menu-container,
+        #topnav-container,
+        .main-content,
+        .card,
+        .modal-overlay {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
         .print-header {
             text-align: center;
             border-bottom: 2px solid #0284c7;
