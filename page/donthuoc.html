@@ -248,25 +248,49 @@
     </div>
 
     <style>
-    @media print {
-        body * {
-            visibility: hidden;
+   @media print {
+        /* 1. Ẩn toàn bộ giao diện quản lý, menu bên trái và khung nền mặc định */
+        body, body * {
+            visibility: hidden !important;
         }
+        
+        #menu-container,
+        #topnav-container,
+        .main-content,
+        .card,
+        .modal-overlay {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* 2. Chỉ định hiển thị độc lập hoàn toàn cho #printInvoiceArea và nội dung bên trong */
         #printInvoiceArea, #printInvoiceArea * {
-            visibility: visible;
+            visibility: visible !important;
         }
+        
         #printInvoiceArea {
             display: block !important;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            font-family: 'Arial', sans-serif;
-            color: #111;
-            background: #fff;
-            padding: 15px;
-            box-sizing: border-box;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            font-family: 'Arial', sans-serif !important;
+            color: #111 !important;
+            background: #fff !important;
+            padding: 15px !important;
+            box-sizing: border-box !important;
+            z-index: 999999 !important;
         }
+
+        /* 3. Tối ưu hiển thị bảng bên trong hóa đơn khi in */
+        #printInvoiceArea table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        #printInvoiceArea th, #printInvoiceArea td {
+            visibility: visible !important;
+        }
+
         .print-header {
             text-align: center;
             border-bottom: 2px solid #0284c7;
