@@ -75,6 +75,7 @@
                                 <th>Thú cưng</th>
                                 <th>Lần khám gần nhất</th>
                                 <th>Tổng chi tiêu</th>
+                                <th>Điểm tích lũy</th>
                                 <th>Loại khách</th>
                                 <th>Thao tác</th>
                             </tr>
@@ -133,7 +134,6 @@
                 });
             }
 
-            // Lấy giá vắc-xin từ kho theo tên để đối chiếu dự phòng nếu nhật ký tiêm không lưu giá
             let giaVaccineMap = {};
             const { data: khoVcData } = await db.from('khovaccine').select('*');
             if (khoVcData) {
@@ -146,7 +146,6 @@
 
             let thongKeChiTieu = {};
 
-            // Hàm cộng tiền quy đổi chuẩn xác về mã khách hàng thông qua thú cưng hoặc mã trực tiếp
             function congTienTheoPetHoacKH(row, soTienTruyXuat, ngayTruyXuat) {
                 let maKH = row.makhachhang || row.makh || row.khachhang_id;
                 
@@ -191,7 +190,7 @@
                 });
             }
 
-            // 3. Tải dữ liệu Tiêm vaccine (nhatkylamvaccine)[cite: 1]
+            // 3. Tải dữ liệu Tiêm vaccine[cite: 1]
             const { data: vcData } = await db.from('nhatkylamvaccine').select('*');
             if (vcData) {
                 vcData.forEach(vc => {
@@ -205,7 +204,7 @@
                 });
             }
 
-            // 4. Tải dữ liệu Mua hàng POS / Petshop (donhang)[cite: 1]
+            // 4. Tải dữ liệu Mua hàng POS / Petshop[cite: 1]
             const { data: dhData } = await db.from('donhang').select('*');
             if (dhData) {
                 dhData.forEach(dh => {
@@ -214,7 +213,7 @@
                 });
             }
 
-            // 5. Tải dữ liệu Nội trú (nhatkynoitru)[cite: 1]
+            // 5. Tải dữ liệu Nội trú[cite: 1]
             const { data: ntData } = await db.from('nhatkynoitru').select('*');
             if (ntData) {
                 ntData.forEach(nt => {
@@ -223,7 +222,7 @@
                 });
             }
 
-            // 6. Tải dữ liệu Đơn thuốc (hoadonthuoc)[cite: 1]
+            // 6. Tải dữ liệu Đơn thuốc[cite: 1]
             const { data: dtData } = await db.from('hoadonthuoc').select('*');
             if (dtData) {
                 dtData.forEach(dt => {
@@ -232,7 +231,6 @@
                 });
             }
 
-            // Bổ sung tải dữ liệu Phiếu chỉ định (phieuchidinh)
             const { data: pcdData } = await db.from('phieuchidinh').select('*');
             if (pcdData) {
                 pcdData.forEach(pcd => {
@@ -242,7 +240,7 @@
                 });
             }
 
-            // 7. Tải dữ liệu Spa (nhatkyspa)[cite: 1]
+            // 7. Tải dữ liệu Spa[cite: 1]
             const { data: spaData } = await db.from('nhatkyspa').select('*');
             if (spaData) {
                 spaData.forEach(sp => {
@@ -268,21 +266,19 @@
             tableBody.innerHTML = '';
             
             if(data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#777;">Không tìm thấy khách hàng phù hợp</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#777;">Không tìm thấy khách hàng phù hợp</td></tr>`;
                 return;
             }
 
             data.forEach(item => {
                 const maKhachHang = formatMaKhachHang(item.id);
                 
-                // Tự động kiểm tra và thêm số 0 ở đầu SĐT nếu thiếu, đồng thời tạo liên kết bấm gọi
                 let rawSdt = String(item.sodienthoai || '').trim();
                 let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
                 const soDienThoaiHtml = displaySdt 
                     ? `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>` 
                     : '---';
 
-                // Tạo URL mã QR dựa trên ID và SĐT khách hàng
                 const qrText = encodeURIComponent(`KH_${item.id}_${item.hovaten}_${displaySdt}`);
                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${qrText}`;
 
@@ -293,6 +289,9 @@
                 const lichSu = mapLichSuKham[item.id] || { tongTien: 0, lanKhamGanNhat: null, soLan: 0 };
                 const tongChiTieuText = Number(lichSu.tongTien).toLocaleString('vi-VN') + ' đ';
                 const lanKhamText = lichSu.lanKhamGanNhat ? new Date(lichSu.lanKhamGanNhat).toLocaleDateString('vi-VN') : '---';
+
+                // TỰ ĐỘNG TÍNH ĐIỂM DỰA TRÊN TỔNG CHI TIÊU (10.000 VNĐ = 1 điểm)
+                const diemTichLuy = Math.floor(lichSu.tongTien / 100000);
 
                 let loaiKhachHtml = `<span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: #e0f2fe; color: #0369a1; font-weight: 500;">Mới</span>`;
                 if (lichSu.soLan > 0) {
@@ -316,6 +315,7 @@
                     <td><span style="color: #0284c7; font-weight: 600;">${soLuongPet} thú cưng</span><br><span style="font-size: 11px; color: #555;">(${tenPetText})</span></td>
                     <td style="font-size: 12px;">${lanKhamText}</td>
                     <td><b>${tongChiTieuText}</b></td>
+                    <td><b style="color: #059669;">${diemTichLuy} điểm</b></td> <!-- Hiển thị điểm quy đổi tự động -->
                     <td>${loaiKhachHtml}</td>
                     <td style="white-space: nowrap;">
                         <button class="btn-add-pet" onclick="themThuCungChoKhach(${item.id})" title="Thêm thú cưng">+ Thú cưng</button>
