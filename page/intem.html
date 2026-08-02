@@ -5,6 +5,8 @@
     <title>In Tem Mã Vạch 2 Cột (Khổ Giấy 80mm) - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Thêm thư viện JsBarcode để hiển thị mã vạch -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
@@ -117,46 +119,45 @@
 
         /* --- CẤU HÌNH IN ẤN CHUẨN XÁC TUYỆT ĐỐI KHỔ 80MM --- */
         @media print {
+            @page{
+                size: 80mm auto;
+                margin: 0;
+            }
 
-    @page{
-        size:80mm auto;
-        margin:0;
-    }
+            html, body{
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+                background: #fff;
+            }
 
-    html,body{
-        width:80mm;
-        margin:0;
-        padding:0;
-        background:#fff;
-    }
+            #menu-container,
+            .top-navbar,
+            .print-setup-card{
+                display: none !important;
+            }
 
-    #menu-container,
-    .top-navbar,
-    .print-setup-card{
-        display:none !important;
-    }
+            .main-content{
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
-    .main-content{
-        margin:0 !important;
-        padding:0 !important;
-    }
+            #khungInTem{
+                width: 80mm;
+                display: grid;
+                grid-template-columns: 35mm 35mm;
+                column-gap: 2mm;
+                row-gap: 2mm;
+                justify-content: center;
+            }
 
-    #khungInTem{
-        width:80mm;
-        display:grid;
-        grid-template-columns:35mm 35mm;
-        column-gap:2mm;
-        row-gap:2mm;
-        justify-content:center;
-    }
-
-    .barcode-item{
-        width:35mm;
-        height:22mm;
-        box-sizing:border-box;
-        page-break-inside:avoid;
-    }
-}
+            .barcode-item{
+                width: 35mm;
+                height: 22mm;
+                box-sizing: border-box;
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
@@ -275,13 +276,14 @@
                 });
             }, 200);
         }
-		function inTem() {
-    taoTemIn();
 
-    setTimeout(() => {
-        window.print();
-    }, 500);
-}
+        function inTem() {
+            taoTemIn();
+
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
     </script>
 </body>
 </html>
