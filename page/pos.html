@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Màn Hình Bán Hàng POS & Tích Điểm - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -246,8 +246,9 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
+            position: relative;
         }
-        .customer-inputs-grid select, .customer-inputs-grid input {
+        .customer-inputs-grid input {
             width: 100%;
             padding: 6px 8px;
             font-size: 12px;
@@ -255,6 +256,31 @@
             border-radius: 4px;
             outline: none;
             box-sizing: border-box;
+        }
+
+        /* Dropdown tìm kiếm khách hàng thông minh */
+        #dropdownGoiYKhachHang {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 160px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 0 0 4px 4px;
+            z-index: 999;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .customer-suggestion-item {
+            padding: 6px 8px;
+            font-size: 11px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+        .customer-suggestion-item:hover {
+            background: #f8fafc;
         }
 
         .cart-table-wrapper {
@@ -397,17 +423,14 @@
         }
 
         /* IN HÓA ĐƠN NHIỆT ẨN */
-       /* --- CSS MẪU HÓA ĐƠN NHIỆT ẨN KHI IN CHUẨN XÁC --- */
         #printInvoiceArea {
             display: none;
         }
 
         @media print {
-            /* Ẩn toàn bộ giao diện phần mềm web */
             body * {
                 visibility: hidden !important;
             }
-            /* Chỉ hiện khung hóa đơn in nhiệt */
             #printInvoiceArea, #printInvoiceArea * {
                 visibility: visible !important;
             }
@@ -416,7 +439,7 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 76mm; /* Khít khổ giấy nhiệt 80mm */
+                width: 76mm;
                 margin: 0;
                 padding: 2mm;
                 font-family: 'Courier New', Courier, monospace;
@@ -474,16 +497,18 @@
                         </select>
                     </div>
 
-                    <!-- KHU VỰC KHÁCH HÀNG & TÍCH ĐIỂM -->
+                    <!-- KHU VỰC TÌM KIẾM KHÁCH HÀNG & TÍCH ĐIỂM THÔNG MINH -->
                     <div class="customer-search-area">
                         <div class="customer-header-row">
                             <label>Khách Hàng & SĐT:</label>
                             <button class="btn-link-add" onclick="moModalThemKhachHang()">+Thêm khách hàng mới</button>
                         </div>
                         <div class="customer-inputs-grid">
-                            <select id="chonKhachHangSelect" onchange="chonKhachHangTuDropdown()">
-                                <option value="">Chọn khách hàng...</option>
-                            </select>
+                            <!-- Thay thế thẻ select bằng ô input tìm kiếm theo tên hoặc SĐT -->
+                            <div style="position: relative; width: 100%;">
+                                <input type="text" id="inputTimKhachHang" placeholder="🔍 Gõ tên hoặc SĐT khách..." onkeyup="goYTimKiemKhachHang(this.value)">
+                                <div id="dropdownGoiYKhachHang"></div>
+                            </div>
                             <input type="text" id="posSdt" placeholder="Số điện thoại..." readonly style="background: #f1f5f9;">
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; margin-top: 4px;">
@@ -724,42 +749,72 @@
             const { data, error } = await db.from('khachhang').select('*');
             if (!error && data) {
                 danhSachKhachHangGoc = data;
-                const select = document.getElementById('chonKhachHangSelect');
-                select.innerHTML = '<option value="">Chọn khách hàng...</option>';
-                data.forEach(item => {
-                    const ten = item.tenkhachhang || item.hovaten || 'Khách hàng';
-                    const sdt = item.sdt || item.sodienthoai || '';
-                    const opt = document.createElement('option');
-                    opt.value = item.id;
-                    opt.textContent = `${ten} (${sdt || 'Không có SĐT'})`;
-                    select.appendChild(opt);
-                });
             }
         }
 
-        function chonKhachHangTuDropdown() {
-            const id = document.getElementById('chonKhachHangSelect').value;
-            if (!id) {
-                khachHangDangChon = null;
-                document.getElementById('posSdt').value = '';
-                document.getElementById('khachHangStatus').innerText = 'Khách lẻ / Vãng lai';
-                document.getElementById('khachHangStatus').style.background = '#e0f2fe';
-                document.getElementById('khachHangStatus').style.color = '#0369a1';
-                document.getElementById('diemTichLuyHienTai').innerText = 'Điểm tích lũy: 0 điểm';
+        // TÌM KIẾM KHÁCH HÀNG THÔNG MINH BẰNG Ô INPUT
+        function goYTimKiemKhachHang(tuKhoa) {
+            const boxGoiY = document.getElementById('dropdownGoiYKhachHang');
+            const keyword = tuKhoa.toLowerCase().trim();
+
+            if (!keyword) {
+                boxGoiY.style.display = 'none';
                 return;
             }
 
+            const ketQua = danhSachKhachHangGoc.filter(kh => {
+                const ten = (kh.tenkhachhang || kh.hovaten || '').toLowerCase();
+                const sdt = (kh.sdt || kh.sodienthoai || '').toLowerCase();
+                return ten.includes(keyword) || sdt.includes(keyword);
+            });
+
+            if (ketQua.length === 0) {
+                boxGoiY.style.display = 'block';
+                boxGoiY.innerHTML = `<div style="padding: 6px 8px; font-size: 11px; color: #64748b; text-align: center;">Không tìm thấy khách hàng</div>`;
+                return;
+            }
+
+            boxGoiY.style.display = 'block';
+            boxGoiY.innerHTML = '';
+            ketQua.forEach(kh => {
+                const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
+                const sdt = kh.sdt || kh.sodienthoai || 'Không có SĐT';
+                boxGoiY.innerHTML += `
+                    <div class="customer-suggestion-item" onclick="chonKhachHangPOS(${kh.id})">
+                        <b>${ten}</b> - <span style="color: #2563eb;">${sdt}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function chonKhachHangPOS(id) {
             const kh = danhSachKhachHangGoc.find(x => x.id == id);
             if (kh) {
                 khachHangDangChon = kh;
+                const ten = kh.tenkhachhang || kh.hovaten || '';
                 const sdt = kh.sdt || kh.sodienthoai || '';
+                
+                document.getElementById('inputTimKhachHang').value = ten;
                 document.getElementById('posSdt').value = sdt;
+                document.getElementById('dropdownGoiYKhachHang').style.display = 'none';
+
                 document.getElementById('khachHangStatus').innerText = 'Thành viên thân thiết';
                 document.getElementById('khachHangStatus').style.background = '#d1fae5';
                 document.getElementById('khachHangStatus').style.color = '#065f46';
+                
                 const diem = kh.tichdiem || kh.điểm || 0;
                 document.getElementById('diemTichLuyHienTai').innerText = `Điểm tích lũy: ${diem} điểm`;
             }
+        }
+
+        function resetKhachHangPOS() {
+            khachHangDangChon = null;
+            document.getElementById('inputTimKhachHang').value = '';
+            document.getElementById('posSdt').value = '';
+            document.getElementById('khachHangStatus').innerText = 'Khách lẻ / Vãng lai';
+            document.getElementById('khachHangStatus').style.background = '#e0f2fe';
+            document.getElementById('khachHangStatus').style.color = '#0369a1';
+            document.getElementById('diemTichLuyHienTai').innerText = 'Điểm tích lũy: 0 điểm';
         }
 
         function moModalThemKhachHang() {
@@ -799,8 +854,7 @@
                 dongModalThemKhachHang();
                 await taiDanhSachKhachHangPOS();
                 if (data && data.length > 0) {
-                    document.getElementById('chonKhachHangSelect').value = data[0].id;
-                    chonKhachHangTuDropdown();
+                    chonKhachHangPOS(data[0].id);
                 }
             }
         }
@@ -855,8 +909,7 @@
 
         function lamMoiGioHang() {
             gioHang = [];
-            document.getElementById('chonKhachHangSelect').value = '';
-            chonKhachHangTuDropdown();
+            resetKhachHangPOS();
             hienThiGioHang();
         }
 
@@ -967,11 +1020,9 @@
                 const bill = danhSachBillCho[index];
                 gioHang = [...bill.gioHang];
                 if (bill.khachObj) {
-                    document.getElementById('chonKhachHangSelect').value = bill.khachObj.id;
-                    chonKhachHangTuDropdown();
+                    chonKhachHangPOS(bill.khachObj.id);
                 } else {
-                    document.getElementById('chonKhachHangSelect').value = '';
-                    chonKhachHangTuDropdown();
+                    resetKhachHangPOS();
                 }
                 danhSachBillCho.splice(index, 1);
                 capNhatDropdownBillCho();
@@ -1018,6 +1069,7 @@
                 return;
             }
 
+            // Tự động cộng dồn điểm vào cột tichdiem của bảng khachhang
             if (khachHangDangChon) {
                 let diemCu = parseInt(khachHangDangChon.tichdiem || khachHangDangChon.điểm) || 0;
                 let diemMoi = diemCu + diemThuong;
