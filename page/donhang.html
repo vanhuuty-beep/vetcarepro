@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <title>Quản lý Đơn Hàng & Bán Hàng - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         .stats-container {
@@ -56,7 +56,7 @@
 
         .search-box {
             padding: 9px 12px;
-            width: 320px;
+            width: 280px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 13px;
@@ -133,35 +133,82 @@
         }
         .btn-print:hover { background-color: #0f766e; }
 
-        /* --- CẤU HÌNH KHUNG IN HÓA ĐƠN --- */
+        /* --- CẤU HÌNH KHUNG IN HÓA ĐƠN & TỰ NHẬN DIỆN KHỔ GIẤY --- */
         #printArea { display: none; }
 
+        body.print-k80 { --print-size: 80mm; --print-width: 76mm; }
+        body.print-k57 { --print-size: 57mm; --print-width: 53mm; }
+        body.print-a5  { --print-size: A5 landscape; --print-width: 100%; }
+        body.print-a4  { --print-size: A4; --print-width: 100%; }
+
         @media print {
-            body * { visibility: hidden !important; }
-            #printArea, #printArea * { visibility: visible !important; }
-            #printArea {
+            @page {
+                size: var(--print-size, 80mm auto);
+                margin: 5mm !important;
+            }
+
+            html, body {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            #menu-container,
+            #topnav-container,
+            .main-content,
+            .card,
+            .modal-header,
+            .modal-footer,
+            .close-modal,
+            button {
+                display: none !important;
+            }
+
+            #hoaDonModal {
                 display: block !important;
                 position: absolute !important;
-                top: 0 !important;
                 left: 0 !important;
+                top: 0 !important;
                 width: 100% !important;
-                font-family: 'Arial', sans-serif !important;
-                color: #111 !important;
                 background: #fff !important;
-                padding: 15px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                z-index: 999999 !important;
+            }
+
+            #hoaDonModal .modal-container {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            #printArea {
+                display: block !important;
+                position: relative !important;
+                width: var(--print-width, 76mm) !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                padding: 2mm !important;
+                background: #fff !important;
+                color: #000 !important;
+                font-family: Arial, sans-serif !important;
+                font-size: 12px !important;
                 box-sizing: border-box !important;
             }
-            .print-header {
-                text-align: center;
-                border-bottom: 2px solid #0284c7;
-                padding-bottom: 6px;
-                margin-bottom: 10px;
+
+            #printArea table {
+                width: 100% !important;
+                table-layout: fixed;
+                word-wrap: break-word;
+                font-size: 11px !important;
             }
-            .print-header h2 { font-size: 15px; margin: 0; color: #0284c7; font-weight: bold; }
-            .print-header p { font-size: 10px; margin: 2px 0; color: #555; }
-            .print-title { text-align: center; margin-bottom: 12px; }
-            .print-title h3 { font-size: 13px; margin: 0; text-transform: uppercase; color: #1e293b; font-weight: bold; }
-            .print-title p { font-size: 10px; margin: 2px 0; color: #64748b; }
         }
     </style>
 </head>
@@ -208,9 +255,18 @@
                     </h3>
                     <div class="card-header-actions">
                         <input type="text" id="searchInput" class="search-box" placeholder="Tìm theo tên KH, SĐT, tên sản phẩm..." onkeyup="timKiemDonHang()">
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-primary" onclick="inDanhSachDonHang()" style="background-color: #0d9488; padding: 9px 16px;">🖨️ In Báo Cáo</button>
-                            <button class="btn-primary" onclick="moModalThem()" style="background-color: #0284c7; padding: 9px 16px;">+ Lập Đơn Mới</button>
+                        
+                        <!-- CHỌN KHỔ GIẤY VÀ NÚT BẤM ĐÃ ĐƯỢC ĐÓNG THẺ CHUẨN XÁC -->
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-size: 13px; font-weight: 500; margin: 0;">Khổ in:</label>
+                            <select id="chonKhoGiay" class="search-box" style="width: 120px; padding: 7px;">
+                                <option value="k80">K80 (Bill)</option>
+                                <option value="k57">K57 (Nhỏ)</option>
+                                <option value="a5">Khổ A5</option>
+                                <option value="a4">Khổ A4</option>
+                            </select>
+                            <button class="btn-primary" onclick="inDanhSachDonHang()" style="background-color: #0d9488; padding: 9px 14px;">🖨️ In Báo Cáo</button>
+                            <button class="btn-primary" onclick="moModalThem()" style="background-color: #0284c7; padding: 9px 14px;">+ Lập Đơn Mới</button>
                         </div>
                     </div>
                 </div>
@@ -241,10 +297,13 @@
 
     <!-- KHUNG IN DÙNG CHUNG -->
     <div id="printArea">
-        <div class="print-header"></div>
-        <div class="print-title">
-            <h3 id="print-form-title">BÁO CÁO DOANH THU & ĐƠN HÀNG</h3>
-            <p id="print-form-sub">Ngày in: ---</p>
+        <div class="print-header" style="text-align: center;">
+            <h2>VETCARE PRO - PHÒNG KHÁM THÚ Y</h2>
+            <p>Địa chỉ: Đà Nẵng | Điện thoại: 0935.xxx.xxx</p>
+        </div>
+        <div class="print-title" style="text-align: center; margin: 10px 0;">
+            <h3 id="print-form-title" style="margin: 0; font-size: 14px;">BÁO CÁO DOANH THU & ĐƠN HÀNG</h3>
+            <p id="print-form-sub" style="margin: 2px 0; font-size: 11px;">Ngày in: ---</p>
         </div>
         <div id="print-form-body"></div>
         <div style="display: flex; justify-content: space-between; text-align: center; font-size: 11px; margin-top: 30px;">
@@ -260,7 +319,7 @@
     </div>
 
     <!-- POPUP FORM THÊM / SỬA ĐƠN HÀNG -->
-    <div class="modal-overlay" id="donHangModal">
+    <div class="modal-overlay" id="donHangModal" style="display: none;">
         <div class="modal-container">
             <div class="modal-header">
                 <h3 id="modalTitle" style="margin:0; font-size: 16px;">Lập đơn hàng mới</h3>
@@ -391,6 +450,13 @@
             document.getElementById('thanhtien').value = sl * gia;
         }
 
+        function thucHienInPhieu() {
+            const loaiKho = document.getElementById('chonKhoGiay').value;
+            document.body.classList.remove('print-k80', 'print-k57', 'print-a5', 'print-a4');
+            document.body.classList.add('print-' + loaiKho);
+            window.print();
+        }
+
         function inDanhSachDonHang() {
             document.getElementById('print-form-title').innerText = "BÁO CÁO LỊCH SỬ BÁN HÀNG & ĐƠN HÀNG";
             document.getElementById('print-form-sub').innerText = "Ngày in: " + new Date().toLocaleDateString('vi-VN');
@@ -427,7 +493,7 @@
 
             html += `</tbody></table>`;
             document.getElementById('print-form-body').innerHTML = html;
-            window.print();
+            thucHienInPhieu();
         }
 
         function inHoaDonDonHang(id) {
@@ -468,7 +534,7 @@
                 </div>
             `;
 
-            window.print();
+            thucHienInPhieu();
         }
 
         function timKiemDonHang() {
