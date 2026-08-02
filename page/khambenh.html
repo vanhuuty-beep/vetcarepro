@@ -304,12 +304,14 @@
 
     <style>
     @media print {
+        /* ẨN TẤT CẢ CÁC THÀNH PHẦN TRÊN TRANG MẶC ĐỊNH */
         body * {
-            visibility: hidden;
+            visibility: hidden !important;
         }
         
+        /* CHỈ HIỂN THỊ DUY NHẤT KHUNG IN PHIẾU KHÁM */
         #printArea, #printArea * {
-            visibility: visible;
+            visibility: visible !important;
         }
         
         #printArea {
@@ -323,6 +325,17 @@
             background: #fff;
             padding: 15px;
             box-sizing: border-box;
+        }
+
+        /* ẨN HOÀN TOÀN THANH MENU BÊN TRÁI, THANH ĐIỀU HƯỚNG VÀ GIAO DIỆN QUẢN LÝ */
+        #menu-container,
+        #topnav-container,
+        .main-content,
+        .card,
+        .modal-overlay,
+        .sidebar {
+            display: none !important;
+            visibility: hidden !important;
         }
 
         .print-header {
