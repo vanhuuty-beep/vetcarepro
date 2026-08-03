@@ -20,9 +20,15 @@ const DANH_SACH_PHONG_KHAM = {
     }
 };
 
-// Tự động nhận diện phòng khám dựa vào tên miền hiện tại
+// Tự động nhận diện phòng khám thông minh, dù có chữ www hay không vẫn bắt chính xác
 const hostname = window.location.hostname;
-const CLINIC_INFO = DANH_SACH_PHONG_KHAM[hostname] || DANH_SACH_PHONG_KHAM["vetcare.vn"];
+let CLINIC_INFO = DANH_SACH_PHONG_KHAM["vetcare.vn"]; // Mặc định
+
+if (hostname.includes("matpet")) {
+    CLINIC_INFO = DANH_SACH_PHONG_KHAM["matpet.vercel.app"];
+} else if (hostname.includes("vetcare")) {
+    CLINIC_INFO = DANH_SACH_PHONG_KHAM["vetcare.vn"];
+}
 
 // Hàm tự động bơm thông tin vào các khung in
 function capNhatThongTinIn() {
