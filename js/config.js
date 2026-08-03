@@ -14,13 +14,13 @@ const CONFIG = {
 // Cấu hình thông tin phòng khám tự động đổi theo tên miền
 const CLINIC_INFO = isMatpet ? {
     ten: "PHÒNG KHÁM THÚ Y MATPET",
-    diachi: "Địa chỉ phòng khám Matpet",
-    dienthoai: "Số điện thoại Matpet",
+    diachi: "139 Mẹ Thứ, phường Hoà Xuân, tp Đà Nẵng",
+    dienthoai: "087.77.31.079",
     slogan: "Hệ thống quản lý thú y Matpet"
 } : {
     ten: "VETCARE PRO - PHÒNG KHÁM THÚ Y",
     diachi: "Đà Nẵng",
-    dienthoai: "0935.xxx.xxx",
+    dienthoai: "0935.77.87.27",
     slogan: "Hệ thống quản lý thú y thông minh"
 };
 
