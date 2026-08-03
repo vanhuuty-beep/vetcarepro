@@ -1,7 +1,7 @@
 const CONFIG = {
     // Nó sẽ lấy giá trị từ Vercel, nếu không có thì lấy giá trị mặc định bên dưới[cite: 12]
-    SUPABASE_URL: window.ENV_SUPABASE_URL || "URL_SUPABASE_MAC_DINH",
-    SUPABASE_KEY: window.ENV_SUPABASE_KEY || "KEY_SUPABASE_MAC_DINH"
+    SUPABASE_URL: window.ENV_SUPABASE_URL || "https://glbbycylllulafzrzfcz.supabase.co",
+    SUPABASE_KEY: window.ENV_SUPABASE_KEY || "sb_publishable_-T8VmENvk62ZD2Ao4hJa1g_mC29Zftk"
 };
 
 // Kiểm tra xem có phải đang chạy trên trang của Phùng Chữ không
