@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <title>Quản lý Khách hàng - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         .search-box {
@@ -120,6 +120,44 @@
         let danhSachKhachHangGoc = [];
         let mapThuCung = {};
         let mapLichSuKham = {};
+
+        // --- HÀM KIỂM TRA QUYỀN ADMIN VÀ ẨN SỐ ĐIỆN THOẠI AN TOÀN ---
+        function anSoDienThoaiChoPC(sdt) {
+            if (!sdt) return '---';
+            
+            let sdtStr = String(sdt).trim();
+            let displaySdt = sdtStr.startsWith('0') ? sdtStr : '0' + sdtStr;
+            
+            // Đọc thông tin user từ sessionStorage an toàn tuyệt đối không gây sập chương trình
+            let isAdmin = false;
+            try {
+                let rawUser = sessionStorage.getItem('currentUser');
+                if (rawUser) {
+                    let currentUser = JSON.parse(rawUser);
+                    let role = String(currentUser.vaitro || currentUser.role || '').trim().toLowerCase();
+                    let username = String(currentUser.tentaikhoan || currentUser.username || '').trim().toLowerCase();
+                    
+                    if (role === 'admin' || username === 'admin') {
+                        isAdmin = true;
+                    }
+                }
+            } catch (e) {
+                // Trường hợp currentUser lưu dưới dạng chuỗi thông thường không phải JSON
+                let rawStr = sessionStorage.getItem('currentUser') || '';
+                if (rawStr.toLowerCase().includes('admin')) {
+                    isAdmin = true;
+                }
+            }
+            
+            // Nếu là Admin -> Hiển thị số điện thoại đầy đủ kèm nút gọi
+            if (isAdmin) {
+                return `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>`;
+            }
+            
+            // Nếu không phải Admin -> Ẩn toàn bộ số thành dấu sao
+            let sdtBiDau = '*'.repeat(displaySdt.length);
+            return `<span style="color: #d97706; font-weight: bold;" title="Số điện thoại đã được bảo mật">${sdtBiDau} 🔒</span>`;
+        }
 
         async function fetchKhachHang() {
             // 1. Tải danh sách thú cưng và lập bản đồ ánh xạ (ID thú cưng -> Mã khách hàng)[cite: 1]
@@ -273,12 +311,11 @@
             data.forEach(item => {
                 const maKhachHang = formatMaKhachHang(item.id);
                 
+                // Gọi hàm ẩn số điện thoại phân quyền bảo mật cho PC
+                const soDienThoaiHtml = anSoDienThoaiChoPC(item.sodienthoai);
+
                 let rawSdt = String(item.sodienthoai || '').trim();
                 let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
-                const soDienThoaiHtml = displaySdt 
-                    ? `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>` 
-                    : '---';
-
                 const qrText = encodeURIComponent(`KH_${item.id}_${item.hovaten}_${displaySdt}`);
                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${qrText}`;
 
@@ -290,7 +327,6 @@
                 const tongChiTieuText = Number(lichSu.tongTien).toLocaleString('vi-VN') + ' đ';
                 const lanKhamText = lichSu.lanKhamGanNhat ? new Date(lichSu.lanKhamGanNhat).toLocaleDateString('vi-VN') : '---';
 
-                // TỰ ĐỘNG TÍNH ĐIỂM DỰA TRÊN TỔNG CHI TIÊU (10.000 VNĐ = 1 điểm)
                 const diemTichLuy = Math.floor(lichSu.tongTien / 100000);
 
                 let loaiKhachHtml = `<span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: #e0f2fe; color: #0369a1; font-weight: 500;">Mới</span>`;
@@ -315,7 +351,7 @@
                     <td><span style="color: #0284c7; font-weight: 600;">${soLuongPet} thú cưng</span><br><span style="font-size: 11px; color: #555;">(${tenPetText})</span></td>
                     <td style="font-size: 12px;">${lanKhamText}</td>
                     <td><b>${tongChiTieuText}</b></td>
-                    <td><b style="color: #059669;">${diemTichLuy} điểm</b></td> <!-- Hiển thị điểm quy đổi tự động -->
+                    <td><b style="color: #059669;">${diemTichLuy} điểm</b></td>
                     <td>${loaiKhachHtml}</td>
                     <td style="white-space: nowrap;">
                         <button class="btn-add-pet" onclick="themThuCungChoKhach(${item.id})" title="Thêm thú cưng">+ Thú cưng</button>
