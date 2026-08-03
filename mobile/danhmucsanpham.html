@@ -39,6 +39,36 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content-custom { background: #fff; width: 95%; max-width: 420px; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
         .form-control { width: 100%; padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
+
+        /* --- CSS NÚT PHÂN TRANG TRUYỀN THỐNG --- */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 20px 0 10px 0;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .page-btn.active {
+            background: #10b981;
+            color: #ffffff;
+            border-color: #10b981;
+        }
+        .page-btn:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -67,6 +97,9 @@
         <div id="danhSachSanPhamContainer">
             <div style="text-align: center; color: #777; padding: 15px; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 11px;">Đang tải danh mục sản phẩm...</div>
         </div>
+
+        <!-- KHUNG CHỨA NÚT PHÂN TRANG -->
+        <div id="paginationContainer" class="pagination-container"></div>
     </div>
 
     <!-- MODAL THÊM / SỬA HÀNG HÓA MỚI -->
@@ -84,7 +117,6 @@
                     <input type="text" id="tensanpham" class="form-control" placeholder="Nhập tên sản phẩm, thức ăn, phụ kiện..." required>
                 </div>
 
-                <!-- MÃ VẠCH VÀ TỒN KHO CHUNG 1 HÀNG -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                     <div>
                         <label style="font-size: 11px; font-weight: bold; color: #475569;">Mã vạch (mabarcode):</label>
@@ -128,11 +160,10 @@
                 </div>
 
                 <div style="margin-bottom: 6px;">
-    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (Chụp ảnh trực tiếp hoặc chọn file):</label>
-    <!-- Thêm capture="environment" để bật trực tiếp camera sau trên mobile -->
-    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" capture="environment" style="font-size: 11px; padding: 5px; margin-bottom: 4px;">
-    <input type="text" id="hinhanhUrl" class="form-control" placeholder="Hoặc dán đường dẫn (URL) hình ảnh vào đây...">
-</div>
+                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Hình ảnh sản phẩm (Chụp ảnh trực tiếp hoặc chọn file):</label>
+                    <input type="file" id="hinhanhFile" class="form-control" accept="image/*" capture="environment" style="font-size: 11px; padding: 5px; margin-bottom: 4px;">
+                    <input type="text" id="hinhanhUrl" class="form-control" placeholder="Hoặc dán đường dẫn (URL) hình ảnh vào đây...">
+                </div>
                 <div style="margin-bottom: 8px;">
                     <label style="font-size: 11px; font-weight: bold; color: #475569;">Mô tả sản phẩm (mota):</label>
                     <textarea id="mota" class="form-control" rows="2" placeholder="Thông tin chi tiết về sản phẩm..."></textarea>
@@ -146,9 +177,16 @@
         </div>
     </div>
 
-    <!-- SCRIPT XỬ LÝ DỮ LIỆU -->
+    <!-- SCRIPT XỬ LÝ DỮ LIỆU KẾT HỢP PHÂN TRANG -->
     <script>
         let danhSachSanPhamToanCuc = [];
+        let danhSachHienThiHienTai = [];
+
+        // Cấu hình phân trang (Hiển thị 5 sản phẩm mỗi trang)
+        let trangThaiPhanTrang = {
+            trangHienTai: 1,
+            soDongMoiTrang: 4
+        };
 
         function dangXuatMobile() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
@@ -173,30 +211,39 @@
             }
 
             danhSachSanPhamToanCuc = data || [];
-            hienThiDanhSach(danhSachSanPhamToanCuc);
+            danhSachHienThiHienTai = danhSachSanPhamToanCuc;
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSach();
         }
 
-        function hienThiDanhSach(data) {
+        function hienThiDanhSach() {
             const container = document.getElementById('danhSachSanPhamContainer');
             
-            if (data.length === 0) {
+            if (!danhSachHienThiHienTai || danhSachHienThiHienTai.length === 0) {
                 container.innerHTML = `<div style="text-align: center; color: #777; padding: 15px; font-size: 11px;">Không tìm thấy sản phẩm nào</div>`;
                 document.getElementById('tongSoSanPham').innerText = '0 sản phẩm';
+                document.getElementById('paginationContainer').innerHTML = '';
                 return;
             }
 
-            document.getElementById('tongSoSanPham').innerText = data.length + ' sản phẩm';
+            document.getElementById('tongSoSanPham').innerText = danhSachHienThiHienTai.length + ' sản phẩm';
             container.innerHTML = '';
 
-            data.forEach(item => {
+            // Tính toán cắt dữ liệu phân trang
+            const { trangHienTai, soDongMoiTrang } = trangThaiPhanTrang;
+            const tongSoTrang = Math.ceil(danhSachHienThiHienTai.length / soDongMoiTrang);
+            
+            const viTriBatDau = (trangHienTai - 1) * soDongMoiTrang;
+            const viTriKetThuc = viTriBatDau + soDongMoiTrang;
+            const duLieuTrangNay = danhSachHienThiHienTai.slice(viTriBatDau, viTriKetThuc);
+
+            duLieuTrangNay.forEach(item => {
                 const maSP = 'SP' + String(item.id).padStart(4, '0');
                 const tenSP = item.tensanpham || 'Chưa đặt tên';
                 const giaBan = item.giaban ? Number(item.giaban).toLocaleString() + 'đ' : '0đ';
                 const tonKho = item.soluongton !== undefined ? item.soluongton : (item.tonkho || 0);
                 const nhomHang = item.nhomsanpham || item.danhmuc || 'Chưa phân loại';
                 const maBarcode = item.mabarcode || '---';
-                
-                // Hiển thị ảnh nếu có, nếu không lấy ảnh mặc định
                 const hinhAnh = item.hinhanh || item.image || 'https://via.placeholder.com/50?text=Pet';
 
                 container.innerHTML += `
@@ -209,7 +256,6 @@
                             </div>
                             <div style="font-size: 11px; color: #059669; font-weight: bold; margin-bottom: 2px;">💰 Giá bán: ${giaBan}</div>
                             <div style="font-size: 11px; color: #475569; margin-bottom: 2px;">🏷️ Nhóm: ${nhomHang}</div>
-                            <!-- MÃ VẠCH VÀ TỒN KHO GỘP CHUNG TRÊN 1 HÀNG -->
                             <div style="font-size: 11px; color: #475569; margin-bottom: 2px; display: flex; justify-content: space-between;">
                                 <span>barcode: <b>${maBarcode}</b></span>
                                 <span>📦 Tồn kho: <b>${tonKho}</b></span>
@@ -222,18 +268,57 @@
                     </div>
                 `;
             });
+
+            // Vẽ thanh nút phân trang
+            veNutPhanTrang(tongSoTrang);
+        }
+
+        function veNutPhanTrang(tongSoTrang) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            paginationContainer.innerHTML = '';
+
+            if (tongSoTrang <= 1) return;
+
+            const { trangHienTai } = trangThaiPhanTrang;
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === 1 ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai - 1})">◀ Trước</button>
+            `;
+
+            for (let i = 1; i <= tongSoTrang; i++) {
+                if (i === 1 || i === tongSoTrang || (i >= trangHienTai - 1 && i <= trangHienTai + 1)) {
+                    paginationContainer.innerHTML += `
+                        <button class="page-btn ${i === trangHienTai ? 'active' : ''}" onclick="chuyenTrang(${i})">${i}</button>
+                    `;
+                } else if (i === trangHienTai - 2 || i === trangHienTai + 2) {
+                    paginationContainer.innerHTML += `<span style="color: #64748b; font-size: 12px; padding: 0 2px;">...</span>`;
+                }
+            }
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === tongSoTrang ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai + 1})">Sau ▶</button>
+            `;
+        }
+
+        function chuyenTrang(trangMoi) {
+            trangThaiPhanTrang.trangHienTai = trangMoi;
+            hienThiDanhSach();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function timKiemSanPham() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
-            const ketQuaLoc = danhSachSanPhamToanCuc.filter(item => {
+            danhSachHienThiHienTai = danhSachSanPhamToanCuc.filter(item => {
                 const tenSP = (item.tensanpham || '').toLowerCase();
                 const nhomHang = (item.nhomsanpham || item.danhmuc || '').toLowerCase();
                 const maBarcode = (item.mabarcode || '').toLowerCase();
                 const maSP = ('sp' + String(item.id)).toLowerCase();
                 return tenSP.includes(tuKhoa) || nhomHang.includes(tuKhoa) || maBarcode.includes(tuKhoa) || maSP.includes(tuKhoa);
             });
-            hienThiDanhSach(ketQuaLoc);
+            
+            // Reset về trang 1 khi tìm kiếm
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSach();
         }
 
         function moModalThem() {
@@ -242,7 +327,6 @@
             document.getElementById('editId').value = '';
             document.getElementById('hinhanhUrl').value = '';
             
-            // Tự động sinh mã barcode bắt đầu bằng đầu số 86
             const randomBarcode = '86' + Math.floor(10000000 + Math.random() * 90000000);
             document.getElementById('mabarcode').value = randomBarcode;
 
@@ -250,100 +334,97 @@
         }
 
         function moModalSua(id) {
-    const item = danhSachSanPhamToanCuc.find(x => x.id === id);
-    if (!item) return;
+            const item = danhSachSanPhamToanCuc.find(x => x.id === id);
+            if (!item) return;
 
-    document.getElementById('modalTitle').innerText = '✏️ Cập Nhật Hàng Hóa';
-    document.getElementById('editId').value = item.id;
-    document.getElementById('tensanpham').value = item.tensanpham || '';
-    document.getElementById('mabarcode').value = item.mabarcode || ('86' + Math.floor(10000000 + Math.random() * 90000000));
-    document.getElementById('nhomsanpham').value = item.nhomsanpham || item.danhmuc || '';
-    document.getElementById('donvi').value = item.donvi || item.donvitinh || '';
-    document.getElementById('gianhap').value = item.gianhap || 0;
-    document.getElementById('giaban').value = item.giaban || 0;
-    document.getElementById('soluongton').value = item.soluongton !== undefined ? item.soluongton : (item.tonkho || 0);
-    document.getElementById('mota').value = item.mota || '';
-    
-    // Gán vào ô nhập link ảnh
-    document.getElementById('hinhanhUrl').value = item.hinhanh || item.image || '';
-    document.getElementById('hinhanhFile').value = ''; // Reset file input
+            document.getElementById('modalTitle').innerText = '✏️ Cập Nhật Hàng Hóa';
+            document.getElementById('editId').value = item.id;
+            document.getElementById('tensanpham').value = item.tensanpham || '';
+            document.getElementById('mabarcode').value = item.mabarcode || ('86' + Math.floor(10000000 + Math.random() * 90000000));
+            document.getElementById('nhomsanpham').value = item.nhomsanpham || item.danhmuc || '';
+            document.getElementById('donvi').value = item.donvi || item.donvitinh || '';
+            document.getElementById('gianhap').value = item.gianhap || 0;
+            document.getElementById('giaban').value = item.giaban || 0;
+            document.getElementById('soluongton').value = item.soluongton !== undefined ? item.soluongton : (item.tonkho || 0);
+            document.getElementById('mota').value = item.mota || '';
+            
+            document.getElementById('hinhanhUrl').value = item.hinhanh || item.image || '';
+            document.getElementById('hinhanhFile').value = '';
 
-    document.getElementById('modalSanPham').style.display = 'flex';
-}
+            document.getElementById('modalSanPham').style.display = 'flex';
+        }
 
         function dongModal() {
             document.getElementById('modalSanPham').style.display = 'none';
         }
 
         async function luuSanPham(event) {
-    event.preventDefault();
+            event.preventDefault();
 
-    const id = document.getElementById('editId').value;
-    const tensanpham = document.getElementById('tensanpham').value.trim();
-    let mabarcode = document.getElementById('mabarcode').value.trim();
-    const nhomsanpham = document.getElementById('nhomsanpham').value;
-    const donvi = document.getElementById('donvi').value.trim();
-    const gianhap = parseFloat(document.getElementById('gianhap').value) || 0;
-    const giaban = parseFloat(document.getElementById('giaban').value) || 0;
-    const soluongton = parseInt(document.getElementById('soluongton').value) || 0;
-    const mota = document.getElementById('mota').value.trim();
-    
-    // Lấy giá trị ảnh cũ nếu có sẵn
-    let hinhanh = document.getElementById('hinhanhUrl').value;
-    const fileInput = document.getElementById('hinhanhFile');
+            const id = document.getElementById('editId').value;
+            const tensanpham = document.getElementById('tensanpham').value.trim();
+            let mabarcode = document.getElementById('mabarcode').value.trim();
+            const nhomsanpham = document.getElementById('nhomsanpham').value;
+            const donvi = document.getElementById('donvi').value.trim();
+            const gianhap = parseFloat(document.getElementById('gianhap').value) || 0;
+            const giaban = parseFloat(document.getElementById('giaban').value) || 0;
+            const soluongton = parseInt(document.getElementById('soluongton').value) || 0;
+            const mota = document.getElementById('mota').value.trim();
+            
+            let hinhanh = document.getElementById('hinhanhUrl').value;
+            const fileInput = document.getElementById('hinhanhFile');
 
-    const btn = document.getElementById('btnSaveSanPham');
-    btn.disabled = true;
-    btn.textContent = 'Đang lưu...';
+            const btn = document.getElementById('btnSaveSanPham');
+            btn.disabled = true;
+            btn.textContent = 'Đang lưu...';
 
-    // Xử lý đọc file ảnh tải lên thành Base64 để lưu vào cơ sở dữ liệu an toàn
-    if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        hinhanh = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.readAsDataURL(file);
-        });
-    }
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                hinhanh = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            }
 
-    if (!mabarcode || !mabarcode.startsWith('86')) {
-        mabarcode = '86' + Math.floor(10000000 + Math.random() * 90000000);
-    }
+            if (!mabarcode || !mabarcode.startsWith('86')) {
+                mabarcode = '86' + Math.floor(10000000 + Math.random() * 90000000);
+            }
 
-    const payload = {
-        tensanpham: tensanpham,
-        mabarcode: mabarcode,
-        nhomsanpham: nhomsanpham,
-        donvi: donvi,
-        gianhap: gianhap,
-        giaban: giaban,
-        soluongton: soluongton,
-        mota: mota,
-        hinhanh: hinhanh
-    };
+            const payload = {
+                tensanpham: tensanpham,
+                mabarcode: mabarcode,
+                nhomsanpham: nhomsanpham,
+                donvi: donvi,
+                gianhap: gianhap,
+                giaban: giaban,
+                soluongton: soluongton,
+                mota: mota,
+                hinhanh: hinhanh
+            };
 
-    let error = null;
-    if (id) {
-        const res = await db.from('danhmucsanpham').update(payload).eq('id', id);
-        error = res.error;
-    } else {
-        const res = await db.from('danhmucsanpham').insert([payload]);
-        error = res.error;
-    }
+            let error = null;
+            if (id) {
+                const res = await db.from('danhmucsanpham').update(payload).eq('id', id);
+                error = res.error;
+            } else {
+                const res = await db.from('danhmucsanpham').insert([payload]);
+                error = res.error;
+            }
 
-    btn.disabled = false;
-    btn.textContent = '💾 Lưu sản phẩm';
+            btn.disabled = false;
+            btn.textContent = '💾 Lưu sản phẩm';
 
-    if (error) {
-        console.error('Lỗi lưu sản phẩm:', error);
-        alert('Lỗi khi lưu dữ liệu: ' + error.message);
-        return;
-    }
+            if (error) {
+                console.error('Lỗi lưu sản phẩm:', error);
+                alert('Lỗi khi lưu dữ liệu: ' + error.message);
+                return;
+            }
 
-    alert(id ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
-    dongModal();
-    await loadDanhSachSanPham();
-}
+            alert(id ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
+            dongModal();
+            await loadDanhSachSanPham();
+        }
 
         async function xoaSanPham(id) {
             if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) return;
