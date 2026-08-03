@@ -8,21 +8,51 @@
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
+    <!-- Kết nối các file cấu hình -->
 	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="out.js"></script>
+
     <!-- CSS chung và CSS riêng mobile -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
     <link rel="stylesheet" href="css/button.css">
     <style>
-        /* CSS CHUẨN CHO POPUP GIỐNG ẢNH MẪU */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content-custom { background: #fff; width: 90%; max-width: 380px; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; font-family: system-ui, -apple-system, sans-serif; }
         .form-control { width: 100%; padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
+        
+        /* CSS NÚT PHÂN TRANG TRUYỀN THỐNG */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 20px 0 10px 0;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .page-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+        .page-btn:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -31,7 +61,7 @@
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
             <h3>🐾 Quản lý Thú cưng</h3>
-            <a href="../page/thongke.html" class="btn-desktop">💻 Bản Desktop</a>
+            <a href="../thucung.html" class="btn-desktop">💻 Bản Desktop</a>
             <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                 <span>🚪</span> Thoát
             </button>
@@ -46,6 +76,9 @@
         <div id="mobile-list">
             <div style="text-align: center; color: #666; padding: 20px;">Đang tải dữ liệu...</div>
         </div>
+
+        <!-- KHUNG CHỨA CÁC NÚT PHÂN TRANG -->
+        <div id="paginationContainer" class="pagination-container"></div>
     </div>
 
     <!-- MODAL THÊM THÚ CƯNG -->
@@ -154,7 +187,7 @@
         </div>
     </div>
 
-    <!-- MODAL TIÊM VACCINE GIỐNG Y HỆT ẢNH MẪU -->
+    <!-- MODAL TIÊM VACCINE -->
     <div id="modalVaccine" class="modal-overlay">
         <div class="modal-content-custom">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
@@ -209,10 +242,17 @@
         }
     </script>
 
-    <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ HIỂN THỊ -->
+    <!-- SCRIPT TÍCH HỢP PHÂN TRANG TRUYỀN THỐNG TRỰC TIẾP TRONG FILE -->
     <script>
         let danhSachThuCungGoc = [];
+        let danhSachHienThiHienTai = [];
         let mapKhachHang = {}; 
+
+        // Cấu hình phân trang trực tiếp
+        let trangThaiPhanTrang = {
+            trangHienTai: 1,
+            soDongMoiTrang: 2 // Hiển thị 5 thú cưng mỗi trang
+        };
 
         async function loadDuLieu() {
             const { data: khData } = await db.from('khachhang').select('id, hovaten');
@@ -230,19 +270,30 @@
             }
 
             danhSachThuCungGoc = data || [];
-            hienThiDanhSach(danhSachThuCungGoc);
+            danhSachHienThiHienTai = danhSachThuCungGoc;
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSach();
         }
 
-        function hienThiDanhSach(data) {
+        function hienThiDanhSach() {
             const container = document.getElementById('mobile-list');
             container.innerHTML = '';
 
-            if (data.length === 0) {
+            if (!danhSachHienThiHienTai || danhSachHienThiHienTai.length === 0) {
                 container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">Không tìm thấy thú cưng phù hợp</div>`;
+                document.getElementById('paginationContainer').innerHTML = '';
                 return;
             }
 
-            data.forEach(item => {
+            // Tính toán cắt dữ liệu theo trang
+            const { trangHienTai, soDongMoiTrang } = trangThaiPhanTrang;
+            const tongSoTrang = Math.ceil(danhSachHienThiHienTai.length / soDongMoiTrang);
+            
+            const viTriBatDau = (trangHienTai - 1) * soDongMoiTrang;
+            const viTriKetThuc = viTriBatDau + soDongMoiTrang;
+            const duLieuTrangNay = danhSachHienThiHienTai.slice(viTriBatDau, viTriKetThuc);
+
+            duLieuTrangNay.forEach(item => {
                 const maTC = 'TC' + String(item.id).padStart(4, '0');
                 const idChuNuoi = item.makhachhang || item.machunuoi;
                 const tenChuNuoi = idChuNuoi && mapKhachHang[idChuNuoi] ? mapKhachHang[idChuNuoi] : 'Chưa có chủ nuôi';
@@ -288,11 +339,47 @@
                     </div>
                 `;
             });
+
+            // Vẽ các nút phân trang
+            veNutPhanTrang(tongSoTrang);
+        }
+
+        function veNutPhanTrang(tongSoTrang) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            paginationContainer.innerHTML = '';
+
+            if (tongSoTrang <= 1) return;
+
+            const { trangHienTai } = trangThaiPhanTrang;
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === 1 ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai - 1})">◀ Trước</button>
+            `;
+
+            for (let i = 1; i <= tongSoTrang; i++) {
+                if (i === 1 || i === tongSoTrang || (i >= trangHienTai - 1 && i <= trangHienTai + 1)) {
+                    paginationContainer.innerHTML += `
+                        <button class="page-btn ${i === trangHienTai ? 'active' : ''}" onclick="chuyenTrang(${i})">${i}</button>
+                    `;
+                } else if (i === trangHienTai - 2 || i === trangHienTai + 2) {
+                    paginationContainer.innerHTML += `<span style="color: #64748b; font-size: 12px; padding: 0 2px;">...</span>`;
+                }
+            }
+
+            paginationContainer.innerHTML += `
+                <button class="page-btn" ${trangHienTai === tongSoTrang ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai + 1})">Sau ▶</button>
+            `;
+        }
+
+        function chuyenTrang(trangMoi) {
+            trangThaiPhanTrang.trangHienTai = trangMoi;
+            hienThiDanhSach();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function timKiemThuCung() {
             const tuKhoa = document.getElementById('searchMobile').value.toLowerCase().trim();
-            const ketQuaLoc = danhSachThuCungGoc.filter(item => {
+            danhSachHienThiHienTai = danhSachThuCungGoc.filter(item => {
                 const ten = (item.tenthucung || '').toLowerCase();
                 const loai = (item.loai || '').toLowerCase();
                 const giong = (item.giong || item.giongloai || '').toLowerCase();
@@ -301,14 +388,16 @@
                 
                 return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || idChu.includes(tuKhoa) || tenChu.includes(tuKhoa);
             });
-            hienThiDanhSach(ketQuaLoc);
+            
+            // Reset về trang 1 khi tìm kiếm
+            trangThaiPhanTrang.trangHienTai = 1;
+            hienThiDanhSach();
         }
 
         function chuyenSangKhamBenh(petId) {
             window.location.href = `khambenh.html?auto_open=true&pet_id=${petId}`;
         }
 
-        // --- HÀM XỬ LÝ MODAL TIÊM VACCINE ---
         function moModalTiemNhanh(petId) {
             document.getElementById('modalVaccine').style.display = 'flex';
             document.getElementById('formTiemNhanh').reset();
