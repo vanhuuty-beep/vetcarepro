@@ -1,37 +1,34 @@
+// Tự động nhận diện tên miền để gán đúng thông tin và Database của Matpet hoặc Vetcare
+const isMatpet = window.location.hostname.includes("matpet");
+
 const CONFIG = {
-    SUPABASE_URL: window.ENV_SUPABASE_URL || "https://glbbycylllulafzrzfcz.supabase.co",
-    SUPABASE_KEY: window.ENV_SUPABASE_KEY || "sb_publishable_-T8VmENvk62ZD2Ao4hJa1g_mC29Zftk",
-    get SUPABASE_ANON_KEY() { return this.SUPABASE_KEY; }
+    SUPABASE_URL: isMatpet 
+        ? "https://aykhvqrogmxzexhrzynv.supabase.co" 
+        : (window.ENV_SUPABASE_URL || "https://glbbycylllulafzrzfcz.supabase.co"),
+        
+    SUPABASE_KEY: isMatpet 
+        ? "sb_publishable_ZztHGsSnkrH36JXVq5W3DQ_jcrj1trx" 
+        : (window.ENV_SUPABASE_KEY || "sb_publishable_-T8VmENvk62ZD2Ao4hJa1g_mC29Zftk"),
 };
 
-// Danh sách thông tin các phòng khám theo tên miền truy cập
-const DANH_SACH_PHONG_KHAM = {
-    "matpet.vercel.app": {
-        ten: "PHÒNG KHÁM THÚ Y MATPET",
-        diachi: "Địa chỉ phòng khám Matpet",
-        dienthoai: "Số điện thoại Matpet",
-        slogan: "Hệ thống quản lý thú y Matpet"
-    },
-    "vetcare.vn": {
-        ten: "VETCARE PRO - PHÒNG KHÁM THÚ Y",
-        diachi: "Đà Nẵng",
-        dienthoai: "0935.xxx.xxx",
-        slogan: "Hệ thống quản lý thú y thông minh"
-    }
+// Cấu hình thông tin phòng khám tự động đổi theo tên miền
+const CLINIC_INFO = isMatpet ? {
+    ten: "PHÒNG KHÁM THÚ Y MATPET",
+    diachi: "Địa chỉ phòng khám Matpet",
+    dienthoai: "Số điện thoại Matpet",
+    slogan: "Hệ thống quản lý thú y Matpet"
+} : {
+    ten: "VETCARE PRO - PHÒNG KHÁM THÚ Y",
+    diachi: "Đà Nẵng",
+    dienthoai: "0935.xxx.xxx",
+    slogan: "Hệ thống quản lý thú y thông minh"
 };
 
-// Tự động nhận diện phòng khám thông minh, dù có chữ www hay không vẫn bắt chính xác
-const hostname = window.location.hostname;
-let CLINIC_INFO = DANH_SACH_PHONG_KHAM["vetcare.vn"]; // Mặc định
-
-if (hostname.includes("matpet")) {
-    CLINIC_INFO = DANH_SACH_PHONG_KHAM["matpet.vercel.app"];
-} else if (hostname.includes("vetcare")) {
-    CLINIC_INFO = DANH_SACH_PHONG_KHAM["vetcare.vn"];
-}
-
-// Hàm tự động bơm thông tin vào các khung in
+// Hàm tự động bơm thông tin vào các khung in và tiêu đề trang
 function capNhatThongTinIn() {
+    // Đổi tiêu đề trang web
+    document.title = CLINIC_INFO.ten;
+    
     const printHeaders = document.querySelectorAll('.print-header');
     printHeaders.forEach(header => {
         header.innerHTML = `
