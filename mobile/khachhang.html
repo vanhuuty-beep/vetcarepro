@@ -56,7 +56,7 @@
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
             <h3>👤 Quản lý Khách hàng</h3>
-            <a href="../page/thongke.html" class="btn-desktop">💻 Bản Desktop</a>
+            <a href="../khachhang.html" class="btn-desktop">💻 Bản Desktop</a>
 			<button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
     <span>🚪</span> Thoát
 </button>
@@ -178,8 +178,44 @@
         // Cấu hình phân trang trực tiếp
         let trangThaiPhanTrang = {
             trangHienTai: 1,
-            soDongMoiTrang: 3 // Hiển thị 5 khách hàng mỗi trang
+            soDongMoiTrang: 3 // Hiển thị 3 khách hàng mỗi trang
         };
+
+        // --- HÀM ẨN SỐ ĐIỆN THOẠI (TRỪ ADMIN) CHO MOBILE ---
+        function anSoDienThoaiMobile(sdt) {
+            if (!sdt) return 'Chưa có SĐT';
+            
+            let sdtStr = String(sdt).trim();
+            let displaySdt = sdtStr.startsWith('0') ? sdtStr : '0' + sdtStr;
+            
+            let isAdmin = false;
+            try {
+                let rawUser = sessionStorage.getItem('currentUser');
+                if (rawUser) {
+                    let currentUser = JSON.parse(rawUser);
+                    let role = String(currentUser.vaitro || currentUser.role || '').trim().toLowerCase();
+                    let username = String(currentUser.tentaikhoan || currentUser.username || '').trim().toLowerCase();
+                    
+                    if (role === 'admin' || username === 'admin') {
+                        isAdmin = true;
+                    }
+                }
+            } catch (e) {
+                let rawStr = sessionStorage.getItem('currentUser') || '';
+                if (rawStr.toLowerCase().includes('admin')) {
+                    isAdmin = true;
+                }
+            }
+            
+            // Nếu là Admin -> Hiển thị SĐT đầy đủ kèm nút bấm gọi
+            if (isAdmin) {
+                return `<a href="tel:${displaySdt}" style="color: #059669; font-weight: bold; text-decoration: none;">${displaySdt} 📞</a>`;
+            }
+            
+            // Nếu không phải Admin -> Dấu hết số điện thoại thành dấu sao
+            let sdtBiDau = '*'.repeat(displaySdt.length);
+            return `<span style="color: #d97706; font-weight: bold;" title="Số điện thoại đã được bảo mật">${sdtBiDau} 🔒</span>`;
+        }
 
         async function loadKhachHangMobile() {
             const { data, error } = await db.from('khachhang').select('*').order('id', { ascending: false });
@@ -215,9 +251,9 @@
 
             duLieuTrangNay.forEach(item => {
                 const maKH = formatMaKhachHang ? formatMaKhachHang(item.id) : ('KH' + String(item.id).padStart(4, '0'));
-                const sdtHtml = item.sodienthoai 
-                    ? `<a href="tel:${item.sodienthoai}" style="color: #059669; font-weight: bold; text-decoration: none;">${item.sodienthoai} 📞</a>` 
-                    : 'Chưa có SĐT';
+                
+                // Gọi hàm phân quyền ẩn số điện thoại cho mobile
+                const sdtHtml = anSoDienThoaiMobile(item.sodienthoai);
 
                 container.innerHTML += `
                     <div class="mobile-card">
