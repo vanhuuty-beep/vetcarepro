@@ -5,16 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- CÁC THẺ META CHUẨN SEO -->
-    <title>Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp</title>
-    <meta name="description" content="Phòng khám thú y VetCare Pro cung cấp dịch vụ khám chữa bệnh thú cưng, tiêm phòng vaccine, siêu âm, xét nghiệm, spa cắt tỉa lông uy tín tại Đà Nẵng. Đặt lịch khám ngay!">
-    <meta name="keywords" content="phòng khám thú y, chăm sóc thú cưng, khám bệnh cho chó mèo, tiêm phòng vaccine thú y, spa thú cưng đà nẵng, vetcare pro">
-    <meta name="author" content="VetCare Pro">
+    <title>Hệ Thống Quản Lý Thú Y</title>
+    <meta name="description" content="Hệ thống y tế và chăm sóc thú cưng chuyên nghiệp. Đặt lịch khám nhanh chóng, quản lý thú y thông minh[cite: 5].">
     
-    <!-- Thẻ Open Graph (SEO mạng xã hội Facebook, Zalo) -->
-    <meta property="og:title" content="Phòng Khám Thú Y VetCare Pro - Chăm Sóc Thú Cưng Chuyên Nghiệp">
-    <meta property="og:description" content="Hệ thống y tế thú cưng toàn diện. Đặt lịch khám nhanh chóng, không cần tài khoản!">
-    <meta property="og:type" content="website">
-
     <!-- Thư viện hệ thống -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/env.js"></script>
@@ -23,186 +16,133 @@
     
     <style>
         body { 
-            background: #f1f5f9; 
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
             font-family: Arial, sans-serif; 
             margin: 0; 
-            padding: 0 0 70px 0; 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #1e293b; 
         }
         .container { 
+            width: 100%;
             max-width: 420px; 
-            margin: 20px auto; 
-            padding: 0 12px; 
+            margin: 20px; 
+            padding: 24px; 
             box-sizing: border-box;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            text-align: center;
         }
         .header-title { 
-            text-align: center; 
-            margin-bottom: 18px; 
+            margin-bottom: 24px; 
         }
-        /* Thẻ H1 chuẩn SEO cho tên thương hiệu/trang chính */
         .header-title h1 { 
             color: #0284c7; 
-            margin: 0 0 4px 0; 
-            font-size: 20px; 
+            margin: 0 0 6px 0; 
+            font-size: 22px; 
+            font-weight: 800;
+            line-height: 1.3;
         }
         .header-title p { 
-            font-size: 12px; 
+            font-size: 13px; 
             color: #64748b; 
             margin: 0; 
+            font-weight: 500;
         }
 
         /* Khung phân luồng chức năng */
         .action-box {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px;
+            box-sizing: border-box;
         }
         .action-box p {
-            margin: 0 0 12px 0;
+            margin: 0 0 14px 0;
             font-weight: bold;
-            color: #1e293b;
-            font-size: 13px;
+            color: #475569;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .btn-action {
             display: block;
             width: 100%;
-            padding: 11px;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            padding: 14px 16px; /* Tăng độ cao và không gian bấm cho nút */
+            margin-bottom: 12px; /* Tạo khoảng hở thoáng đãng giữa các nút, không bị dính */
+            border-radius: 12px;
             font-weight: bold;
             font-size: 13px;
             text-decoration: none;
             box-sizing: border-box;
             text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-action:last-child {
+            margin-bottom: 0; /* Bỏ lề dưới của nút cuối cùng */
+        }
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .btn-owner { background: #0284c7; color: white; }
+        .btn-owner:hover { background: #0369a1; }
+        
         .btn-admin { background: #334155; color: white; }
-        .btn-booking { background: #10b981; color: white; margin-bottom: 0; }
+        .btn-admin:hover { background: #1e293b; }
+        
+        .btn-booking { background: #10b981; color: white; }
+        .btn-booking:hover { background: #059669; }
 
-        .info-card { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 16px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
-            border: 1px solid #e2e8f0;
-        }
-        /* Thẻ H2 chuẩn SEO cho các đề mục nội dung */
-        .info-card h2 { 
-            color: #0284c7; 
-            font-size: 14px; 
-            margin-top: 0; 
-            margin-bottom: 8px; 
-            border-bottom: 2px solid #e0f2fe;
-            padding-bottom: 5px;
-        }
-        .info-card p, .info-card ul { 
-            font-size: 13px; 
-            line-height: 1.6; 
-            color: #334155; 
-            margin: 0 0 10px 0; 
-        }
-        .info-card ul { padding-left: 18px; }
-
-        /* Thanh menu điều hướng dưới đáy */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 420px;
-            background: #ffffff;
-            border-top: 1px solid #cbd5e1;
-            border-left: 1px solid #cbd5e1;
-            border-right: 1px solid #cbd5e1;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
-            z-index: 1000;
-            box-sizing: border-box;
-        }
-        .nav-item {
-            text-align: center;
-            text-decoration: none;
-            color: #64748b;
+        .footer-note {
+            margin-top: 20px;
             font-size: 11px;
-            font-weight: bold;
-            flex: 1;
+            color: #94a3b8;
         }
-        .nav-item.active { color: #0284c7; }
-        .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- Logo và tiêu đề tự động nhận diện theo phòng khám -->
         <div class="header-title">
-            <h1>🐾 VetCare Pro</h1>
-            <p>Hệ thống Y tế & Chăm sóc Thú cưng Chuyên nghiệp</p>
+            <div style="font-size: 36px; margin-bottom: 8px;">🐾</div>
+            <h1 id="clinic-title">VetCare Pro</h1>
+            <p id="clinic-slogan">Hệ thống Y tế & Chăm sóc Thú cưng Chuyên nghiệp</p>
         </div>
 
-        <!-- Khung phân luồng chức năng -->
+        <!-- Bảng lựa chọn dịch vụ hệ thống -->
         <div class="action-box">
             <p>Lựa chọn dịch vụ hệ thống</p>
             <a href="chunuoi/login.html" class="btn-action btn-owner">📱 Đăng Nhập Cổng Chủ Nuôi</a>
-            <a href="chunuoi/booklich.html" class="btn-action btn-booking">📅 Đặt Lịch Khám (Không cần tài khoản)</a>
+            <a href="chunuoi/datlich.html" class="btn-action btn-booking">📅 Đặt Lịch Khám (Không cần tài khoản)</a>
             <a href="login.html" class="btn-action btn-admin">🔐 Đăng Nhập Quản Lý (Nhân viên/Bác sĩ)</a>
         </div>
 
-        <!-- Nội dung giới thiệu chuẩn cấu trúc SEO (H2) -->
-        <div class="info-card">
-            <h2>🏥 Về Chúng Tôi</h2>
-            <p>Phòng khám thú y <strong>VetCare Pro</strong> chuyên cung cấp dịch vụ chăm sóc sức khỏe toàn diện, tận tâm cho thú cưng với hệ thống trang thiết bị tiên tiến.</p>
-        </div>
-
-        <div class="info-card">
-            <h2>🩺 Dịch Vụ Nổi Bật</h2>
-            <ul>
-                <li>Khám và điều trị nội - ngoại trú chuyên sâu.</li>
-                <li>Tiêm phòng vaccine, tẩy giun định kỳ.</li>
-                <li>Phẫu thuật ngoại khoa an toàn.</li>
-                <li>Siêu âm, xét nghiệm máu, X-quang.</li>
-                <li>Dịch vụ Spa, cắt tỉa lông tạo kiểu.</li>
-            </ul>
-        </div>
-
-        <div class="info-card">
-            <h2>🕒 Thời Gian Làm Việc</h2>
-            <p><strong>Thứ Hai - Chủ Nhật:</strong> 08:00 - 20:00 (Kể cả ngày lễ).</p>
-        </div>
-
-        <div class="info-card">
-            <h2>📞 Liên Hệ & Địa Chỉ</h2>
-            <p>
-                📍 <strong>Địa chỉ:</strong> Số 123, Đường Thú Y, TP. Đà Nẵng<br>
-                ☎️ <strong>Hotline:</strong> 0935.123.456
-            </p>
+        <div class="footer-note">
+            &copy; 2026 Hệ thống quản lý thú y thông minh
         </div>
     </div>
 
-    <!-- Thanh menu điều hướng dưới đáy -->
-    <div class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <span class="nav-icon">ℹ️</span>Giới thiệu
-        </a>
-        <a href="chunuoi/booklich.html" class="nav-item">
-            <span class="nav-icon">📅</span>Đặt lịch
-        </a>
-        <a href="chunuoi/login.html" class="nav-item">
-            <span class="nav-icon">👤</span>Chủ nuôi
-        </a>
-        <a href="login.html" class="nav-item">
-            <span class="nav-icon">🔐</span>Quản lý
-        </a>
-    </div>
+    <!-- Script tự động cập nhật tên và slogan theo file config.js tùy vào tên miền -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof CLINIC_INFO !== 'undefined') {
+                const titleEl = document.getElementById('clinic-title');
+                const sloganEl = document.getElementById('clinic-slogan');
+                
+                if (titleEl) titleEl.innerText = CLINIC_INFO.ten;
+                if (sloganEl) sloganEl.innerText = CLINIC_INFO.slogan;
+                document.title = CLINIC_INFO.ten;
+            }
+        });
+    </script>
 
 </body>
 </html>
