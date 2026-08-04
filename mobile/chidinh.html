@@ -12,7 +12,9 @@
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
-<script src="out.js"></script>
+	<script src="js/thongbao.js"></script>
+    <script src="out.js"></script>
+    
     <!-- CSS chung và CSS riêng mobile -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="css/mobile.css">
@@ -24,16 +26,17 @@
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
             <h3>📋 Quản lý Chỉ định</h3>
-            <a href="../page/thongke.html" class="btn-desktop">💻 Bản Desktop</a>
-			<button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-    <span>🚪</span> Thoát
-</button>
+            <div style="display: flex; gap: 4px; align-items: center;">
+                <a href="../phieuchidinh.html" class="btn-desktop">💻 Desktop</a>
+                <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    <span>🚪</span> Thoát
+                </button>
+            </div>
         </div>
 
         <!-- THANH TÌM KIẾM VÀ NÚT THÊM NẰM CÙNG 1 DÒNG -->
         <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
             <input type="text" id="searchMobile" class="search-box" placeholder="🔍 Tìm mã khám, kết luận hoặc dịch vụ..." onkeyup="timKiemChiDinh()" style="flex: 1; margin: 0;">
-            <!-- Đã thu nhỏ nút Chỉ định ở đây -->
             <button class="btn-add" onclick="moModalThem()" style="white-space: nowrap; margin: 0; padding: 6px 10px; font-size: 12px;">➕ Chỉ định</button>
         </div>
 
@@ -87,6 +90,7 @@
                         <label>Trạng thái (trangthai):</label>
                         <select id="modalTrangThai" class="form-control">
                             <option value="Chờ thực hiện">Chờ thực hiện</option>
+                            <option value="Đang thực hiện">Đang thực hiện</option>
                             <option value="Đã hoàn thành">Đã hoàn thành</option>
                             <option value="Đã hủy">Đã hủy</option>
                         </select>
@@ -149,6 +153,7 @@
                     <label>Trạng thái (trangthai):</label>
                     <select id="suaTrangThai" class="form-control">
                         <option value="Chờ thực hiện">Chờ thực hiện</option>
+                        <option value="Đang thực hiện">Đang thực hiện</option>
                         <option value="Đã hoàn thành">Đã hoàn thành</option>
                         <option value="Đã hủy">Đã hủy</option>
                     </select>
@@ -161,16 +166,16 @@
             </form>
         </div>
     </div>
-<script>
-        // Hàm xử lý đăng xuất cho mobile
+
+    <script>
         function dangXuatMobile() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 sessionStorage.removeItem('currentUser');
-                // Quay về trang đăng nhập ngoài thư mục gốc
                 window.location.href = '../index.html';
             }
         }
     </script>
+
     <!-- SCRIPT XỬ LÝ DỮ LIỆU VÀ MODAL -->
     <script>
         let danhSachChiDinhGoc = [];
@@ -186,16 +191,24 @@
                 moModalThem();
                 document.getElementById('modalMaKhamBenh').value = kbId;
             }
+            loadChiDinhMobile();
+
+            // Đăng ký Realtime tự động cập nhật khi có thay đổi dữ liệu từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-chidinh-mobile')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'phieuchidinh' }, async () => {
+                      await loadChiDinhMobile();
+                  })
+                  .subscribe();
+            }
         });
 
         async function loadChiDinhMobile() {
-            // 1. Tải danh mục dịch vụ từ bảng 'dichvu'
             const { data: dvData } = await db.from('dichvu').select('*');
             if (dvData) {
                 danhSachDichVuGoc = dvData;
             }
 
-            // 2. Tải thông tin hỗ trợ Khách hàng và Thú cưng
             const { data: khData } = await db.from('khachhang').select('*');
             if (khData) khData.forEach(kh => mapKhachHang[kh.id] = kh.hovaten || kh.ten);
 
@@ -208,7 +221,6 @@
                 });
             }
 
-            // 3. Tải danh sách khám bệnh để map tên Thú cưng
             const { data: kbData } = await db.from('khambenh').select('*');
             if (kbData) {
                 kbData.forEach(kb => {
@@ -219,7 +231,6 @@
                 });
             }
 
-            // 4. Tải danh sách phiếu chỉ định
             const { data, error } = await db.from('phieuchidinh').select('*').order('id', { ascending: false });
             if (error) {
                 console.error('Lỗi tải dữ liệu:', error);
@@ -249,32 +260,70 @@
                     tenPet = mapKhamBenh[maKB].ten;
                 }
 
+                // Xử lý huy hiệu trạng thái dạng bấm đổi nhanh
+                const trangThaiHienTai = item.trangthai || 'Chờ thực hiện';
+                let badgeColor = '#d97706'; // Cam: Chờ thực hiện
+                let nextStatus = 'Đang thực hiện';
+
+                if (trangThaiHienTai === 'Đang thực hiện') {
+                    badgeColor = '#2563eb'; // Xanh dương: Đang thực hiện
+                    nextStatus = 'Đã hoàn thành';
+                } else if (trangThaiHienTai === 'Đã hoàn thành') {
+                    badgeColor = '#059669'; // Xanh lá: Đã hoàn thành
+                    nextStatus = 'Chờ thực hiện';
+                } else if (trangThaiHienTai === 'Đã hủy') {
+                    badgeColor = '#64748b'; // Xám: Đã hủy
+                    nextStatus = 'Chờ thực hiện';
+                }
+
                 container.innerHTML += `
-                    <div class="mobile-card">
-                        <div class="card-title">
-                            <span>📋 Mã khám: ${maKB || '---'}</span>
-                            <span style="color: #2563eb; font-size: 13px;">${maPhieu}</span>
+                    <div class="mobile-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 12px; color: #475569;">📋 Mã khám: ${maKB || '---'}</span>
+                            <span style="color: #2563eb; font-size: 12px; font-weight: bold;">${maPhieu}</span>
                         </div>
-                        <div class="card-info" style="color: #059669; font-weight: bold;">
+                        <div class="card-info" style="color: #059669; font-weight: bold; font-size: 12px; margin-bottom: 2px;">
                             🐾 Thú cưng: ${tenPet}
                         </div>
-                        <div class="card-info">
-                            📅 Ngày chỉ định: ${item.ngaychidinh || '---'} | 🏷️ Trạng thái: ${item.trangthai || '---'}
+                        <div class="card-info" style="font-size: 11px; color: #64748b; margin-bottom: 2px;">
+                            📅 ${item.ngaychidinh || '---'}
                         </div>
-                        <div class="card-info" style="color: #0284c7;">
+                        <div class="card-info" style="color: #0284c7; font-size: 11px; margin-bottom: 2px;">
                             🛠️ Chi tiết: ${item.chitietdichvu || item.tendichvu || '---'}
                         </div>
-                        <div class="card-info" style="color: #64748b;">
-                            💡 Kết luận: ${item.ketluan || '---'} | 💰 Tổng tiền: ${item.tongtien ? Number(item.tongtien).toLocaleString() + 'đ' : '---'}
+                        <div class="card-info" style="color: #64748b; font-size: 11px; margin-bottom: 6px;">
+                            💡 Kết luận: ${item.ketluan || '---'} | <strong style="color: #dc2626;">${item.tongtien ? Number(item.tongtien).toLocaleString() + 'đ' : '0đ'}</strong>
                         </div>
-                        <div class="card-footer" style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
-                            <!-- Đã thu nhỏ nút Sửa, Xóa tại đây -->
-                            <button onclick="moModalSuaChiDinh(${item.id}, '${maKB || ''}', '${item.ngaychidinh || ''}', '${item.trangthai || 'Chờ thực hiện'}', '${encodeURIComponent(item.ketluan || '')}', '${encodeURIComponent(item.chitietdichvu || '')}')" style="background: #eab308; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 4px;">✏️ Sửa</button>
-                            <button onclick="xoaChiDinh(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">🗑️ Xóa</button>
+                        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 6px;">
+                            <span onclick="capNhatTrangThaiChiDinhMobile(${item.id}, '${nextStatus}')" 
+                                  style="background-color: ${badgeColor}; color: white; font-size: 10px; padding: 3px 8px; border-radius: 12px; cursor: pointer; font-weight: bold; display: inline-block;" 
+                                  title="Bấm để đổi trạng thái">
+                                ${trangThaiHienTai} 🔄
+                            </span>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="moModalSuaChiDinh(${item.id}, '${maKB || ''}', '${item.ngaychidinh || ''}', '${item.trangthai || 'Chờ thực hiện'}', '${encodeURIComponent(item.ketluan || '')}', '${encodeURIComponent(item.chitietdichvu || '')}')" style="background: #eab308; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold;">✏️ Sửa</button>
+                                <button onclick="xoaChiDinh(${item.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold;">🗑️ Xóa</button>
+                            </div>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp trên Mobile
+        async function capNhatTrangThaiChiDinhMobile(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('phieuchidinh')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await loadChiDinhMobile();
+            }
         }
 
         function timKiemChiDinh() {
@@ -426,7 +475,7 @@
             }
 
             dongModalThem();
-            loadChiDinhMobile();
+            await loadChiDinhMobile();
         }
 
         // --- QUẢN LÝ DÒNG DỊCH VỤ ĐỘNG (SỬA) ---
@@ -591,7 +640,7 @@
             }
 
             dongModalSuaChiDinh();
-            loadChiDinhMobile();
+            await loadChiDinhMobile();
         }
 
         async function xoaChiDinh(id) {
@@ -608,10 +657,8 @@
             }
 
             alert('Đã xóa phiếu chỉ định thành công!');
-            loadChiDinhMobile();
+            await loadChiDinhMobile();
         }
-
-        loadChiDinhMobile();
     </script>
 
     <!-- NHÚNG MENU ĐIỀU HƯỚNG ĐÁY MOBILE -->
