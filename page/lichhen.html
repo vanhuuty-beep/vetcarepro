@@ -110,7 +110,7 @@
                                 <th>Chủ nuôi & SĐT</th>
                                 <th>Địa chỉ</th>
                                 <th>Nội dung hẹn</th>
-                                <th>Trạng thái</th>
+                                <th style="text-align: center;">Trạng thái</th>
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
@@ -181,6 +181,15 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             await taiDanhSachLichHen();
+
+            // Đăng ký Realtime tự động cập nhật bảng khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-lichhen-pc')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'lichhen' }, async () => {
+                      await taiDanhSachLichHen();
+                  })
+                  .subscribe();
+            }
         });
 
         async function taiDanhSachLichHen() {
@@ -205,17 +214,23 @@
             data.forEach(item => {
                 const ngayHenFormatted = item.ngayhen ? new Date(item.ngayhen).toLocaleString('vi-VN') : '---';
                 
-                let badgeColor = '#0369a1';
-                let bgBadge = '#e0f2fe';
-                if(item.trangthai === 'Đã hoàn thành') {
-                    badgeColor = '#059669';
+                // Xử lý huy hiệu trạng thái dạng bấm đổi trực tiếp trên bảng PC
+                const trangThaiHienTai = item.trangthai || 'Chờ khám';
+                let badgeColor = '#d97706'; // Cam: Chờ khám
+                let bgBadge = '#fef3c7';
+                let nextStatus = 'Đã hoàn thành';
+
+                if(trangThaiHienTai === 'Đã hoàn thành') {
+                    badgeColor = '#059669'; // Xanh lá: Đã hoàn thành
                     bgBadge = '#d1fae5';
-                } else if(item.trangthai === 'Đã hủy') {
-                    badgeColor = '#dc2626';
+                    nextStatus = 'Đã hủy';
+                } else if(trangThaiHienTai === 'Đã hủy') {
+                    badgeColor = '#dc2626'; // Đỏ: Đã hủy
                     bgBadge = '#fee2e2';
+                    nextStatus = 'Chờ khám';
                 }
 
-                // Tự động thêm số 0 ở đầu nếu SĐT bị mất số 0
+                // Tự động thêm số 0 ở đầu nếu SĐT bị thiếu số 0
                 let rawSdt = String(item.sdt || '').trim();
                 let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
 
@@ -230,7 +245,13 @@
                     </td>
                     <td>${item.diachi || '---'}</td>
                     <td style="font-size: 12px; max-width: 250px; word-break: break-word;">${item.noidung || '---'}</td>
-                    <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: ${bgBadge}; color: ${badgeColor}; font-weight: 500;">${item.trangthai || 'Chờ khám'}</span></td>
+                    <td style="text-align: center;">
+                        <span onclick="capNhatTrangThaiLichHenPC(${item.id}, '${nextStatus}')" 
+                              style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: ${bgBadge}; color: ${badgeColor}; font-weight: bold; cursor: pointer; display: inline-block; white-space: nowrap;" 
+                              title="Bấm để đổi trạng thái">
+                            ${trangThaiHienTai} 🔄
+                        </span>
+                    </td>
                     <td>
                         <div style="display: flex; gap: 6px; align-items: center;">
                             <button class="btn-edit" style="padding: 5px 10px; font-size: 11px; border-radius: 4px;" onclick="moModalSua(${item.id})">Sửa</button>
@@ -239,6 +260,22 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp trên bảng PC
+        async function capNhatTrangThaiLichHenPC(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('lichhen')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await taiDanhSachLichHen();
+            }
         }
 
         function timKiemLichHen() {
