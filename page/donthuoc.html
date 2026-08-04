@@ -4,19 +4,18 @@
     <meta charset="UTF-8">
     <title>Quản lý Hóa đơn & Đơn thuốc - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
-
+    <link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         .search-box {
@@ -174,7 +173,7 @@
                         <tr>
                             <th style="width: 28%;">Tên thuốc (mathuoc)</th>
                             <th style="width: 12%;">Số lượng</th>
-                            <th style="width: 18%;">Giá (Gia)</th>
+                            <th style="width: 18%;">Đơn giá</th>
                             <th style="width: 32%;">Hướng dẫn (huongdan)</th>
                             <th style="width: 10%; text-align: center;">Xóa</th>
                         </tr>
@@ -248,8 +247,7 @@
     </div>
 
     <style>
-   @media print {
-        /* 1. Ẩn toàn bộ giao diện quản lý, menu bên trái và khung nền mặc định */
+    @media print {
         body, body * {
             visibility: hidden !important;
         }
@@ -263,7 +261,6 @@
             visibility: hidden !important;
         }
 
-        /* 2. Chỉ định hiển thị độc lập hoàn toàn cho #printInvoiceArea và nội dung bên trong */
         #printInvoiceArea, #printInvoiceArea * {
             visibility: visible !important;
         }
@@ -282,7 +279,6 @@
             z-index: 999999 !important;
         }
 
-        /* 3. Tối ưu hiển thị bảng bên trong hóa đơn khi in */
         #printInvoiceArea table {
             width: 100% !important;
             border-collapse: collapse !important;
@@ -311,9 +307,9 @@
     <script>
         let danhSachDonThuocGoc = [];
         let danhSachKhoThuocGoc = [];
-        let mapKhamBenh = {};  // Lưu thông tin khám bệnh (mathucung)
-        let mapThuCung = {};    // Lưu thông tin thú cưng (makhachhang)
-        let mapKhachHang = {};  // Lưu tên khách hàng theo ID
+        let mapKhamBenh = {}; 
+        let mapThuCung = {};    
+        let mapKhachHang = {};  
 
         window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -329,13 +325,11 @@
         });
 
         async function fetchDuLieuBanDau() {
-            // 1. Tải khách hàng
             const { data: khData } = await db.from('khachhang').select('*');
             if (khData) {
                 khData.forEach(kh => { mapKhachHang[kh.id] = kh.hovaten; });
             }
 
-            // 2. Tải thú cưng
             const { data: tcData } = await db.from('thucung').select('*');
             if (tcData) {
                 tcData.forEach(tc => {
@@ -346,7 +340,6 @@
                 });
             }
 
-            // 3. Tải khám bệnh
             const { data: kbData } = await db.from('khambenh').select('*');
             if (kbData) {
                 kbData.forEach(kb => {
@@ -356,13 +349,11 @@
                 });
             }
 
-            // 4. Tải kho thuốc
             const { data: khoData, error: khoErr } = await db.from('khothuoc').select('*');
             if (!khoErr && khoData) {
                 danhSachKhoThuocGoc = khoData;
             }
 
-            // 5. Tải hóa đơn thuốc
             const { data, error } = await db.from('hoadonthuoc').select('*').order('id', { ascending: false });
             if (error) {
                 console.error('Lỗi tải hóa đơn thuốc:', error);
@@ -378,9 +369,13 @@
             
             let optionsHtml = `<option value="">-- Chọn thuốc từ kho --</option>`;
             danhSachKhoThuocGoc.forEach(tk => {
-                const selected = (thuocData.mathuoc === tk.tenthuoc) ? 'selected' : '';
-                optionsHtml += `<option value="${tk.tenthuoc}" data-gia="${tk.gia || 0}" ${selected}>${tk.tenthuoc} (Tồn: ${tk.soluong})</option>`;
+                const tenT = tk.tenthuoc || tk.ten || '';
+                const giaT = tk.giaban !== undefined ? tk.giaban : (tk.gia !== undefined ? tk.gia : (tk.dongia !== undefined ? tk.dongia : 0));
+                const selected = (thuocData.mathuoc === tenT) ? 'selected' : '';
+                optionsHtml += `<option value="${tenT}" data-gia="${giaT}" ${selected}>${tenT} (Tồn: ${tk.soluong || 0})</option>`;
             });
+
+            let giaKhoiDau = thuocData.Gia !== undefined ? thuocData.Gia : (thuocData.gia !== undefined ? thuocData.gia : '');
 
             const tr = document.createElement('tr');
             tr.id = rowId;
@@ -397,7 +392,7 @@
                     <input type="number" class="input-soluong" value="${thuocData.soluong || 1}" min="1" oninput="tinhTongTien()" style="width:100%; padding:4px; font-size:12px; box-sizing: border-box;">
                 </td>
                 <td>
-                    <input type="number" class="input-gia" value="${thuocData.Gia !== undefined ? thuocData.Gia : 0}" oninput="tinhTongTien()" style="width:100%; padding:4px; font-size:12px; box-sizing: border-box;">
+                    <input type="number" class="input-gia" value="${giaKhoiDau}" placeholder="Nhập giá..." oninput="tinhTongTien()" style="width:100%; padding:4px; font-size:12px; box-sizing: border-box;">
                 </td>
                 <td>
                     <input type="text" class="input-huongdan" value="${thuocData.huongdan || ''}" placeholder="VD: Sáng 1 viên..." style="width:100%; padding:4px; font-size:12px; box-sizing: border-box;">
@@ -418,8 +413,11 @@
             if (selectedOption.value) {
                 tr.querySelector('.input-mathuoc').value = selectedOption.value;
             }
+            const inputGia = tr.querySelector('.input-gia');
             if (gia !== null && gia !== "" && parseFloat(gia) > 0) {
-                tr.querySelector('.input-gia').value = gia;
+                inputGia.value = gia; 
+            } else {
+                inputGia.value = ''; 
             }
             tinhTongTien();
         }
@@ -453,11 +451,8 @@
             }
 
             data.forEach(item => {
-                // Tạo mã đơn dạng HD0001
                 const maDonFormatted = 'HD' + String(item.id).padStart(4, '0');
                 const maKBText = typeof formatMaKham === 'function' ? formatMaKham(item.makhambenh) : ('KB' + String(item.makhambenh).padStart(4, '0'));
-                
-                // Lấy tên chủ thú cưng từ từ điển mapKhamBenh
                 const tenChuSoHuu = mapKhamBenh[item.makhambenh] || 'Không rõ chủ';
 
                 let chiTietHtml = '';
@@ -476,18 +471,24 @@
                 if (danhSachChiTiet.length > 0) {
                     chiTietHtml = `<ul style="margin: 0; padding-left: 15px; font-size: 12px;">`;
                     danhSachChiTiet.forEach(t => {
-                        chiTietHtml += `<li><b>${t.mathuoc || ''}</b> - SL: ${t.soluong || 0} - Giá: ${Number(t.Gia || 0).toLocaleString('vi-VN')}đ <i>(${t.huongdan || ''})</i></li>`;
+                        const itemGia = t.Gia !== undefined ? t.Gia : (t.gia !== undefined ? t.gia : 0);
+                        chiTietHtml += `<li><b>${t.mathuoc || ''}</b> - SL: ${t.soluong || 0} - Giá: ${Number(itemGia).toLocaleString('vi-VN')}đ <i>(${t.huongdan || ''})</i></li>`;
                     });
                     chiTietHtml += `</ul>`;
                 } else {
-                    chiTietHtml = `<b>${item.mathuoc || ''}</b> - SL: ${item.soluong || 0} - Giá: ${Number(item.Gia || 0).toLocaleString('vi-VN')}đ<br><small>HD: ${item.huongdan || ''}</small>`;
+                    const itemGia = item.Gia !== undefined ? item.Gia : (item.gia !== undefined ? item.gia : 0);
+                    chiTietHtml = `<b>${item.mathuoc || ''}</b> - SL: ${item.soluong || 0} - Giá: ${Number(itemGia).toLocaleString('vi-VN')}đ<br><small>HD: ${item.huongdan || ''}</small>`;
                 }
 
                 let tongTienVal = 0;
                 if (danhSachChiTiet.length > 0) {
-                    danhSachChiTiet.forEach(t => { tongTienVal += (parseFloat(t.soluong) || 0) * (parseFloat(t.Gia) || 0); });
+                    danhSachChiTiet.forEach(t => {
+                        const g = t.Gia !== undefined ? t.Gia : (t.gia !== undefined ? t.gia : 0);
+                        tongTienVal += (parseFloat(t.soluong) || 0) * (parseFloat(g) || 0);
+                    });
                 } else {
-                    tongTienVal = (parseFloat(item.soluong) || 0) * (parseFloat(item.Gia) || 0);
+                    const g = item.Gia !== undefined ? item.Gia : (item.gia !== undefined ? item.gia : 0);
+                    tongTienVal = (parseFloat(item.soluong) || 0) * (parseFloat(g) || 0);
                 }
 
                 tableBody.innerHTML += `<tr>
@@ -543,7 +544,7 @@
                 themDongThuoc({
                     mathuoc: item.mathuoc,
                     soluong: item.soluong,
-                    Gia: item.Gia,
+                    Gia: item.Gia !== undefined ? item.Gia : item.gia,
                     huongdan: item.huongdan
                 });
             }
@@ -603,7 +604,7 @@
                     }
 
                     for (let cu of chiTietCu) {
-                        const thuocTrongKho = danhSachKhoThuocGoc.find(tk => tk.tenthuoc === cu.mathuoc);
+                        const thuocTrongKho = danhSachKhoThuocGoc.find(tk => (tk.tenthuoc || tk.ten) === cu.mathuoc);
                         if (thuocTrongKho) {
                             const slMoi = (thuocTrongKho.soluong || 0) + parseFloat(cu.soluong || 0);
                             await db.from('khothuoc').update({ soluong: slMoi }).eq('id', thuocTrongKho.id);
@@ -614,13 +615,14 @@
 
             // 2. Trừ kho thuốc mới
             for (let t of chiTietThuoc) {
-                const thuocTrongKho = danhSachKhoThuocGoc.find(tk => tk.tenthuoc === t.mathuoc);
+                const thuocTrongKho = danhSachKhoThuocGoc.find(tk => (tk.tenthuoc || tk.ten) === t.mathuoc);
                 if (thuocTrongKho) {
                     const slConLai = (thuocTrongKho.soluong || 0) - t.soluong;
                     await db.from('khothuoc').update({ soluong: slConLai >= 0 ? slConLai : 0 }).eq('id', thuocTrongKho.id);
                 }
             }
 
+            // Sử dụng trường 'Gia' (viết hoa chữ G) khớp chuẩn với tên cột trên CSDL của bạn
             const payload = {
                 makhambenh: makhambenh,
                 chitiet: JSON.stringify(chiTietThuoc),
@@ -663,7 +665,7 @@
                     }
 
                     for (let cu of chiTietCu) {
-                        const thuocTrongKho = danhSachKhoThuocGoc.find(tk => tk.tenthuoc === cu.mathuoc);
+                        const thuocTrongKho = danhSachKhoThuocGoc.find(tk => (tk.tenthuoc || tk.ten) === cu.mathuoc);
                         if (thuocTrongKho) {
                             const slMoi = (thuocTrongKho.soluong || 0) + parseFloat(cu.soluong || 0);
                             await db.from('khothuoc').update({ soluong: slMoi }).eq('id', thuocTrongKho.id);
@@ -710,7 +712,8 @@
             }
 
             if (danhSachChiTiet.length === 0) {
-                danhSachChiTiet = [{ mathuoc: item.mathuoc, soluong: item.soluong, Gia: item.Gia, huongdan: item.huongdan }];
+                const gVal = item.Gia !== undefined ? item.Gia : (item.gia !== undefined ? item.gia : 0);
+                danhSachChiTiet = [{ mathuoc: item.mathuoc, soluong: item.soluong, Gia: gVal, huongdan: item.huongdan }];
             }
 
             const tbody = document.getElementById('inv-table-body');
@@ -719,7 +722,7 @@
             let tongTien = 0;
             danhSachChiTiet.forEach(t => {
                 const sl = parseFloat(t.soluong) || 0;
-                const gia = parseFloat(t.Gia) || 0;
+                const gia = parseFloat(t.Gia !== undefined ? t.Gia : t.gia) || 0;
                 const thanhTien = sl * gia;
                 tongTien += thanhTien;
 
