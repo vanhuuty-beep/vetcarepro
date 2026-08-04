@@ -159,7 +159,7 @@
                                 <th>Triệu chứng & Chẩn đoán</th>
                                 <th>Điều trị</th>
                                 <th>Chi phí</th>
-                                <th>Trạng thái</th>
+                                <th style="text-align: center;">Trạng thái</th>
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
@@ -426,6 +426,15 @@
                 document.getElementById('mathucung').value = maTC;
             }
             fetchDuLieu();
+
+            // Đăng ký Realtime tự động cập nhật bảng khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-khambenh-pc')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'khambenh' }, async () => {
+                      await fetchDuLieu();
+                  })
+                  .subscribe();
+            }
         });
 
         async function fetchDuLieu() {
@@ -477,6 +486,19 @@
                 const tenChuSoHuu = (item.mathucung && mapKhachHang[item.mathucung]) ? mapKhachHang[item.mathucung] : 'Chưa rõ chủ';
                 const chiPhiFormatted = item.chiphi ? Number(item.chiphi).toLocaleString('vi-VN') + ' đ' : '0 đ';
 
+                // Xử lý trạng thái và màu sắc huy hiệu (Badge) dạng bấm chuyển đổi nhanh
+                const trangThaiHienTai = item.trangthai || 'Đang điều trị';
+                let badgeColor = '#dc2626'; // Đỏ: Đang điều trị
+                let nextStatus = 'Đã khỏi bệnh';
+
+                if (trangThaiHienTai === 'Đã khỏi bệnh') {
+                    badgeColor = '#2563eb'; // Xanh dương: Đã khỏi bệnh
+                    nextStatus = 'Hẹn tái khám';
+                } else if (trangThaiHienTai === 'Hẹn tái khám') {
+                    badgeColor = '#059669'; // Xanh lá: Hẹn tái khám
+                    nextStatus = 'Đang điều trị';
+                }
+
                 tableBody.innerHTML += `<tr>
                     <td><strong>${maKB}</strong></td>
                     <td>
@@ -492,7 +514,13 @@
                     </td>
                     <td>${item.dieutri || ''}</td>
                     <td><strong style="color: #059669;">${chiPhiFormatted}</strong></td>
-                    <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: #e0f2fe; color: #0369a1; white-space: nowrap;">${item.trangthai || ''}</span></td>
+                    <td style="text-align: center;">
+                        <span onclick="capNhatTrangThaiKhambenh(${item.id}, '${nextStatus}')" 
+                              style="background-color: ${badgeColor}; color: white; font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; font-weight: bold; display: inline-block; white-space: nowrap;" 
+                              title="Bấm để đổi trạng thái">
+                            ${trangThaiHienTai} 🔄
+                        </span>
+                    </td>
                     <td>
                         <button class="btn-primary" style="padding: 4px 6px; font-size: 11px; margin-bottom: 3px; background: #6366f1; border:none; color:white; border-radius:3px; cursor:pointer;" onclick="window.location.href='nhatkynoitru.html?makhambenh=${item.id}'" title="Lập hồ sơ nội trú cho mã này">Nhập viện</button>
                         <button class="btn-primary" style="padding: 4px 6px; font-size: 11px; margin-bottom: 3px; background: #0284c7; border:none; color:white; border-radius:3px; cursor:pointer;" onclick="window.location.href='nhatkylamvaccine.html?makhambenh=${item.id}&mathucung=${item.mathucung}'" title="Tiêm vắc-xin cho mã này">Tiêm vắc-xin</button><br>
@@ -504,6 +532,22 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp trên bảng
+        async function capNhatTrangThaiKhambenh(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('khambenh')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await fetchDuLieu();
+            }
         }
 
         function timKiemKhamBenh() {
