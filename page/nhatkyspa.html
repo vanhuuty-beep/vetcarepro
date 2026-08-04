@@ -333,12 +333,13 @@
                                 <th>Chủ nuôi</th>
                                 <th>Thú cưng</th>
                                 <th>Dịch vụ sử dụng</th>
+                                <th style="text-align: center;">Trạng thái</th>
                                 <th style="text-align: right;">Tổng tiền</th>
                                 <th style="text-align: center;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="tableNhatKySpa">
-                            <tr><td colspan="6" style="text-align: center; color: #777; padding: 20px;">Đang tải dữ liệu...</td></tr>
+                            <tr><td colspan="7" style="text-align: center; color: #777; padding: 20px;">Đang tải dữ liệu...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -391,13 +392,22 @@
         function laAdmin() {
             const user = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
             const role = (user.role || user.chucvu || user.username || '').toLowerCase();
-            return role.includes('admin') || role === 'quản lý' || role === 'admin';
+            return role.includes('admin') || role === 'quản lý';
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
             await taiKhachHang();
             await taiDanhSachDichVu();
             await taiNhatKySpa();
+
+            // Đăng ký Realtime tự động cập nhật khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-nhatkyspa-pc')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'nhatkyspa' }, async () => {
+                      await taiNhatKySpa();
+                  })
+                  .subscribe();
+            }
 
             document.addEventListener('click', function (e) {
                 if (!e.target.closest('#inputTimKhachHang')) {
@@ -491,7 +501,6 @@
             });
         }
 
-        // Hàm hỗ trợ click vào cả dòng là tự động tích chọn và tính tiền ngay lập tức
         function chonDongDichvu(event, element) {
             if (event.target.tagName !== 'INPUT') {
                 const cb = element.querySelector('input[type="checkbox"]');
@@ -529,7 +538,7 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #777; padding: 20px;">Chưa có nhật ký spa nào</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #777; padding: 20px;">Chưa có nhật ký spa nào</td></tr>`;
                 return;
             }
 
@@ -543,12 +552,32 @@
                     sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
                 }
 
+                // Xử lý trạng thái và màu sắc huy hiệu (Badge) trên PC
+                const trangThaiHienTai = item.trangthai || 'Chưa hoàn thành';
+                let badgeColor = '#dc2626'; // Đỏ: Chưa hoàn thành
+                let nextStatus = 'Đã hoàn thành';
+
+                if (trangThaiHienTai === 'Đã hoàn thành') {
+                    badgeColor = '#2563eb'; // Xanh dương: Đã hoàn thành
+                    nextStatus = 'Đã trả khách';
+                } else if (trangThaiHienTai === 'Đã trả khách') {
+                    badgeColor = '#059669'; // Xanh lá: Đã trả khách
+                    nextStatus = 'Chưa hoàn thành';
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td style="font-size: 11px; color: #64748b;">${ngay}</td>
                         <td style="font-weight: 500;">${item.chunuoi || '---'} ${sdtHienThi ? '('+sdtHienThi+')' : ''}</td>
                         <td style="font-weight: bold; color: #1e3a8a;">${item.thucung || '---'}</td>
                         <td style="font-size: 11px;">${item.dichvusudung || '---'}</td>
+                        <td style="text-align: center;">
+                            <span onclick="capNhatTrangThaiSpaPC(${item.id}, '${nextStatus}')" 
+                                  style="background-color: ${badgeColor}; color: white; font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; font-weight: bold; display: inline-block;" 
+                                  title="Bấm để đổi trạng thái">
+                                ${trangThaiHienTai} 🔄
+                            </span>
+                        </td>
                         <td style="text-align: right; font-weight: bold; color: var(--danger-color);">${Number(item.tongtien || 0).toLocaleString('vi-VN')} đ</td>
                         <td style="text-align: center; white-space: nowrap;">
                             <button onclick="chuanBiSuaNhatKy(${item.id})" style="background:var(--warning-color); color:white; border:none; padding:3px 6px; border-radius:4px; cursor:pointer; margin-right:2px;" title="Sửa">Sửa</button>
@@ -558,6 +587,22 @@
                     </tr>
                 `;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp trên PC
+        async function capNhatTrangThaiSpaPC(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('nhatkyspa')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await taiNhatKySpa();
+            }
         }
 
         async function luuNhatKySpa() {
@@ -587,6 +632,7 @@
             const payload = { chunuoi, sdt, thucung, dichvusudung, tongtien };
 
             if (!editId) {
+                payload.trangthai = 'Chưa hoàn thành'; // Mặc định bản ghi mới tạo
                 const { error } = await db.from('nhatkyspa').insert([payload]);
                 if (error) {
                     alert('Lỗi lưu nhật ký: ' + error.message);
