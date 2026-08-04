@@ -150,7 +150,7 @@
                 word-wrap: break-word;
             }
 
-            /* Ẩn các nút bấm, header, footer của modal web khi in */
+            /* 5. Ẩn các nút bấm, header, footer của modal web khi in */
             .modal-header, .modal-footer, .close-modal, button {
                 display: none !important;
             }
@@ -186,7 +186,7 @@
                                 <th>Thời gian (Vào - Ra)</th>
                                 <th>Bác sĩ</th>
                                 <th>Chi phí & Thanh toán</th>
-                                <th>Trạng thái</th>
+                                <th style="text-align: center;">Trạng thái</th>
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
@@ -282,6 +282,7 @@
         </div>
     </div>
 
+    <!-- SCRIPT XỬ LÝ DỮ LIỆU -->
     <script>
         let danhSachNhatKyGoc = [];
         let mapKhamBenh = {}; 
@@ -296,6 +297,15 @@
                 document.getElementById('makhambenh').value = maKBParam;
             }
             await fetchDuLieuBanDau();
+
+            // Đăng ký Realtime tự động đồng bộ khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-nhatkynoitru-pc')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'nhatkynoitru' }, async () => {
+                      await fetchDuLieuBanDau();
+                  })
+                  .subscribe();
+            }
 
             if (maKBParam) {
                 moModalThem();
@@ -353,7 +363,7 @@
             if (error) {
                 console.error('Lỗi tải nhật ký nội trú:', error);
             } else {
-                danhSachNhatKyGoc = data;
+                danhSachNhatKyGoc = data || [];
                 hienThiBang(danhSachNhatKyGoc);
             }
         }
@@ -398,6 +408,22 @@
                 const ngayVao = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
                 const ngayRa = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
 
+                // Xử lý huy hiệu trạng thái dạng bấm đổi trực tiếp trên bảng PC
+                const trangThaiHienTai = item.trangthai || 'Đang nằm viện';
+                let badgeColor = '#d97706'; // Cam: Đang nằm viện
+                let bgBadge = '#fef3c7';
+                let nextStatus = 'Chờ xuất viện';
+
+                if (trangThaiHienTai === 'Chờ xuất viện') {
+                    badgeColor = '#2563eb'; // Xanh dương: Chờ xuất viện
+                    bgBadge = '#e0f2fe';
+                    nextStatus = 'Đã xuất viện';
+                } else if (trangThaiHienTai === 'Đã xuất viện') {
+                    badgeColor = '#059669'; // Xanh lá: Đã xuất viện
+                    bgBadge = '#d1fae5';
+                    nextStatus = 'Đang nằm viện';
+                }
+
                 tableBody.innerHTML += `<tr>
                     <td><strong>${maNKNT}</strong></td>
                     <td>
@@ -419,7 +445,13 @@
                         T.Ứng: ${Number(item.tamung || 0).toLocaleString('vi-VN')} đ<br>
                         <span style="color: #dc2626;">Còn: <b>${Number(item.thanhtien || 0).toLocaleString('vi-VN')} đ</b></span>
                     </td>
-                    <td><span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; background: #e0f2fe; color: #0369a1;">${item.trangthai || ''}</span></td>
+                    <td style="text-align: center;">
+                        <span onclick="capNhatTrangThaiPC(${item.id}, '${nextStatus}', ${item.malong})" 
+                              style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: ${bgBadge}; color: ${badgeColor}; font-weight: bold; cursor: pointer; display: inline-block; white-space: nowrap;" 
+                              title="Bấm để đổi trạng thái">
+                            ${trangThaiHienTai} 🔄
+                        </span>
+                    </td>
                     <td style="white-space: nowrap;">
                         <div style="display: flex; gap: 6px; align-items: center;">
                             <button class="btn-primary" style="background-color: #059669; padding: 5px 10px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer;" onclick="moModalHoaDon(${item.id})">Hóa đơn</button>
@@ -429,6 +461,25 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp bằng cách bấm vào huy hiệu trên bảng PC
+        async function capNhatTrangThaiPC(id, trangThaiMoi, maLong) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('nhatkynoitru')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                if (trangThaiMoi === 'Đã xuất viện' && maLong) {
+                    await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', maLong);
+                }
+                await fetchDuLieuBanDau();
+            }
         }
 
         function timKiemNhatKyNoiTru() {
@@ -545,7 +596,7 @@
                     alert('Lập hồ sơ nội trú thành công!');
                     await db.from('noitru').update({ trangthai: 'Đang sử dụng' }).eq('id', malong);
                     dongModal();
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             } else {
                 const { error } = await db.from('nhatkynoitru').update(payload).eq('id', id);
@@ -557,7 +608,7 @@
                         await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', malong);
                     }
                     dongModal();
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             }
         }
@@ -573,61 +624,9 @@
                     if (itemCu && itemCu.malong) {
                         await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', itemCu.malong);
                     }
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             }
-        }
-        
-        function moModalHoaDon(id) {
-            const item = danhSachNhatKyGoc.find(x => x.id === id);
-            if (!item) return;
-
-            const maNKNT = 'NKNT' + String(item.id).padStart(4, '0');
-            const infoPet = mapKhamBenh[item.makhambenh] || { tenthucung: 'Không rõ', tenchu: 'Không rõ' };
-            const infoLong = mapLong[item.malong] || { phong: 'N/A', long: 'N/A' };
-            
-            let diffDays = 1;
-            if (item.ngayvao && item.ngayra) {
-                const diffTime = new Date(item.ngayra) - new Date(item.ngayvao);
-                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 0) diffDays = 1;
-            }
-
-            const chiPhiNgay = parseFloat(item.chiphingay) || 0;
-            const tongChiPhiTinhToan = diffDays * chiPhiNgay;
-            
-            const tongChiPhi = (item.tongchiphi !== undefined && item.tongchiphi !== null && item.tongchiphi !== 0) 
-                ? parseFloat(item.tongchiphi) 
-                : tongChiPhiTinhToan;
-
-            const tamUng = parseFloat(item.tamung) || 0;
-            const thanhTienConLai = tongChiPhi - tamUng;
-
-            document.getElementById('hdMaNKNT').innerText = `Mã phiếu: ${maNKNT}`;
-            document.getElementById('hdTenChu').innerText = infoPet.tenchu;
-            document.getElementById('hdTenThuCung').innerText = infoPet.tenthucung;
-            document.getElementById('hdNgayVao').innerText = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
-            document.getElementById('hdNgayRa').innerText = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
-            document.getElementById('hdPhongLong').innerText = `${infoLong.phong} - ${infoLong.long}`;
-            document.getElementById('hdBacSi').innerText = item.bacsiphutrach || '---';
-
-            document.getElementById('hdSoNgay').innerText = diffDays;
-            document.getElementById('hdChiPhiNgay').innerText = chiPhiNgay.toLocaleString('vi-VN');
-            
-            document.getElementById('hdTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN');
-            document.getElementById('hdTxtTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('hdTxtTamUng').innerText = tamUng.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('hdTxtThanhTien').innerText = thanhTienConLai.toLocaleString('vi-VN') + ' đ';
-
-            document.getElementById('hoaDonModal').style.display = 'flex';
-        }
-
-        function dongModalHoaDon() {
-            document.getElementById('hoaDonModal').style.display = 'none';
-        }
-
-        function inHoaDon() {
-            window.print();
         }
     </script>
     
@@ -707,5 +706,59 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function moModalHoaDon(id) {
+            const item = danhSachNhatKyGoc.find(x => x.id === id);
+            if (!item) return;
+
+            const maNKNT = 'NKNT' + String(item.id).padStart(4, '0');
+            const infoPet = mapKhamBenh[item.makhambenh] || { tenthucung: 'Không rõ', tenchu: 'Không rõ' };
+            const infoLong = mapLong[item.malong] || { phong: 'N/A', long: 'N/A' };
+            
+            let diffDays = 1;
+            if (item.ngayvao && item.ngayra) {
+                const diffTime = new Date(item.ngayra) - new Date(item.ngayvao);
+                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays <= 0) diffDays = 1;
+            }
+
+            const chiPhiNgay = parseFloat(item.chiphingay) || 0;
+            const tongChiPhiTinhToan = diffDays * chiPhiNgay;
+            
+            const tongChiPhi = (item.tongchiphi !== undefined && item.tongchiphi !== null && item.tongchiphi !== 0) 
+                ? parseFloat(item.tongchiphi) 
+                : tongChiPhiTinhToan;
+
+            const tamUng = parseFloat(item.tamung) || 0;
+            const thanhTienConLai = tongChiPhi - tamUng;
+
+            document.getElementById('hdMaNKNT').innerText = `Mã phiếu: ${maNKNT}`;
+            document.getElementById('hdTenChu').innerText = infoPet.tenchu;
+            document.getElementById('hdTenThuCung').innerText = infoPet.tenthucung;
+            document.getElementById('hdNgayVao').innerText = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
+            document.getElementById('hdNgayRa').innerText = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
+            document.getElementById('hdPhongLong').innerText = `${infoLong.phong} - ${infoLong.long}`;
+            document.getElementById('hdBacSi').innerText = item.bacsiphutrach || '---';
+
+            document.getElementById('hdSoNgay').innerText = diffDays;
+            document.getElementById('hdChiPhiNgay').innerText = chiPhiNgay.toLocaleString('vi-VN');
+            
+            document.getElementById('hdTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN');
+            document.getElementById('hdTxtTongChiPhi').innerText = tongChiPhi.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('hdTxtTamUng').innerText = tamUng.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('hdTxtThanhTien').innerText = thanhTienConLai.toLocaleString('vi-VN') + ' đ';
+
+            document.getElementById('hoaDonModal').style.display = 'flex';
+        }
+
+        function dongModalHoaDon() {
+            document.getElementById('hoaDonModal').style.display = 'none';
+        }
+
+        function inHoaDon() {
+            window.print();
+        }
+    </script>
 </body>
 </html>
