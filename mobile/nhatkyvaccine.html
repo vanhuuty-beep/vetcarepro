@@ -8,8 +8,8 @@
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Kết nối các file cấu hình ở thư mục gốc (thêm ../) -->
-	<script src="../js/env.js"></script>
+    <!-- Kết nối các file cấu hình ở thư mục gốc -->
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
@@ -72,7 +72,7 @@
         <div class="top-header">
             <h3>💉 Nhật Ký Vaccine</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
-                <a href="../page/thongke.html" class="btn-desktop">💻 Desktop</a>
+                <a href="../nhatkylamvaccine.html" class="btn-desktop">💻 Desktop</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
             </div>
         </div>
@@ -157,6 +157,15 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadKhoVaccineDropdown();
             loadDanhSachVaccine();
+
+            // Tự động đồng bộ Realtime khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-nhatkylamvaccine-mobile')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'nhatkylamvaccine' }, async () => {
+                      await loadDanhSachVaccine();
+                  })
+                  .subscribe();
+            }
         });
 
         async function loadKhoVaccineDropdown() {
@@ -296,6 +305,7 @@
             btn.disabled = true;
             btn.textContent = 'Đang lưu...';
 
+            // Payload đã loại bỏ hoàn toàn trường 'ghichu' để tránh lỗi CSDL
             const payload = {
                 mathucung: mathucung,
                 tenvaccine: tenvaccine,
