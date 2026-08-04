@@ -60,7 +60,7 @@
         <div class="top-header">
             <h3>🏥 Quản Lý Nội Trú</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
-                <a href="../page/nhatkynoitru.html" class="btn-desktop">💻 Desktop</a>
+                <a href="../page/nhatkynoitru.html" class="btn-desktop">💻</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
             </div>
         </div>
@@ -245,19 +245,26 @@
             }
             await fetchDuLieuBanDau();
 
+            // Đăng ký Realtime tự động cập nhật bảng khi có thay đổi từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-nhatkynoitru-mobile')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'nhatkynoitru' }, async () => {
+                      await fetchDuLieuBanDau();
+                  })
+                  .subscribe();
+            }
+
             if (maKBParam) {
                 moModalThem();
             }
         });
 
         async function fetchDuLieuBanDau() {
-            // 1. Tải Khách hàng
             const { data: khData } = await db.from('khachhang').select('*');
             if (khData) {
                 khData.forEach(kh => { mapKhachHang[kh.id] = kh.hovaten; });
             }
 
-            // 2. Tải Thú cưng
             const { data: tcData } = await db.from('thucung').select('*');
             if (tcData) {
                 tcData.forEach(tc => {
@@ -269,7 +276,6 @@
                 });
             }
 
-            // 3. Tải Khám bệnh
             const { data: kbData } = await db.from('khambenh').select('*');
             if (kbData) {
                 kbData.forEach(kb => {
@@ -279,7 +285,6 @@
                 });
             }
 
-            // 4. Tải danh sách lồng nội trú
             const { data: longData } = await db.from('noitru').select('*');
             if (longData) {
                 const selectLong = document.getElementById('malong');
@@ -292,14 +297,12 @@
                 });
             }
 
-            // 5. Tải danh sách Nhật ký nội trú
             const { data, error } = await db.from('nhatkynoitru').select('*').order('id', { ascending: false });
             if (error) {
                 console.error('Lỗi tải nhật ký nội trú:', error);
                 document.getElementById('mobile-list').innerHTML = `<div style="text-align:center; color:red; padding:15px; font-size:11px;">Lỗi tải dữ liệu</div>`;
             } else {
                 danhSachNhatKyGoc = data || [];
-                // Lọc ẩn các ca đã xuất viện[cite: 2]
                 locVaHienThiDanhSach(danhSachNhatKyGoc);
             }
         }
@@ -356,6 +359,22 @@
                 const ngayRa = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
                 const thanhTien = Number(item.thanhtien || 0).toLocaleString('vi-VN');
 
+                // Xử lý trạng thái huy hiệu bấm đổi nhanh trên Mobile
+                const trangThaiHienTai = item.trangthai || 'Đang nằm viện';
+                let badgeColor = '#d97706'; // Cam: Đang nằm viện
+                let bgBadge = '#fef3c7';
+                let nextStatus = 'Chờ xuất viện';
+
+                if (trangThaiHienTai === 'Chờ xuất viện') {
+                    badgeColor = '#2563eb'; // Xanh dương: Chờ xuất viện
+                    bgBadge = '#e0f2fe';
+                    nextStatus = 'Đã xuất viện';
+                } else if (trangThaiHienTai === 'Đã xuất viện') {
+                    badgeColor = '#059669'; // Xanh lá: Đã xuất viện
+                    bgBadge = '#d1fae5';
+                    nextStatus = 'Đang nằm viện';
+                }
+
                 container.innerHTML += `
                     <div class="mobile-card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
@@ -372,9 +391,12 @@
                         <div style="font-size: 11px; color: #dc2626; font-weight: bold; text-align: right;">Còn lại: ${thanhTien} đ</div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f1f5f9; padding-top: 6px;">
-                            <span style="font-size: 10px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">● ${item.trangthai || ''}</span>
+                            <span onclick="capNhatTrangThaiNhatKyMobile(${item.id}, '${nextStatus}', ${item.malong})" 
+                                  style="padding: 3px 8px; border-radius: 12px; font-size: 10px; background: ${bgBadge}; color: ${badgeColor}; font-weight: bold; cursor: pointer; display: inline-block;" 
+                                  title="Bấm để đổi trạng thái">
+                                ${trangThaiHienTai} 🔄
+                            </span>
                             <div style="display: flex; gap: 4px;">
-                                <!-- NÚT LỊCH TRÌNH -->
                                 <button onclick="window.location.href='lichtrinh.html?makhambenh=${item.makhambenh}'" style="background: #0284c7; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Lịch trình</button>
                                 <button onclick="moModalHoaDon(${item.id})" style="background: #059669; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Hóa đơn</button>
                                 <button onclick="moModalSua(${item.id})" style="background: #3b82f6; color: white; border: none; padding: 3px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">Sửa</button>
@@ -384,6 +406,25 @@
                     </div>
                 `;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp bằng cách bấm vào huy hiệu trên Mobile
+        async function capNhatTrangThaiNhatKyMobile(id, trangThaiMoi, maLong) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('nhatkynoitru')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                if (trangThaiMoi === 'Đã xuất viện' && maLong) {
+                    await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', maLong);
+                }
+                await fetchDuLieuBanDau();
+            }
         }
 
         function timKiemNhatKyNoiTru() {
@@ -503,7 +544,7 @@
                     alert('Lập hồ sơ nội trú thành công!');
                     await db.from('noitru').update({ trangthai: 'Đang sử dụng' }).eq('id', malong);
                     dongModal();
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             } else {
                 const { error } = await db.from('nhatkynoitru').update(payload).eq('id', id);
@@ -515,7 +556,7 @@
                         await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', malong);
                     }
                     dongModal();
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             }
         }
@@ -531,7 +572,7 @@
                     if (itemCu && itemCu.malong) {
                         await db.from('noitru').update({ trangthai: 'Trống' }).eq('id', itemCu.malong);
                     }
-                    fetchDuLieuBanDau();
+                    await fetchDuLieuBanDau();
                 }
             }
         }
