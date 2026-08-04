@@ -1,4 +1,9 @@
  <style>
+html {
+    zoom: 80%; /* Hỗ trợ tốt cho Chrome, Cốc Cốc, Edge, Safari */
+    -moz-transform: scale(0.8); /* Hỗ trợ cho Firefox */
+    -moz-transform-origin: top left; /* Cố định điểm neo thu nhỏ từ góc trên bên trái */
+}
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
 
