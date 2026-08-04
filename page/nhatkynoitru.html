@@ -5,17 +5,17 @@
     <title>Nhật ký Nội trú - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         .search-box {
@@ -40,6 +40,8 @@
             max-width: 100%;
             padding: 20px 24px;
             box-sizing: border-box;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-header {
             margin-bottom: 12px;
@@ -47,6 +49,7 @@
         }
         .form-group-modal {
             margin-bottom: 10px;
+            position: relative;
         }
         .form-group-modal label {
             font-size: 13px;
@@ -83,15 +86,53 @@
             width: 180px;
         }
 
+        /* --- CSS PHÂN TRANG --- */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #475569;
+        }
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-page {
+            padding: 6px 12px;
+            border: 1px solid #cbd5e1;
+            background-color: #fff;
+            color: #1e293b;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .btn-page:hover:not(:disabled) {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .btn-page:disabled {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .btn-page.active {
+            background-color: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
         /* --- CẤU HÌNH IN CHUẨN KHÔNG BỊ DÍNH MENU & TRÀN LỀ --- */
        @media print {
-            /* 1. Thiết lập khổ giấy và tăng lề trên/dưới để không bị sát mép */
             @page {
                 size: A4 portrait;
                 margin: 15mm 10mm;
             }
 
-            /* 2. Ẩn toàn bộ giao diện quản lý bên ngoài */
             body, body * {
                 visibility: hidden !important;
             }
@@ -105,7 +146,6 @@
                 visibility: hidden !important;
             }
 
-            /* 3. Ẩn toàn bộ modal rườm rà, chỉ bật duy nhất vùng #printArea lên */
             #hoaDonModal {
                 display: block !important;
                 position: static !important;
@@ -124,7 +164,6 @@
                 background: none !important;
             }
 
-            /* 4. Ép vùng in #printArea hiển thị tuyệt đối, căn giữa, chống lệch lề hai bên */
             #printArea, #printArea * {
                 visibility: visible !important;
             }
@@ -143,14 +182,12 @@
                 overflow: hidden !important;
             }
 
-            /* Cố định bảng bên trong hóa đơn không bị tràn ngang */
             #printArea table {
                 width: 100% !important;
                 table-layout: fixed;
                 word-wrap: break-word;
             }
 
-            /* 5. Ẩn các nút bấm, header, footer của modal web khi in */
             .modal-header, .modal-footer, .close-modal, button {
                 display: none !important;
             }
@@ -195,6 +232,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- THANH ĐIỀU HƯỚNG PHÂN TRANG -->
+                <div id="paginationContainer" class="pagination-container">
+                    <div id="paginationInfo">Hiển thị 0 - 0 của 0 bản ghi</div>
+                    <div id="paginationButtons" class="pagination-buttons"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -215,10 +258,24 @@
                     <input type="text" id="makhambenh" placeholder="Nhập mã khám (VD: 1)...">
                 </div>
                 <div class="form-group-modal">
+                    <label>Tìm kiếm & Chọn thú cưng (*):</label>
+                    <input type="text" id="thucung_search" class="smart-search-input" placeholder="Gõ tên thú cưng hoặc tên chủ..." autocomplete="off">
+                    <input type="hidden" id="mathucung">
+                    <!-- Dropdown gợi ý tìm kiếm thú cưng -->
+                    <div id="thucung_dropdown" class="smart-search-dropdown" style="display: none; position: absolute; background: #fff; border: 1px solid #ccc; z-index: 1000; max-height: 200px; overflow-y: auto; width: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group-modal">
                     <label>Chọn Lồng / Phòng (malong) (*):</label>
                     <select id="malong">
                         <option value="">-- Chọn lồng / phòng --</option>
                     </select>
+                </div>
+                <div class="form-group-modal">
+                    <label>Bác sĩ phụ trách (bacsiphutrach):</label>
+                    <input type="text" id="bacsiphutrach" placeholder="Nhập tên bác sĩ...">
                 </div>
             </div>
 
@@ -233,11 +290,17 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group-modal">
-                    <label>Bác sĩ phụ trách (bacsiphutrach):</label>
-                    <input type="text" id="bacsiphutrach" placeholder="Nhập tên bác sĩ...">
+            <!-- DÒNG HIỂN THỊ SỐ NGÀY LƯU TRÚ / NẰM VIỆN -->
+            <div class="form-row" style="background: #f8fafc; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; align-items: center; margin-bottom: 10px;">
+                <div class="form-group-modal" style="margin-bottom: 0;">
+                    <span style="font-size: 13px; font-weight: bold; color: #334155;">⏳ Tổng số ngày lưu trú / nằm viện:</span>
                 </div>
+                <div class="form-group-modal" style="margin-bottom: 0; text-align: right;">
+                    <span id="hienThiSoNgayModal" style="font-size: 15px; font-weight: bold; color: #0284c7;">1 ngày</span>
+                </div>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group-modal">
                     <label>Trạng thái (trangthai):</label>
                     <select id="trangthai">
@@ -246,28 +309,26 @@
                         <option value="Đã xuất viện">Đã xuất viện</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="form-row">
                 <div class="form-group-modal">
                     <label>Chi phí / ngày (chiphingay - VNĐ):</label>
                     <input type="number" id="chiphingay" placeholder="VD: 100000" oninput="tinhUocTinh()">
                 </div>
-                <div class="form-group-modal">
-                    <label>Tổng chi phí (tongchiphi):</label>
-                    <input type="number" id="tongchiphi" placeholder="Có thể sửa thủ công..." oninput="tinhThanhTien()">
-                </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group-modal">
+                    <label>Tổng chi phí (tongchiphi):</label>
+                    <input type="number" id="tongchiphi" placeholder="Có thể sửa thủ công..." oninput="tinhThanhTien()">
+                </div>
+                <div class="form-group-modal">
                     <label>Khách tạm ứng (tamung):</label>
                     <input type="number" id="tamung" value="0" oninput="tinhThanhTien()">
                 </div>
-                <div class="form-group-modal">
-                    <label>Thành tiền (thanhtien = Tổng - Tạm ứng):</label>
-                    <input type="number" id="thanhtien" readonly style="background: #f1f5f9; font-weight: bold; color: #dc2626;">
-                </div>
+            </div>
+
+            <div class="form-group-modal">
+                <label>Thành tiền (thanhtien = Tổng - Tạm ứng):</label>
+                <input type="number" id="thanhtien" readonly style="background: #f1f5f9; font-weight: bold; color: #dc2626;">
             </div>
 
             <div class="form-group-modal">
@@ -282,17 +343,25 @@
         </div>
     </div>
 
-    <!-- SCRIPT XỬ LÝ DỮ LIỆU -->
+    <!-- SCRIPT XỬ LÝ DỮ LIỆU & PHÂN TRANG -->
     <script>
         let danhSachNhatKyGoc = [];
         let mapKhamBenh = {}; 
         let mapThuCung = {};
         let mapKhachHang = {};
         let mapLong = {};
+        let dsThuCungChoSearch = [];
+
+        // Biến phân trang
+        let trangHienTai = 1;
+        let soDongMoiTrang = 10;
+        let ketQuaLocTamThoi = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const maKBParam = urlParams.get('makhambenh');
+            const maTCParam = urlParams.get('mathucung');
+
             if (maKBParam) {
                 document.getElementById('makhambenh').value = maKBParam;
             }
@@ -307,8 +376,15 @@
                   .subscribe();
             }
 
-            if (maKBParam) {
+            if (maKBParam || maTCParam) {
                 moModalThem();
+                if (maTCParam) {
+                    document.getElementById('mathucung').value = maTCParam;
+                    const tcItem = dsThuCungChoSearch.find(x => x.value == maTCParam);
+                    if (tcItem) {
+                        document.getElementById('thucung_search').value = tcItem.label;
+                    }
+                }
             }
         });
 
@@ -316,20 +392,33 @@
             // 1. Tải Khách hàng
             const { data: khData } = await db.from('khachhang').select('*');
             if (khData) {
-                khData.forEach(kh => { mapKhachHang[kh.id] = kh.hovaten; });
+                khData.forEach(kh => { mapKhachHang[kh.id] = kh.hovaten || kh.ten || 'Không tên'; });
             }
 
             // 2. Tải Thú cưng
             const { data: tcData } = await db.from('thucung').select('*');
+            dsThuCungChoSearch = [];
             if (tcData) {
                 tcData.forEach(tc => {
-                    let maKH = tc.makhachhang || tc.makh || tc.khachhang_id;
+                    let maKH = tc.makhachhang || tc.makh || tc.khachhang_id || tc.id_khachhang;
+                    let tenChu = (maKH && mapKhachHang[maKH]) ? mapKhachHang[maKH] : 'Chưa rõ';
+                    let tenPet = tc.tenthucung || tc.ten || 'Thú cưng';
+
                     mapThuCung[tc.id] = {
-                        tenthucung: tc.tenthucung,
-                        tenchu: mapKhachHang[maKH] || 'Không rõ chủ'
+                        tenthucung: tenPet,
+                        tenchu: tenChu
                     };
+
+                    dsThuCungChoSearch.push({
+                        id: tc.id,
+                        label: `${tenPet} (Chủ: ${tenChu}) - ID: ${tc.id}`,
+                        value: tc.id,
+                        tuKhoaTim: `${tenPet} ${tenChu} PET${String(tc.id).padStart(4, '0')}`
+                    });
                 });
             }
+
+            setupModalSmartSearch();
 
             // 3. Tải Khám bệnh để map Mã khám bệnh -> Thú cưng
             const { data: kbData } = await db.from('khambenh').select('*');
@@ -364,8 +453,66 @@
                 console.error('Lỗi tải nhật ký nội trú:', error);
             } else {
                 danhSachNhatKyGoc = data || [];
-                hienThiBang(danhSachNhatKyGoc);
+                ketQuaLocTamThoi = danhSachNhatKyGoc;
+                hienThiBang(ketQuaLocTamThoi);
             }
+        }
+
+        function setupModalSmartSearch() {
+            const inputElem = document.getElementById('thucung_search');
+            const dropdownElem = document.getElementById('thucung_dropdown');
+            const hiddenElem = document.getElementById('mathucung');
+
+            if (!inputElem || !dropdownElem) return;
+
+            inputElem.addEventListener('input', function() {
+                const val = chuanHoaSearch(this.value.trim());
+                if (val.length === 0) {
+                    dropdownElem.style.display = 'none';
+                    hiddenElem.value = '';
+                    return;
+                }
+
+                const ketQua = dsThuCungChoSearch.filter(item => chuanHoaSearch(item.tuKhoaTim).includes(val));
+
+                if (ketQua.length === 0) {
+                    dropdownElem.innerHTML = `<div style="padding: 10px; text-align: center; color: #64748b; font-size: 13px;">Không tìm thấy thú cưng phù hợp</div>`;
+                    dropdownElem.style.display = 'block';
+                    return;
+                }
+
+                let html = '';
+                ketQua.forEach(item => {
+                    html += `
+                        <div class="search-item" onclick="chonThuCungModal(${item.id}, '${item.label.replace(/'/g, "\\'")}')" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9;">
+                            <div style="font-weight: 600; font-size: 13px; color: #1e293b;">🐾 ${item.label}</div>
+                        </div>`;
+                });
+
+                dropdownElem.innerHTML = html;
+                dropdownElem.style.display = 'block';
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!inputElem.contains(e.target) && !dropdownElem.contains(e.target)) {
+                    dropdownElem.style.display = 'none';
+                }
+            });
+        }
+
+        function chonThuCungModal(id, label) {
+            document.getElementById('mathucung').value = id;
+            document.getElementById('thucung_search').value = label;
+            document.getElementById('thucung_dropdown').style.display = 'none';
+        }
+
+        function chuanHoaSearch(str) {
+            if (!str) return '';
+            return str.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/Đ/g, 'D');
         }
 
         function tinhUocTinh() {
@@ -373,13 +520,19 @@
             const ngayra = new Date(document.getElementById('ngayra').value);
             const chiphingay = parseFloat(document.getElementById('chiphingay').value) || 0;
 
-            if (!isNaN(ngayvao.getTime()) && !isNaN(ngayra.getTime()) && chiphingay > 0) {
+            if (!isNaN(ngayvao.getTime()) && !isNaN(ngayra.getTime())) {
                 const diffTime = ngayra - ngayvao;
                 let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 if (diffDays <= 0) diffDays = 1;
 
-                const tongchiphi = diffDays * chiphingay;
-                document.getElementById('tongchiphi').value = tongchiphi;
+                document.getElementById('hienThiSoNgayModal').innerText = diffDays + ' ngày';
+
+                if (chiphingay > 0) {
+                    const tongchiphi = diffDays * chiphingay;
+                    document.getElementById('tongchiphi').value = tongchiphi;
+                }
+            } else {
+                document.getElementById('hienThiSoNgayModal').innerText = '1 ngày';
             }
             tinhThanhTien();
         }
@@ -390,36 +543,56 @@
             document.getElementById('thanhtien').value = tongchiphi - tamung;
         }
 
+        // --- HÀM HIỂN THỊ BẢNG KÈM PHÂN TRANG ---
         function hienThiBang(data) {
             const tableBody = document.getElementById('data-table');
             tableBody.innerHTML = '';
             
-            if(data.length === 0) {
+            if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">Chưa có nhật ký nội trú nào</td></tr>`;
+                document.getElementById('paginationInfo').innerText = 'Hiển thị 0 - 0 của 0 bản ghi';
+                document.getElementById('paginationButtons').innerHTML = '';
                 return;
             }
 
-            data.forEach(item => {
+            const tongSoBanGhi = data.length;
+            const tongSoTrang = Math.ceil(tongSoBanGhi / soDongMoiTrang);
+            
+            if (trangHienTai > tongSoTrang) trangHienTai = tongSoTrang;
+            if (trangHienTai < 1) trangHienTai = 1;
+
+            const viTriBatDau = (trangHienTai - 1) * soDongMoiTrang;
+            const viTriKetThuc = viTriBatDau + soDongMoiTrang;
+            const duLieuTrangHienTai = data.slice(viTriBatDau, viTriKetThuc);
+
+            duLieuTrangHienTai.forEach(item => {
                 const maNKNT = 'NKNT' + String(item.id).padStart(4, '0');
                 const maKBText = item.makhambenh ? 'KB' + String(item.makhambenh).padStart(4, '0') : 'N/A';
-                const infoPet = mapKhamBenh[item.makhambenh] || { tenthucung: 'Không rõ', tenchu: 'Không rõ' };
+                
+                let infoPet = mapKhamBenh[item.makhambenh];
+                if (!infoPet && item.mathucung && mapThuCung[item.mathucung]) {
+                    infoPet = mapThuCung[item.mathucung];
+                }
+                if (!infoPet) {
+                    infoPet = { tenthucung: 'Thú cưng #' + (item.mathucung || 'K/C'), tenchu: 'Chưa rõ' };
+                }
+
                 const infoLong = mapLong[item.malong] || { phong: 'N/A', long: 'N/A' };
                 
                 const ngayVao = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
                 const ngayRa = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
 
-                // Xử lý huy hiệu trạng thái dạng bấm đổi trực tiếp trên bảng PC
                 const trangThaiHienTai = item.trangthai || 'Đang nằm viện';
-                let badgeColor = '#d97706'; // Cam: Đang nằm viện
+                let badgeColor = '#d97706'; 
                 let bgBadge = '#fef3c7';
                 let nextStatus = 'Chờ xuất viện';
 
                 if (trangThaiHienTai === 'Chờ xuất viện') {
-                    badgeColor = '#2563eb'; // Xanh dương: Chờ xuất viện
+                    badgeColor = '#2563eb'; 
                     bgBadge = '#e0f2fe';
                     nextStatus = 'Đã xuất viện';
                 } else if (trangThaiHienTai === 'Đã xuất viện') {
-                    badgeColor = '#059669'; // Xanh lá: Đã xuất viện
+                    badgeColor = '#059669'; 
                     bgBadge = '#d1fae5';
                     nextStatus = 'Đang nằm viện';
                 }
@@ -461,9 +634,38 @@
                     </td>
                 </tr>`;
             });
+
+            capNhatThanhPhanTrang(tongSoBanGhi, viTriBatDau, duLieuTrangHienTai.length, tongSoTrang);
         }
 
-        // Hàm gọi Database cập nhật trạng thái trực tiếp bằng cách bấm vào huy hiệu trên bảng PC
+        function capNhatThanhPhanTrang(tongSoBanGhi, viTriBatDau, soLuongHienTai, tongSoTrang) {
+            const infoText = document.getElementById('paginationInfo');
+            const buttonsContainer = document.getElementById('paginationButtons');
+
+            const fromNum = tongSoBanGhi > 0 ? viTriBatDau + 1 : 0;
+            const toNum = viTriBatDau + soLuongHienTai;
+            infoText.innerText = `Hiển thị ${fromNum} - ${toNum} của ${tongSoBanGhi} bản ghi`;
+
+            let buttonsHTML = '';
+            buttonsHTML += `<button class="btn-page" ${trangHienTai === 1 ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai - 1})">‹ Trước</button>`;
+
+            for (let i = 1; i <= tongSoTrang; i++) {
+                if (i === 1 || i === tongSoTrang || (i >= trangHienTai - 1 && i <= trangHienTai + 1)) {
+                    buttonsHTML += `<button class="btn-page ${i === trangHienTai ? 'active' : ''}" onclick="chuyenTrang(${i})">${i}</button>`;
+                } else if (i === trangHienTai - 2 || i === trangHienTai + 2) {
+                    buttonsHTML += `<span style="padding: 6px 4px; color: #94a3b8;">...</span>`;
+                }
+            }
+
+            buttonsHTML += `<button class="btn-page" ${trangHienTai === tongSoTrang || tongSoTrang === 0 ? 'disabled' : ''} onclick="chuyenTrang(${trangHienTai + 1})">Sau ›</button>`;
+            buttonsContainer.innerHTML = buttonsHTML;
+        }
+
+        function chuyenTrang(trangMoi) {
+            trangHienTai = trangMoi;
+            hienThiBang(ketQuaLocTamThoi);
+        }
+
         async function capNhatTrangThaiPC(id, trangThaiMoi, maLong) {
             if (typeof db === 'undefined' || !db) return;
 
@@ -484,13 +686,14 @@
 
         function timKiemNhatKyNoiTru() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
-            const ketQuaLoc = danhSachNhatKyGoc.filter(item => {
+            ketQuaLocTamThoi = danhSachNhatKyGoc.filter(item => {
                 const maKB = String(item.makhambenh || '').toLowerCase();
                 const bacSi = (item.bacsiphutrach || '').toLowerCase();
                 const maNK = ('nknt' + String(item.id)).toLowerCase();
                 return maKB.includes(tuKhoa) || bacSi.includes(tuKhoa) || maNK.includes(tuKhoa);
             });
-            hienThiBang(ketQuaLoc);
+            trangHienTai = 1;
+            hienThiBang(ketQuaLocTamThoi);
         }
 
         function moModalThem() {
@@ -498,6 +701,8 @@
             if (!window.location.search.includes('makhambenh')) {
                 document.getElementById('makhambenh').value = '';
             }
+            document.getElementById('mathucung').value = '';
+            document.getElementById('thucung_search').value = '';
             document.getElementById('malong').value = '';
             
             const now = new Date();
@@ -513,6 +718,7 @@
             document.getElementById('thanhtien').value = '0';
             document.getElementById('ghichu').value = '';
             
+            tinhUocTinh();
             document.getElementById('modalTitle').innerText = 'Lập hồ sơ nội trú mới';
             document.getElementById('nhatKyNoiTruModal').style.display = 'flex';
         }
@@ -523,6 +729,14 @@
 
             document.getElementById('editingId').value = item.id;
             document.getElementById('makhambenh').value = item.makhambenh || '';
+            document.getElementById('mathucung').value = item.mathucung || '';
+
+            if (item.mathucung && mapThuCung[item.mathucung]) {
+                const t = mapThuCung[item.mathucung];
+                document.getElementById('thucung_search').value = `${t.tenthucung} (Chủ: ${t.tenchu})`;
+            } else {
+                document.getElementById('thucung_search').value = '';
+            }
             
             const selectLong = document.getElementById('malong');
             selectLong.innerHTML = `<option value="">-- Chọn lồng / phòng trống --</option>`;
@@ -544,6 +758,7 @@
             document.getElementById('thanhtien').value = item.thanhtien || 0;
             document.getElementById('ghichu').value = item.ghichu || '';
 
+            tinhUocTinh();
             document.getElementById('modalTitle').innerText = 'Cập nhật hồ sơ nội trú (ID: ' + id + ')';
             document.getElementById('nhatKyNoiTruModal').style.display = 'flex';
         }
@@ -556,6 +771,7 @@
             const id = document.getElementById('editingId').value;
             let rawMaKB = document.getElementById('makhambenh').value.trim().replace(/[^0-9]/g, '');
             const makhambenh = rawMaKB ? parseInt(rawMaKB) : null;
+            const mathucung = document.getElementById('mathucung').value;
             const malong = document.getElementById('malong').value;
             
             const ngayvao = document.getElementById('ngayvao').value;
@@ -569,13 +785,14 @@
             const tamung = parseFloat(document.getElementById('tamung').value) || 0;
             const thanhtien = parseFloat(document.getElementById('thanhtien').value) || 0;
 
-            if (!makhambenh || !malong) {
-                alert('Vui lòng nhập Mã khám bệnh và chọn Lồng/Phòng!');
+            if (!malong) {
+                alert('Vui lòng chọn Lồng/Phòng!');
                 return;
             }
 
             const payload = {
                 makhambenh: makhambenh,
+                mathucung: mathucung ? parseInt(mathucung) : null,
                 malong: parseInt(malong),
                 ngayvao: ngayvao ? new Date(ngayvao).toISOString() : null,
                 ngayra: ngayra ? new Date(ngayra).toISOString() : null,
@@ -638,7 +855,6 @@
                 <button class="close-modal" onclick="dongModalHoaDon()">&times;</button>
             </div>
             
-            <!-- Khu vực nội dung hóa đơn để in -->
             <div id="printArea" style="padding: 15px; background: #fff; color: #000; font-family: Arial, sans-serif;">
                 <div style="text-align: center; margin-bottom: 20px;">
                     <div class="print-header"></div>
@@ -713,7 +929,15 @@
             if (!item) return;
 
             const maNKNT = 'NKNT' + String(item.id).padStart(4, '0');
-            const infoPet = mapKhamBenh[item.makhambenh] || { tenthucung: 'Không rõ', tenchu: 'Không rõ' };
+            
+            let infoPet = mapKhamBenh[item.makhambenh];
+            if (!infoPet && item.mathucung && mapThuCung[item.mathucung]) {
+                infoPet = mapThuCung[item.mathucung];
+            }
+            if (!infoPet) {
+                infoPet = { tenthucung: 'Không rõ', tenchu: 'Không rõ' };
+            }
+
             const infoLong = mapLong[item.malong] || { phong: 'N/A', long: 'N/A' };
             
             let diffDays = 1;
