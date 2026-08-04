@@ -40,7 +40,6 @@
             width: 100%;
         }
 
-        /* Thu gọn khung form bên trái, mở rộng bảng bên phải cho cân đối */
         .spa-container {
             display: grid;
             grid-template-columns: 0.8fr 1.2fr;
@@ -405,23 +404,6 @@
                     document.getElementById('autocompleteList').style.display = 'none';
                 }
             });
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const makhachhang = urlParams.get('makhachhang');
-            const thuCungTen = urlParams.get('thucung_ten');
-
-            if (makhachhang && danhSachKhachHang.length > 0) {
-                const kh = danhSachKhachHang.find(x => x.id == makhachhang);
-                if (kh) {
-                    const ten = kh.tenkhachhang || kh.hovaten || '';
-                    document.getElementById('inputTimKhachHang').value = ten;
-                    document.getElementById('sdt').value = kh.sdt || kh.sodienthoai || '';
-                }
-            }
-
-            if (thuCungTen) {
-                document.getElementById('thucung').value = decodeURIComponent(thuCungTen);
-            }
         });
 
         async function taiKhachHang() {
@@ -494,13 +476,13 @@
             }
 
             danhSachDichVuGoc.forEach(item => {
-                const tenDichVu = item.tendichvu || item.tensanpham || 'Dịch vụ spa';
-                const giaDichVu = parseFloat(item.gia || item.giaban || 0);
+                const tenDichVu = item.tendichvu || item.tensanpham || item.tendv || 'Dịch vụ spa';
+                const giaDichVu = parseFloat(item.gia || item.giaban || item.giadichvu || item.giatien || 0);
 
                 container.innerHTML += `
-                    <div class="service-item-row">
-                        <label>
-                            <input type="checkbox" value="${item.id}" data-ten="${tenDichVu}" data-gia="${giaDichVu}" onchange="tinhTongTienSpa()">
+                    <div class="service-item-row" onclick="chonDongDichvu(event, this)" style="cursor: pointer;">
+                        <label style="pointer-events: none;">
+                            <input type="checkbox" value="${item.id}" data-ten="${tenDichVu}" data-gia="${giaDichVu}">
                             <span>${tenDichVu}</span>
                         </label>
                         <span style="font-weight: bold; color: var(--danger-color);">${giaDichVu.toLocaleString('vi-VN')} đ</span>
@@ -509,15 +491,27 @@
             });
         }
 
+        // Hàm hỗ trợ click vào cả dòng là tự động tích chọn và tính tiền ngay lập tức
+        function chonDongDichvu(event, element) {
+            if (event.target.tagName !== 'INPUT') {
+                const cb = element.querySelector('input[type="checkbox"]');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                }
+            }
+            tinhTongTienSpa();
+        }
+
         function tinhTongTienSpa() {
             const checkboxes = document.querySelectorAll('#danhSachDichVuCheckbox input[type="checkbox"]:checked');
             let tong = 0;
             checkboxes.forEach(cb => {
-                tong += parseFloat(cb.getAttribute('data-gia')) || 0;
+                const gia = parseFloat(cb.getAttribute('data-gia')) || 0;
+                tong += gia;
             });
 
             document.getElementById('tongtien').value = tong;
-            document.getElementById('tongTienHienThi').innerText = tong.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('tongTienHienThi').value = tong.toLocaleString('vi-VN') + ' đ';
         }
 
         async function taiNhatKySpa() {
@@ -674,8 +668,8 @@
             const arrDichVu = item.dichvusudung ? item.dichvusudung.split(', ') : [];
             
             arrDichVu.forEach((tenDV, index) => {
-                const matchDv = danhSachDichVuGoc.find(d => (d.tendichvu || d.tensanpham) === tenDV);
-                const giaDV = matchDv ? parseFloat(matchDv.gia || matchDv.giaban || 0) : 0;
+                const matchDv = danhSachDichVuGoc.find(d => (d.tendichvu || d.tensanpham || d.tendv) === tenDV);
+                const giaDV = matchDv ? parseFloat(matchDv.gia || matchDv.giaban || matchDv.giadichvu || matchDv.giatien || 0) : 0;
 
                 htmlList += `
                     <tr>
