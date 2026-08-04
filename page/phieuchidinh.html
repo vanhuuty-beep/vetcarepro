@@ -39,6 +39,8 @@
         .modal-container {
             width: 850px;
             padding: 20px 24px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-header {
             margin-bottom: 12px;
@@ -46,6 +48,7 @@
         }
         .form-group-modal {
             margin-bottom: 10px;
+            position: relative; /* Giúp neo hộp gợi ý tìm kiếm */
         }
         .form-group-modal label {
             font-size: 13px;
@@ -60,6 +63,34 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+        }
+        
+        /* Hộp gợi ý tìm kiếm thông minh cho mã khám bệnh */
+        #suggestions-box-kb {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0 0 6px 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 99999;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: none;
+            margin-top: 2px;
+        }
+        .suggestion-item {
+            padding: 9px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .suggestion-item:hover {
+            background-color: #f8fafc;
+            color: #2563eb;
+            font-weight: 500;
         }
         
         .table-chitiet-modal {
@@ -120,6 +151,46 @@
             padding: 3px;
             border-radius: 4px;
         }
+
+        /* Giao diện phân trang */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #475569;
+        }
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-page {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .btn-page:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .btn-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-page.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -159,6 +230,14 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- PHÂN TRANG -->
+                <div class="pagination-container">
+                    <div id="pageInfo">Hiển thị 0 - 0 của 0 bản ghi</div>
+                    <div class="pagination-buttons" id="paginationControls">
+                        <!-- Nút phân trang tạo tự động -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -176,8 +255,11 @@
             
             <div style="display: flex; gap: 10px;">
                 <div class="form-group-modal" style="flex: 1;">
-                    <label>Mã khám bệnh (makhambenh) (*):</label>
-                    <input type="text" id="makhambenh" placeholder="Nhập mã khám bệnh (VD: 1)...">
+                    <label>Tìm kiếm & Chọn mã khám bệnh (makhambenh) (*):</label>
+                    <input type="text" id="makhambenh_search" placeholder="Gõ mã khám, tên thú cưng hoặc chủ..." autocomplete="off" oninput="xuLyTimKiemMaKham(this.value)">
+                    <input type="hidden" id="makhambenh">
+                    <!-- Hộp gợi ý tìm kiếm thông minh -->
+                    <div id="suggestions-box-kb"></div>
                 </div>
                 <div class="form-group-modal" style="flex: 1;">
                     <label>Ngày chỉ định (ngaychidinh):</label>
@@ -237,7 +319,6 @@
     <!-- KHUNG IN PHIẾU CHỈ ĐỊNH -->
     <div id="printArea" style="display: none;">
             <div class="print-header"></div>
-
         
         <div class="print-title">
             <h3>PHIẾU CHỈ ĐỊNH CẬN LÂM SÀNG</h3>
@@ -293,12 +374,10 @@
 
     <style>
     @media print {
-        /* Ẩn toàn bộ các thành phần trên trang mặc định */
         body * {
             visibility: hidden !important;
         }
         
-        /* Chỉ hiển thị duy nhất khung in phiếu chỉ định */
         #printArea, #printArea * {
             visibility: visible !important;
         }
@@ -316,7 +395,6 @@
             box-sizing: border-box;
         }
 
-        /* ẨN HOÀN TOÀN THANH MENU, ĐIỀU HƯỚNG VÀ GIAO DIỆN QUẢN LÝ KHI IN */
         #menu-container,
         #topnav-container,
         .main-content,
@@ -347,8 +425,16 @@
         let danhSachPhieuGoc = [];
         let danhSachDichVuGoc = [];
         let mapKhamBenh = {}; 
-        let mapThuCung = {};   
+        let mapThuCung = {};    
         let mapKhachHang = {}; 
+        
+        // Biến cho tìm kiếm thông minh mã khám
+        let dsMaKhamChoSearch = [];
+
+        // Biến phục vụ phân trang
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let filteredDataCache = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -357,6 +443,14 @@
                 document.getElementById('makhambenh').value = maKBParam;
             }
             await fetchDuLieuBanDau();
+
+            // Đóng hộp gợi ý tìm kiếm khi click ra ngoài
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.form-group-modal')) {
+                    const box = document.getElementById('suggestions-box-kb');
+                    if (box) box.style.display = 'none';
+                }
+            });
 
             // Đăng ký Realtime tự động cập nhật bảng khi có thay đổi từ thiết bị khác
             if (typeof db !== 'undefined' && db) {
@@ -388,12 +482,21 @@
                 });
             }
 
-            const { data: kbData } = await db.from('khambenh').select('*');
+            const { data: kbData } = await db.from('khambenh').select('*').order('id', { ascending: false });
+            dsMaKhamChoSearch = [];
             if (kbData) {
                 kbData.forEach(kb => {
+                    let petInfo = mapThuCung[kb.mathucung] || { tenthucung: 'Thú cưng #' + kb.mathucung, tenchu: 'Không rõ' };
                     if (kb.mathucung && mapThuCung[kb.mathucung]) {
                         mapKhamBenh[kb.id] = mapThuCung[kb.mathucung];
                     }
+
+                    let labelStr = `KB #${kb.id} - Thú cưng: ${petInfo.tenthucung} (Chủ: ${petInfo.tenchu})`;
+                    dsMaKhamChoSearch.push({
+                        id: kb.id,
+                        label: labelStr,
+                        searchKey: `kb #${kb.id} ${petInfo.tenthucung} ${petInfo.tenchu}`.toLowerCase()
+                    });
                 });
             }
 
@@ -407,8 +510,44 @@
                 console.error('Lỗi tải phiếu chỉ định:', error);
             } else {
                 danhSachPhieuGoc = data;
-                hienThiBang(danhSachPhieuGoc);
+                timKiemPhiếuChỉĐịnh(); // Khởi tạo phân trang và lọc dữ liệu
             }
+        }
+
+        // Xử lý tìm kiếm thông minh cho mã khám bệnh trong modal
+        function xuLyTimKiemMaKham(tuKhoa) {
+            const box = document.getElementById('suggestions-box-kb');
+            document.getElementById('makhambenh').value = ''; 
+
+            if (!tuKhoa || tuKhoa.trim() === '') {
+                box.style.display = 'none';
+                return;
+            }
+
+            const keyword = tuKhoa.toLowerCase().trim();
+            const filtered = dsMaKhamChoSearch.filter(item => item.searchKey.includes(keyword));
+
+            if (filtered.length === 0) {
+                box.innerHTML = `<div class="suggestion-item" style="color: #777;">Không tìm thấy mã khám phù hợp</div>`;
+                box.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(item => {
+                html += `<div class="suggestion-item" onclick="chonMaKham(${item.id}, '${item.label.replace(/'/g, "\\'")}')">
+                    <strong>${item.label}</strong>
+                </div>`;
+            });
+
+            box.innerHTML = html;
+            box.style.display = 'block';
+        }
+
+        function chonMaKham(id, label) {
+            document.getElementById('makhambenh').value = id;
+            document.getElementById('makhambenh_search').value = label;
+            document.getElementById('suggestions-box-kb').style.display = 'none';
         }
 
         function themDongDichVu(chiTietData = {}) {
@@ -481,16 +620,29 @@
             document.getElementById('tongTienHienThi').innerText = tong.toLocaleString('vi-VN') + ' đ';
         }
 
+        // HÀM HIỂN THỊ BẢNG KÈM PHÂN TRANG
         function hienThiBang(data) {
+            filteredDataCache = data;
+            const totalRows = data.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+            
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIdx = (currentPage - 1) * rowsPerPage;
+            const endIdx = startIdx + rowsPerPage;
+            const pageData = data.slice(startIdx, endIdx);
+
             const tableBody = document.getElementById('data-table');
             tableBody.innerHTML = '';
             
-            if(data.length === 0) {
+            if(pageData.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">Chưa có phiếu chỉ định nào</td></tr>`;
+                renderPagination(0, 0, 0, 1);
                 return;
             }
 
-            data.forEach(item => {
+            pageData.forEach(item => {
                 const maPhieuFormatted = 'PCD' + String(item.id).padStart(4, '0');
                 const maKBText = 'KB' + String(item.makhambenh).padStart(4, '0');
                 const ngayFormatted = item.ngaychidinh ? new Date(item.ngaychidinh).toLocaleString('vi-VN') : '';
@@ -515,16 +667,15 @@
                     chiTietHtml = `<b>${item.tendichvu || ''}</b> - TT: ${Number(item.thanhtien || 0).toLocaleString('vi-VN')}đ`;
                 }
 
-                // Xử lý trạng thái huy hiệu bấm đổi nhanh cho Phiếu chỉ định
                 const trangThaiHienTai = item.trangthai || 'Chờ thực hiện';
-                let badgeColor = '#d97706'; // Cam: Chờ thực hiện
+                let badgeColor = '#d97706'; 
                 let nextStatus = 'Đang thực hiện';
 
                 if (trangThaiHienTai === 'Đang thực hiện') {
-                    badgeColor = '#2563eb'; // Xanh dương: Đang thực hiện
+                    badgeColor = '#2563eb'; 
                     nextStatus = 'Đã hoàn thành';
                 } else if (trangThaiHienTai === 'Đã hoàn thành') {
-                    badgeColor = '#059669'; // Xanh lá: Đã hoàn thành
+                    badgeColor = '#059669'; 
                     nextStatus = 'Chờ thực hiện';
                 }
 
@@ -552,9 +703,56 @@
                     </td>
                 </tr>`;
             });
+
+            renderPagination(startIdx + 1, Math.min(endIdx, totalRows), totalRows, totalPages);
         }
 
-        // Hàm gọi Database cập nhật trạng thái trực tiếp trên PC
+        function renderPagination(start, end, total, totalPages) {
+            document.getElementById('pageInfo').innerText = total === 0 ? 'Không có bản ghi' : `Hiển thị ${start} - ${end} của ${total} bản ghi`;
+            
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            if (total === 0) return;
+
+            // Nút Trước
+            const btnPrev = document.createElement('button');
+            btnPrev.className = 'btn-page';
+            btnPrev.innerText = '‹ Trước';
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.onclick = () => { if (currentPage > 1) { currentPage--; hienThiBang(filteredDataCache); } };
+            controls.appendChild(btnPrev);
+
+            // Các nút số trang
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const btn = document.createElement('button');
+                    btn.className = `btn-page ${i === currentPage ? 'active' : ''}`;
+                    btn.innerText = i;
+                    btn.onclick = (function(page) {
+                        return function() {
+                            currentPage = page;
+                            hienThiBang(filteredDataCache);
+                        };
+                    })(i);
+                    controls.appendChild(btn);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const span = document.createElement('span');
+                    span.innerText = '...';
+                    span.style.padding = '0 4px';
+                    controls.appendChild(span);
+                }
+            }
+
+            // Nút Sau
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn-page';
+            btnNext.innerText = 'Sau ›';
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.onclick = () => { if (currentPage < totalPages) { currentPage++; hienThiBang(filteredDataCache); } };
+            controls.appendChild(btnNext);
+        }
+
         async function capNhatTrangThaiPhieuChiDinhPC(id, trangThaiMoi) {
             if (typeof db === 'undefined' || !db) return;
 
@@ -571,6 +769,7 @@
         }
 
         function timKiemPhiếuChỉĐịnh() {
+            currentPage = 1; // Reset về trang 1 khi tìm kiếm
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachPhieuGoc.filter(item => {
                 const maPCD = ('pcd' + String(item.id)).toLowerCase();
@@ -584,9 +783,24 @@
         function moModalThem() {
             document.getElementById('editingId').value = '';
             document.getElementById('editingHinhanhOld').value = '';
+            document.getElementById('makhambenh').value = '';
+            document.getElementById('makhambenh_search').value = '';
+            
+            const box = document.getElementById('suggestions-box-kb');
+            if (box) box.style.display = 'none';
+
             if (!window.location.search.includes('makhambenh')) {
                 document.getElementById('makhambenh').value = '';
+            } else {
+                const urlParams = new URLSearchParams(window.location.search);
+                const maKBParam = urlParams.get('makhambenh');
+                if (maKBParam) {
+                    document.getElementById('makhambenh').value = maKBParam;
+                    let kbObj = dsMaKhamChoSearch.find(x => x.id == maKBParam);
+                    if (kbObj) document.getElementById('makhambenh_search').value = kbObj.label;
+                }
             }
+
             document.getElementById('ngaychidinh').value = new Date().toISOString().slice(0, 16);
             document.getElementById('ketluan').value = '';
             document.getElementById('trangthai').value = 'Chờ thực hiện';
@@ -599,11 +813,22 @@
         }
 
         function moModalSua(id) {
+            const box = document.getElementById('suggestions-box-kb');
+            if (box) box.style.display = 'none';
+
             const item = danhSachPhieuGoc.find(x => x.id === id);
             if (!item) return;
 
             document.getElementById('editingId').value = item.id;
             document.getElementById('makhambenh').value = item.makhambenh || '';
+            
+            let kbObj = dsMaKhamChoSearch.find(x => x.id == item.makhambenh);
+            if (kbObj) {
+                document.getElementById('makhambenh_search').value = kbObj.label;
+            } else {
+                document.getElementById('makhambenh_search').value = item.makhambenh ? 'KB #' + item.makhambenh : '';
+            }
+
             document.getElementById('ngaychidinh').value = item.ngaychidinh ? item.ngaychidinh.slice(0, 16) : '';
             document.getElementById('ketluan').value = item.ketluan || '';
             document.getElementById('trangthai').value = item.trangthai || 'Chờ thực hiện';
@@ -645,7 +870,7 @@
             const trangthai = document.getElementById('trangthai').value;
 
             if (!makhambenh) {
-                alert('Vui lòng nhập mã khám bệnh hợp lệ!');
+                alert('Vui lòng tìm và chọn mã khám bệnh hợp lệ từ danh sách gợi ý!');
                 return;
             }
 
