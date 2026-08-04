@@ -190,7 +190,6 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // Khởi tạo các thành phần âm thanh và khung chứa thông báo ẩn
     if (!document.getElementById('globalAudioNotification')) {
         const audioTag = document.createElement('audio');
         audioTag.id = 'globalAudioNotification';
@@ -240,7 +239,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Kích hoạt lắng nghe Realtime chạy ngầm an toàn tuyệt đối
     langNgheThongBaoRealtimePC();
 });
 
@@ -250,7 +248,6 @@ function xuLyCoDuLieuMoiPC(noiDungThongBao) {
         audio.play().catch(error => console.log("Trình duyệt chặn autoplay:", error));
     }
 
-    // 1. Tự động hiện Popup ở góc phải màn hình trong 5 giây rồi tự tắt
     const center = document.getElementById('notification-center-pc');
     if (center) {
         const toast = document.createElement('div');
@@ -272,7 +269,6 @@ function xuLyCoDuLieuMoiPC(noiDungThongBao) {
         }, 5000);
     }
 
-    // 2. Tăng số đếm đỏ và lưu vào lịch sử chuông
     const badge = document.getElementById('navNotificationBadge');
     if (badge) {
         let count = parseInt(badge.innerText || '0') + 1;
@@ -310,52 +306,109 @@ function xoaTatCaThongBaoPC() {
     }
 }
 
-// Hàm kết nối Realtime chạy ngầm an toàn chống đơ trang
 function langNgheThongBaoRealtimePC() {
     setTimeout(() => {
         if (typeof db === 'undefined' || !db) return;
 
         try {
             if (!window._realtimePCSubscribed) {
-                // Lắng nghe chung mọi sự kiện INSERT trên toàn bộ schema public
-                const channel = db.channel('realtime-quet-thong-bao-pc-v9');
+                const channel = db.channel('realtime-vetcare-toan-bo-bang-v3');
 
                 channel.on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
-                    console.log("Phát hiện dữ liệu INSERT mới từ bảng:", payload.table, payload);
-                    const data = payload.new;
-                    const tableName = payload.table.toLowerCase();
-
-                    let noiDung = "Có dữ liệu mới trên hệ thống";
-
-                    if (tableName.includes('khach')) {
-                        const ten = data.tenkhachhang || data.hovaten || data.ten_khach_hang || 'Khách mới';
-                        noiDung = `👤 Khách hàng mới: ${ten}`;
-                    } else if (tableName.includes('lich')) {
-                        const ten = data.tenkhachhang || data.chunuoi || 'Khách';
-                        noiDung = `📅 Lịch hẹn mới từ: ${ten}`;
-                    } else if (tableName.includes('don')) {
-                        const tong = Number(data.tongtien || data.thanhtien || 0).toLocaleString('vi-VN');
-                        noiDung = `🛒 Đơn hàng mới: ${tong} đ`;
-                    } else if (tableName.includes('spa') || tableName.includes('nhatky')) {
-                        const ten = data.chunuoi || data.tenkhachhang || 'Khách';
-                        noiDung = `✂️ Lượt Spa mới: ${ten}`;
-                    } else {
-                        noiDung = `🔔 Dữ liệu mới từ bảng [${payload.table}]`;
-                    }
-
-                    xuLyCoDuLieuMoiPC(noiDung);
+                    xuLySuKienRealtime('Thêm mới', payload);
                 });
 
-                channel.subscribe((status) => {
-                    console.log("Trạng thái kênh Realtime PC v9:", status);
+                channel.on('postgres_changes', { event: 'UPDATE', schema: 'public' }, payload => {
+                    xuLySuKienRealtime('Cập nhật', payload);
                 });
 
+                channel.on('postgres_changes', { event: 'DELETE', schema: 'public' }, payload => {
+                    xuLySuKienRealtime('Xóa', payload);
+                });
+
+                channel.subscribe();
                 window._realtimePCSubscribed = true;
             }
         } catch (err) {
-            console.error("Lỗi Realtime PC:", err);
+            console.error("Lỗi Realtime toàn cục:", err);
         }
     }, 1500);
+}
+
+function xuLySuKienRealtime(hanhDong, payload) {
+    const tableName = payload.table.toLowerCase();
+    const data = payload.new && Object.keys(payload.new).length > 0 ? payload.new : payload.old;
+    
+    // 1. Lấy tên nhân viên từ phiên đăng nhập hiện tại trên trình duyệt
+    let tenNhanVien = "Nhân viên";
+    try {
+        const user = JSON.parse(sessionStorage.getItem('currentUser'));
+        if (user) {
+            tenNhanVien = user.tennhanvien || user.hovaten || user.name || "Nhân viên";
+        }
+    } catch (e) {}
+
+    // 2. Nếu dữ liệu trả về từ Database có sẵn thông tin người thao tác (như nguoitao, nguoisua, nguoixoa, bacsi...)
+    if (data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi) {
+        tenNhanVien = data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi;
+    }
+
+    let tenDoiTuong = `dữ liệu [${payload.table}]`;
+
+    switch (tableName) {
+        case 'khachhang':
+            tenDoiTuong = `khách hàng [${data.tenkhachhang || data.hovaten || ''}]`;
+            break;
+        case 'thucung':
+            tenDoiTuong = `thú cưng [${data.tenthucung || data.ten || ''}]`;
+            break;
+        case 'lichhen':
+            tenDoiTuong = `lịch hẹn của khách [${data.tenkhachhang || data.chunuoi || ''}]`;
+            break;
+        case 'khambenh':
+            tenDoiTuong = `phiếu khám bệnh của thú cưng [${data.thucung || data.tenthucung || ''}]`;
+            break;
+        case 'phieuchidinh':
+            tenDoiTuong = `phiếu chỉ định điều trị`;
+            break;
+        case 'donhang':
+            tenDoiTuong = `đơn hàng (tổng tiền: ${Number(data.tongtien || data.thanhtien || 0).toLocaleString('vi-VN')} đ)`;
+            break;
+        case 'hoadonthuoc':
+            tenDoiTuong = `hóa đơn/đơn thuốc`;
+            break;
+        case 'khothuoc':
+            tenDoiTuong = `kho thuốc (sản phẩm: ${data.tenthuoc || data.ten_thuoc || ''})`;
+            break;
+        case 'khovaccine':
+            tenDoiTuong = `kho vắc-xin (vắc-xin: ${data.tenvaccine || data.ten_vaccine || ''})`;
+            break;
+        case 'nhatkylamvaccine':
+            tenDoiTuong = `nhật ký tiêm vắc-xin`;
+            break;
+        case 'nhatkynoitru':
+            tenDoiTuong = `nhật ký nội trú`;
+            break;
+        case 'nhatkyspa':
+            tenDoiTuong = `lượt spa của thú cưng [${data.thucung || data.chunuoi || ''}]`;
+            break;
+        case 'noitru':
+            tenDoiTuong = `thông tin nội trú`;
+            break;
+        case 'user':
+            tenDoiTuong = `tài khoản nhân viên [${data.tendangnhap || data.username || ''}]`;
+            break;
+    }
+
+    let icon = "🔔";
+    if (hanhDong === 'Thêm mới') icon = "➕";
+    else if (hanhDong === 'Cập nhật') icon = "✏️";
+    else if (hanhDong === 'Xóa') icon = "🗑️";
+
+    // Hiển thị rõ ràng tên nhân viên thực hiện hành động (kể cả Xóa)
+    const noiDung = `${icon} <b>${tenNhanVien}</b> vừa <b>${hanhDong.toLowerCase()}</b> ${tenDoiTuong}`;
+    
+    xuLyCoDuLieuMoiPC(noiDung);
 }
 
 function toggleSubmenu(element) {
