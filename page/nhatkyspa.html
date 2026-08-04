@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nhật Ký Spa & Dịch Vụ - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
@@ -31,21 +31,32 @@
             background-color: var(--bg-body);
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .main-content {
+            padding: 15px;
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .spa-container {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
             gap: 15px;
-            padding: 15px;
+            padding: 0;
             box-sizing: border-box;
             max-width: 1600px;
             margin: 0 auto;
+            width: 100%;
         }
 
         @media (max-width: 1024px) {
             .spa-container {
                 grid-template-columns: 1fr;
+            }
+            .main-content {
+                padding: 10px;
             }
         }
 
@@ -55,10 +66,13 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             padding: 15px;
             box-sizing: border-box;
+            width: 100%;
+            overflow-x: auto;
         }
 
         .form-group-spa {
             margin-bottom: 12px;
+            position: relative;
         }
         .form-group-spa label {
             font-size: 13px;
@@ -75,10 +89,38 @@
             border-radius: 6px;
             box-sizing: border-box;
             outline: none;
+            background: #fff;
         }
         .form-group-spa select:focus, .form-group-spa input:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 2px rgba(30,58,138,0.1);
+        }
+
+        /* Style hộp gợi ý tìm kiếm khách hàng */
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #cbd5e1;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            max-height: 180px;
+            overflow-y: auto;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .autocomplete-items div {
+            padding: 8px 10px;
+            cursor: pointer;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+        }
+        .autocomplete-items div:hover {
+            background: #f1f5f9;
         }
 
         .service-checkbox-list {
@@ -114,6 +156,7 @@
             border-collapse: collapse;
             font-size: 12px;
             margin-top: 10px;
+            white-space: nowrap;
         }
         .spa-table th {
             background: #1e3a8a;
@@ -230,7 +273,7 @@
 </head>
 <body>
 
-    <!-- THANH MENU BÊN TRÁI -->
+    <!-- THANH MENU -->
     <div id="menu-container"></div>
 
     <!-- NỘI DUNG CHÍNH -->
@@ -247,10 +290,9 @@
                 <input type="hidden" id="editId" value="">
 
                 <div class="form-group-spa">
-                    <label>1. Chọn Khách Hàng (Chủ nuôi từ bảng khachhang) (*):</label>
-                    <select id="chonKhachHang" onchange="chonKhachHangChange()">
-                        <option value="">-- Chọn khách hàng --</option>
-                    </select>
+                    <label>1. Chọn Khách Hàng (Gõ tên hoặc SĐT để tìm) (*):</label>
+                    <input type="text" id="inputTimKhachHang" placeholder="Gõ tên hoặc SĐT khách hàng..." autocomplete="off" oninput="locGoiYKhachHang()">
+                    <div id="autocompleteList" class="autocomplete-items" style="display: none;"></div>
                 </div>
 
                 <div class="form-group-spa">
@@ -283,7 +325,7 @@
                 <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e3a8a;">
                     📋 Danh Sách Nhật Ký Spa Gần Đây
                 </h3>
-                <div style="flex: 1; overflow-y: auto; max-height: calc(100vh - 200px);">
+                <div style="flex: 1; overflow-x: auto; max-height: calc(100vh - 200px);">
                     <table class="spa-table">
                         <thead>
                             <tr>
@@ -346,19 +388,36 @@
         let danhSachDichVuGoc = [];
         let danhSachNhatKyGoc = [];
 
+        // Kiểm tra quyền Admin (hỗ trợ session hoặc local storage)
+        function laAdmin() {
+            const user = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
+            const role = (user.role || user.chucvu || user.username || '').toLowerCase();
+            return role.includes('admin') || role === 'quản lý' || role === 'admin';
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             await taiKhachHang();
             await taiDanhSachDichVu();
             await taiNhatKySpa();
 
+            // Ẩn khung gợi ý tìm kiếm khi click ra ngoài
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#inputTimKhachHang')) {
+                    document.getElementById('autocompleteList').style.display = 'none';
+                }
+            });
+
             const urlParams = new URLSearchParams(window.location.search);
             const makhachhang = urlParams.get('makhachhang');
             const thuCungTen = urlParams.get('thucung_ten');
 
-            if (makhachhang) {
-                const select = document.getElementById('chonKhachHang');
-                select.value = makhachhang;
-                chonKhachHangChange();
+            if (makhachhang && danhSachKhachHang.length > 0) {
+                const kh = danhSachKhachHang.find(x => x.id == makhachhang);
+                if (kh) {
+                    const ten = kh.tenkhachhang || kh.hovaten || '';
+                    document.getElementById('inputTimKhachHang').value = ten;
+                    document.getElementById('sdt').value = kh.sdt || kh.sodienthoai || '';
+                }
             }
 
             if (thuCungTen) {
@@ -370,29 +429,54 @@
             const { data, error } = await db.from('khachhang').select('*');
             if (!error && data) {
                 danhSachKhachHang = data;
-                const select = document.getElementById('chonKhachHang');
-                select.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
-                data.forEach(item => {
-                    const ten = item.tenkhachhang || item.hovaten || 'Khách hàng';
-                    const sdt = item.sdt || item.sodienthoai || '';
-                    const opt = document.createElement('option');
-                    opt.value = item.id;
-                    opt.textContent = `${ten} (${sdt || 'Không có SĐT'})`;
-                    select.appendChild(opt);
-                });
             }
         }
 
-        function chonKhachHangChange() {
-            const id = document.getElementById('chonKhachHang').value;
-            if (!id) {
+        // Tìm kiếm khách hàng khi gõ phím & ẩn SĐT với nhân viên thường
+        function locGoiYKhachHang() {
+            const keyword = document.getElementById('inputTimKhachHang').value.toLowerCase().trim();
+            const listContainer = document.getElementById('autocompleteList');
+            listContainer.innerHTML = '';
+
+            if (!keyword) {
+                listContainer.style.display = 'none';
                 document.getElementById('sdt').value = '';
                 return;
             }
-            const kh = danhSachKhachHang.find(x => x.id == id);
-            if (kh) {
-                document.getElementById('sdt').value = kh.sdt || kh.sodienthoai || '';
+
+            const filtered = danhSachKhachHang.filter(item => {
+                const ten = (item.tenkhachhang || item.hovaten || '').toLowerCase();
+                const sdt = (item.sdt || item.sodienthoai || '').toLowerCase();
+                return ten.includes(keyword) || sdt.includes(keyword);
+            });
+
+            if (filtered.length === 0) {
+                listContainer.style.display = 'none';
+                return;
             }
+
+            const isAdmin = laAdmin();
+
+            filtered.forEach(kh => {
+                const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
+                const sdtGoc = kh.sdt || kh.sodienthoai || '';
+                
+                let sdtHienThi = sdtGoc;
+                if (!isAdmin && sdtGoc.length > 4) {
+                    sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
+                }
+
+                const div = document.createElement('div');
+                div.innerHTML = `<b>${ten}</b> - <span style="color:#2563eb;">${sdtHienThi || 'Không có SĐT'}</span>`;
+                div.onclick = function() {
+                    document.getElementById('inputTimKhachHang').value = ten;
+                    document.getElementById('sdt').value = sdtGoc; // Gán SĐT thật vào ô ẩn/readonly để lưu DB
+                    listContainer.style.display = 'none';
+                };
+                listContainer.appendChild(div);
+            });
+
+            listContainer.style.display = 'block';
         }
 
         async function taiDanhSachDichVu() {
@@ -457,12 +541,20 @@
                 return;
             }
 
+            const isAdmin = laAdmin();
+
             data.forEach(item => {
                 const ngay = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : '---';
+                let sdtGoc = item.sdt || '';
+                let sdtHienThi = sdtGoc;
+                if (!isAdmin && sdtGoc.length > 4) {
+                    sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td style="font-size: 11px; color: #64748b;">${ngay}</td>
-                        <td style="font-weight: 500;">${item.chunuoi || '---'}</td>
+                        <td style="font-weight: 500;">${item.chunuoi || '---'} ${sdtHienThi ? '('+sdtHienThi+')' : ''}</td>
                         <td style="font-weight: bold; color: #1e3a8a;">${item.thucung || '---'}</td>
                         <td style="font-size: 11px;">${item.dichvusudung || '---'}</td>
                         <td style="text-align: right; font-weight: bold; color: var(--danger-color);">${Number(item.tongtien || 0).toLocaleString('vi-VN')} đ</td>
@@ -478,14 +570,13 @@
 
         async function luuNhatKySpa() {
             const editId = document.getElementById('editId').value;
-            const selectKH = document.getElementById('chonKhachHang');
-            const chunuoi = selectKH.options[selectKH.selectedIndex]?.text.split(' (')[0] || '';
+            const chunuoi = document.getElementById('inputTimKhachHang').value.trim();
             const sdt = document.getElementById('sdt').value.trim();
             const thucung = document.getElementById('thucung').value.trim();
             const tongtien = parseFloat(document.getElementById('tongtien').value) || 0;
 
             const checkboxes = document.querySelectorAll('#danhSachDichVuCheckbox input[type="checkbox"]:checked');
-            if (!selectKH.value || !thucung) {
+            if (!chunuoi || !thucung) {
                 alert('Vui lòng chọn khách hàng và nhập tên thú cưng!');
                 return;
             }
@@ -501,13 +592,7 @@
             });
             const dichvusudung = danhSachDichVuArr.join(', ');
 
-            const payload = {
-                chunuoi: chunuoi,
-                sdt: sdt,
-                thucung: thucung,
-                dichvusudung: dichvusudung,
-                tongtien: tongtien
-            };
+            const payload = { chunuoi, sdt, thucung, dichvusudung, tongtien };
 
             if (!editId) {
                 const { error } = await db.from('nhatkyspa').insert([payload]);
@@ -537,28 +622,15 @@
             if (!item) return;
 
             document.getElementById('editId').value = item.id;
+            document.getElementById('inputTimKhachHang').value = item.chunuoi || '';
             document.getElementById('thucung').value = item.thucung || '';
             document.getElementById('sdt').value = item.sdt || '';
-
-            const selectKH = document.getElementById('chonKhachHang');
-            let foundVal = '';
-            for (let i = 0; i < selectKH.options.length; i++) {
-                if (selectKH.options[i].text.includes(item.chunuoi)) {
-                    foundVal = selectKH.options[i].value;
-                    break;
-                }
-            }
-            selectKH.value = foundVal;
 
             const checkboxes = document.querySelectorAll('#danhSachDichVuCheckbox input[type="checkbox"]');
             const arrDichVuCu = item.dichvusudung ? item.dichvusudung.split(', ').map(s => s.trim()) : [];
             checkboxes.forEach(cb => {
                 const tenDV = cb.getAttribute('data-ten');
-                if (arrDichVuCu.includes(tenDV)) {
-                    cb.checked = true;
-                } else {
-                    cb.checked = false;
-                }
+                cb.checked = arrDichVuCu.includes(tenDV);
             });
 
             tinhTongTienSpa();
@@ -577,7 +649,7 @@
 
         function resetFormSpa() {
             document.getElementById('editId').value = '';
-            document.getElementById('chonKhachHang').value = '';
+            document.getElementById('inputTimKhachHang').value = '';
             document.getElementById('sdt').value = '';
             document.getElementById('thucung').value = '';
 
