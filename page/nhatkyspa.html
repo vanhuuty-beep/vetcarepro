@@ -36,21 +36,29 @@
 
         /* Tối ưu phần nội dung chính */
         .main-content {
-            padding: 10px;
+            padding: 15px;
             box-sizing: border-box;
             width: 100%;
-            transition: all 0.3s ease;
         }
 
         .spa-container {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
             gap: 15px;
-            padding: 10px;
+            padding: 0;
             box-sizing: border-box;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .spa-container {
+                grid-template-columns: 1fr;
+            }
+            .main-content {
+                padding: 10px;
+            }
         }
 
         .spa-card {
@@ -167,31 +175,6 @@
             background-color: #475569;
         }
 
-        /* --- XỬ LÝ RESPONSIVE RIÊNG CHO ĐIỆN THOẠI (MOBILE) --- */
-        @media (max-width: 1024px) {
-            /* Ẩn menu dọc cố định gây đè màn hình, nhường chỗ cho topnav hoặc nút thu gọn */
-            #menu-container {
-                display: none !important;
-            }
-
-            /* Ép toàn bộ khung nội dung căn sát trái và rộng tuyệt đối 100% */
-            .main-content {
-                margin-left: 0 !important;
-                width: 100% !important;
-                padding: 4px !important;
-            }
-
-            .spa-container {
-                grid-template-columns: 1fr !important;
-                padding: 4px !important;
-                gap: 10px !important;
-            }
-
-            .spa-card {
-                padding: 10px !important;
-            }
-        }
-
         /* --- CẤU HÌNH IN HÓA ĐƠN NHIỆT TỐI ƯU --- */
         #printInvoiceArea {
             display: none;
@@ -262,7 +245,7 @@
 </head>
 <body>
 
-    <!-- THANH MENU BÊN TRÁI -->
+    <!-- THANH MENU -->
     <div id="menu-container"></div>
 
     <!-- NỘI DUNG CHÍNH -->
