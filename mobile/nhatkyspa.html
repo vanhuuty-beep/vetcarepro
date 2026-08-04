@@ -40,7 +40,6 @@
         .page-btn.active { background: #1e3a8a; color: #ffffff; border-color: #1e3a8a; }
         .page-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
 
-        /* Style cho ô tìm kiếm khách hàng dạng dropdown tùy biến */
         .autocomplete-items { position: absolute; border: 1px solid #cbd5e1; border-bottom: none; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background: #fff; max-height: 150px; overflow-y: auto; border-radius: 0 0 4px 4px; }
         .autocomplete-items div { padding: 8px; cursor: pointer; background: #fff; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
         .autocomplete-items div:hover { background: #f1f5f9; }
@@ -82,7 +81,7 @@
             </div>
             <form id="formSpa" onsubmit="luuNhatKySpaMobile(event)">
                 <input type="hidden" id="editId">
-                <input type="hidden" id="chonKhachHangId"> <!-- Lưu ID khách hàng được chọn -->
+                <input type="hidden" id="chonKhachHangId">
                 
                 <div style="margin-bottom: 6px; position: relative;">
                     <label style="font-size: 11px; font-weight: bold; color: #475569;">1. Tìm & Chọn Khách Hàng (*):</label>
@@ -130,11 +129,10 @@
 
         let trangThaiPhanTrang = { trangHienTai: 1, soDongMoiTrang: 4 };
 
-        // Kiểm tra quyền Admin (giả định lưu currentUser trong sessionStorage hoặc localStorage)
         function laAdmin() {
             const user = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
             const role = (user.role || user.chucvu || user.username || '').toLowerCase();
-            return role.includes('admin') || role === 'quản lý' || role === 'admin';
+            return role.includes('admin') || role === 'quản lý';
         }
 
         function dangXuatMobile() {
@@ -150,7 +148,6 @@
             await taiDanhSachDichVu();
             await loadDanhSachNhatKy();
 
-            // Click ra ngoài thì ẩn khung gợi ý tìm kiếm khách hàng
             document.addEventListener('click', function (e) {
                 if (!e.target.closest('#inputTimKhachHang')) {
                     document.getElementById('autocompleteList').style.display = 'none';
@@ -165,7 +162,6 @@
             }
         }
 
-        // Tìm kiếm khách hàng dạng gõ phím và ẩn SĐT nếu không phải Admin
         function locGoiYKhachHang() {
             const keyword = document.getElementById('inputTimKhachHang').value.toLowerCase().trim();
             const listContainer = document.getElementById('autocompleteList');
@@ -193,7 +189,6 @@
                 const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng';
                 const sdtGoc = kh.sdt || kh.sodienthoai || '';
                 
-                // Ẩn SĐT nếu không phải Admin (Ví dụ ẩn 4 số giữa hoặc ẩn hoàn toàn)
                 let sdtHienThi = sdtGoc;
                 if (!isAdmin && sdtGoc.length > 4) {
                     sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
@@ -204,7 +199,7 @@
                 div.onclick = function() {
                     document.getElementById('inputTimKhachHang').value = ten;
                     document.getElementById('chonKhachHangId').value = kh.id;
-                    document.getElementById('sdt').value = sdtGoc; // Lưu số điện thoại thật vào ô ẩn/readonly để gửi lên Database
+                    document.getElementById('sdt').value = sdtGoc;
                     listContainer.style.display = 'none';
                 };
                 listContainer.appendChild(div);
@@ -295,7 +290,6 @@
                 const chuNuoi = item.chunuoi || 'Khách lẻ';
                 let sdtGoc = item.sdt || '---';
                 
-                // Ẩn số điện thoại ngoài danh sách chính nếu không phải Admin
                 let sdtHienThi = sdtGoc;
                 if (!isAdmin && sdtGoc.length > 4) {
                     sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
@@ -305,12 +299,30 @@
                 const dichVu = item.dichvusudung || '---';
                 const tongTien = Number(item.tongtien || 0).toLocaleString('vi-VN') + ' đ';
 
+                // Xử lý trạng thái và màu sắc huy hiệu (Badge)
+                const trangThaiHienTai = item.trangthai || 'Chưa hoàn thành';
+                let badgeColor = '#dc2626'; // Đỏ: Chưa hoàn thành
+                let nextStatus = 'Đã hoàn thành';
+
+                if (trangThaiHienTai === 'Đã hoàn thành') {
+                    badgeColor = '#2563eb'; // Xanh dương: Đã hoàn thành
+                    nextStatus = 'Đã trả khách';
+                } else if (trangThaiHienTai === 'Đã trả khách') {
+                    badgeColor = '#059669'; // Xanh lá: Đã trả khách
+                    nextStatus = 'Chưa hoàn thành';
+                }
+
                 container.innerHTML += `
                     <div class="spa-card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
                             <span style="font-weight: bold; font-size: 12px; color: #1e3a8a;">🐾 ${thuCung}</span>
-                            <span style="font-size: 10px; color: #64748b;">${ngay}</span>
+                            <span onclick="capNhatTrangThaiSpa(${item.id}, '${nextStatus}')" 
+                                  style="background-color: ${badgeColor}; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; cursor: pointer; font-weight: bold;" 
+                                  title="Bấm để đổi trạng thái">
+                                ${trangThaiHienTai} 🔄
+                            </span>
                         </div>
+                        <div style="font-size: 10px; color: #64748b; margin-bottom: 2px;">⏰ ${ngay}</div>
                         <div style="font-size: 11px; color: #1e293b; font-weight: bold; margin-bottom: 2px;">
                             👤 ${chuNuoi} (<span style="color: #2563eb;">${sdtHienThi}</span>)
                         </div>
@@ -329,6 +341,22 @@
             });
 
             veNutPhanTrang(tongSoTrang);
+        }
+
+        // Hàm gọi Database cập nhật trạng thái khi người dùng chạm vào huy hiệu
+        async function capNhatTrangThaiSpa(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('nhatkyspa')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await loadDanhSachNhatKy();
+            }
         }
 
         function veNutPhanTrang(tongSoTrang) {
@@ -439,7 +467,11 @@
             btn.disabled = true;
             btn.textContent = 'Đang lưu...';
 
+            // Mặc định bản ghi mới tạo sẽ mang trạng thái "Chưa hoàn thành"
             const payload = { chunuoi, sdt, thucung, dichvusudung, tongtien };
+            if (!editId) {
+                payload.trangthai = 'Chưa hoàn thành';
+            }
 
             let error = null;
             if (editId) {
