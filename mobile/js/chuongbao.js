@@ -113,47 +113,113 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 4. Lắng nghe Realtime từ Supabase cho Mobile
+    // 4. Lắng nghe Realtime toàn cục cho Mobile
     if (typeof db !== 'undefined' && db) {
         try {
             if (!window._realtimeMobileSubscribed) {
-                db.channel('realtime-quet-thong-bao-mobile-v7')
-                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, (payload) => {
-                      const kh = payload.new;
-                      const ten = kh.tenkhachhang || kh.hovaten || 'Khách mới';
-                      xuLyCoDuLieuMoiMobile('khachhang', `👤 Khách hàng mới: ${ten}`);
-                  })
-                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'donhang' }, (payload) => {
-                      const dh = payload.new;
-                      const tong = Number(dh.tongtien || dh.thanhtien || 0).toLocaleString('vi-VN');
-                      xuLyCoDuLieuMoiMobile('donhang', `🛒 Đơn hàng mới: ${tong} đ`);
-                  })
-                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lichhen' }, (payload) => {
-                      const lh = payload.new;
-                      const ten = lh.tenkhachhang || lh.chunuoi || 'Khách';
-                      xuLyCoDuLieuMoiMobile('lichhen', `📅 Lịch hẹn mới từ: ${ten}`);
-                  })
-                  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'nhatkyspa' }, (payload) => {
-                      const sp = payload.new;
-                      const ten = sp.chunuoi || 'Khách';
-                      xuLyCoDuLieuMoiMobile('spa', `✂️ Lượt Spa mới: ${ten} (${sp.thucung || ''})`);
-                  })
-                  .subscribe();
+                const channel = db.channel('realtime-vetcare-mobile-toan-bo');
+
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
+                    xuLySuKienRealtimeMobile('Thêm mới', payload);
+                });
+
+                channel.on('postgres_changes', { event: 'UPDATE', schema: 'public' }, payload => {
+                    xuLySuKienRealtimeMobile('Cập nhật', payload);
+                });
+
+                channel.on('postgres_changes', { event: 'DELETE', schema: 'public' }, payload => {
+                    xuLySuKienRealtimeMobile('Xóa', payload);
+                });
+
+                channel.subscribe();
                 window._realtimeMobileSubscribed = true;
             }
         } catch (err) {
-            console.error("Lỗi Realtime Mobile:", err);
+            console.error("Lỗi Realtime Mobile toàn cục:", err);
         }
     }
 });
 
-function xuLyCoDuLieuMoiMobile(loai, noiDungThongBao) {
+// Hàm phân tích sự kiện trên Mobile
+function xuLySuKienRealtimeMobile(hanhDong, payload) {
+    const tableName = payload.table.toLowerCase();
+    const data = payload.new && Object.keys(payload.new).length > 0 ? payload.new : payload.old;
+    
+    let tenNhanVien = "Nhân viên";
+    try {
+        const user = JSON.parse(sessionStorage.getItem('currentUser'));
+        if (user) {
+            tenNhanVien = user.tennhanvien || user.hovaten || user.name || "Nhân viên";
+        }
+    } catch (e) {}
+
+    if (data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi) {
+        tenNhanVien = data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi;
+    }
+
+    let tenDoiTuong = `dữ liệu [${payload.table}]`;
+
+    switch (tableName) {
+        case 'khachhang':
+            tenDoiTuong = `khách hàng [${data.tenkhachhang || data.hovaten || ''}]`;
+            break;
+        case 'thucung':
+            tenDoiTuong = `thú cưng [${data.tenthucung || data.ten || ''}]`;
+            break;
+        case 'lichhen':
+            tenDoiTuong = `lịch hẹn của khách [${data.tenkhachhang || data.chunuoi || ''}]`;
+            break;
+        case 'khambenh':
+            tenDoiTuong = `phiếu khám bệnh của thú cưng [${data.thucung || data.tenthucung || ''}]`;
+            break;
+        case 'phieuchidinh':
+            tenDoiTuong = `phiếu chỉ định điều trị`;
+            break;
+        case 'donhang':
+            tenDoiTuong = `đơn hàng (${Number(data.tongtien || data.thanhtien || 0).toLocaleString('vi-VN')} đ)`;
+            break;
+        case 'hoadonthuoc':
+            tenDoiTuong = `hóa đơn/đơn thuốc`;
+            break;
+        case 'khothuoc':
+            tenDoiTuong = `kho thuốc (${data.tenthuoc || data.ten_thuoc || ''})`;
+            break;
+        case 'khovaccine':
+            tenDoiTuong = `kho vắc-xin (${data.tenvaccine || data.ten_vaccine || ''})`;
+            break;
+        case 'nhatkylamvaccine':
+            tenDoiTuong = `nhật ký tiêm vắc-xin`;
+            break;
+        case 'nhatkynoitru':
+            tenDoiTuong = `nhật ký nội trú`;
+            break;
+        case 'nhatkyspa':
+            tenDoiTuong = `lượt spa của thú cưng [${data.thucung || data.chunuoi || ''}]`;
+            break;
+        case 'noitru':
+            tenDoiTuong = `thông tin nội trú`;
+            break;
+        case 'user':
+            tenDoiTuong = `tài khoản nhân viên [${data.tendangnhap || data.username || ''}]`;
+            break;
+    }
+
+    let icon = "🔔";
+    if (hanhDong === 'Thêm mới') icon = "➕";
+    else if (hanhDong === 'Cập nhật') icon = "✏️";
+    else if (hanhDong === 'Xóa') icon = "🗑️";
+
+    const noiDung = `${icon} <b>${tenNhanVien}</b> vừa <b>${hanhDong.toLowerCase()}</b> ${tenDoiTuong}`;
+    
+    xuLyCoDuLieuMoiMobile(noiDung);
+}
+
+function xuLyCoDuLieuMoiMobile(noiDungThongBao) {
     const audio = document.getElementById('globalAudioNotification');
     if (audio) {
         audio.play().catch(error => console.log("Trình duyệt chặn autoplay mobile:", error));
     }
 
-    // 1. Tự động hiện Popup nổi trên mobile trong 5 giây rồi tự tắt
     const center = document.getElementById('notification-center-mobile');
     if (center) {
         const toast = document.createElement('div');
@@ -185,7 +251,6 @@ function xuLyCoDuLieuMoiMobile(loai, noiDungThongBao) {
         }, 5000);
     }
 
-    // 2. Tăng số đếm đỏ và lưu vào lịch sử chuông
     const badge = document.getElementById('mobileNotificationBadge');
     if (badge) {
         let count = parseInt(badge.innerText || '0') + 1;
@@ -208,16 +273,6 @@ function xuLyCoDuLieuMoiMobile(loai, noiDungThongBao) {
             </div>
         `;
         listDiv.innerHTML = itemHtml + listDiv.innerHTML;
-    }
-
-    if (loai === 'khachhang' && typeof loadDanhSachKhachHang === 'function') {
-        loadDanhSachKhachHang();
-    } else if (loai === 'donhang' && typeof loadDanhSachDonHang === 'function') {
-        loadDanhSachDonHang();
-    } else if (loai === 'lichhen' && typeof loadDanhSachLichHen === 'function') {
-        loadDanhSachLichHen();
-    } else if (loai === 'spa' && typeof loadDanhSachNhatKy === 'function') {
-        loadDanhSachNhatKy();
     }
 }
 
