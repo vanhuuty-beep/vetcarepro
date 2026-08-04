@@ -46,7 +46,7 @@
         <div class="top-header">
             <h3>🏥 Quản lý Khám bệnh</h3>
             <div style="display: flex; gap: 5px; align-items: center;">
-                <a href="../page/thongke.html" class="btn-desktop">💻 Desktop</a>
+                <a href="../khambenh.html" class="btn-desktop">💻 Desktop</a>
                 <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;">🚪 Thoát</button>
             </div>
         </div>
@@ -99,7 +99,7 @@
                         <select id="modalTrangThai" class="form-control">
                             <option value="Đang điều trị">Đang điều trị</option>
                             <option value="Đã khỏi bệnh">Đã khỏi bệnh</option>
-                            <option value="Tái khám">Tái khám</option>
+                            <option value="Hẹn tái khám">Hẹn tái khám</option>
                         </select>
                     </div>
                 </div>
@@ -365,6 +365,15 @@
             }
             loadKhamBenhMobile();
             loadDropdownsData();
+
+            // Đăng ký Realtime tự động đồng bộ khi có thay đổi dữ liệu từ thiết bị khác
+            if (typeof db !== 'undefined' && db) {
+                db.channel('realtime-khambenh-mobile')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'khambenh' }, async () => {
+                      await loadKhamBenhMobile();
+                  })
+                  .subscribe();
+            }
         });
 
         async function loadDropdownsData() {
@@ -391,7 +400,6 @@
                 }
             }
 
-            // Tải danh sách lồng/phòng cho modal Nhập viện
             loadDanhSachLongModal();
         }
 
@@ -401,12 +409,10 @@
 
             selectEl.innerHTML = '<option value="">-- Chọn lồng / phòng --</option>';
 
-            // Lấy trực tiếp từ bảng 'noitru' gốc giống bản Desktop để lấy đầy đủ tên Phòng và Lồng
             const { data: noitruData, error } = await db.from('noitru').select('*');
             
             if (!error && noitruData && noitruData.length > 0) {
                 noitruData.forEach(l => {
-                    // Kiểm tra nếu lồng đang trống hoặc chưa có khách nằm thì đưa vào danh sách chọn
                     if (!l.trangthai || l.trangthai.toLowerCase() !== 'đang sử dụng') {
                         const tenPhong = l.phong || '';
                         const tenLong = l.long || l.malong || l.id;
@@ -415,7 +421,6 @@
                     }
                 });
             } else {
-                // Fallback dự phòng nếu bảng noitru trống
                 const mauLongs = ["Phòng truyền nhiễm - 01", "Phòng truyền nhiễm - 02", "Lồng cách ly - 01"];
                 mauLongs.forEach(tenLong => {
                     selectEl.innerHTML += `<option value="${tenLong}">${tenLong}</option>`;
@@ -489,6 +494,19 @@
 
                 const chiPhiFormatted = item.chiphi ? Number(item.chiphi).toLocaleString('vi-VN') + ' đ' : '0 đ';
 
+                // Xử lý trạng thái dạng bấm đổi nhanh giống trang Nhật ký Spa
+                const trangThaiHienTai = item.trangthai || 'Đang điều trị';
+                let badgeColor = '#dc2626'; // Đỏ: Đang điều trị
+                let nextStatus = 'Đã khỏi bệnh';
+
+                if (trangThaiHienTai === 'Đã khỏi bệnh') {
+                    badgeColor = '#2563eb'; // Xanh dương: Đã khỏi bệnh
+                    nextStatus = 'Hẹn tái khám';
+                } else if (trangThaiHienTai === 'Hẹn tái khám') {
+                    badgeColor = '#059669'; // Xanh lá: Hẹn tái khám
+                    nextStatus = 'Đang điều trị';
+                }
+
                 container.innerHTML += `
                     <div class="mobile-card">
                         <div style="display: flex; gap: 8px; align-items: flex-start;">
@@ -510,7 +528,11 @@
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px solid #f1f5f9; padding-top: 6px; flex-wrap: wrap; gap: 4px;">
-                            <span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; background: #e0f2fe; color: #0369a1; font-weight: bold;">${item.trangthai || ''}</span>
+                            <span onclick="capNhatTrangThaiKhambenhMobile(${item.id}, '${nextStatus}')" 
+                                  style="background-color: ${badgeColor}; color: white; font-size: 10px; padding: 3px 8px; border-radius: 12px; cursor: pointer; font-weight: bold; display: inline-block;" 
+                                  title="Bấm để đổi trạng thái">
+                                ${trangThaiHienTai} 🔄
+                            </span>
                             <div style="display: flex; gap: 3px; flex-wrap: wrap;">
                                 <button onclick="moModalChiDinh(${item.id}, '${maKB}')" style="background: #8b5cf6; color: #fff; border: none; padding: 2px 5px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">📋 Chỉ định</button>
                                 <button onclick="moModalNhapVien(${item.id}, '${maKB}')" style="background: #0d9488; color: #fff; border: none; padding: 2px 5px; border-radius: 3px; font-size: 10px; cursor: pointer; font-weight: bold;">🏥 Nhập viện</button>
@@ -522,6 +544,22 @@
                     </div>
                 `;
             });
+        }
+
+        // Hàm gọi Database cập nhật trạng thái trực tiếp trên Mobile
+        async function capNhatTrangThaiKhambenhMobile(id, trangThaiMoi) {
+            if (typeof db === 'undefined' || !db) return;
+
+            const { error } = await db
+                .from('khambenh')
+                .update({ trangthai: trangThaiMoi })
+                .eq('id', id);
+
+            if (error) {
+                alert('Lỗi cập nhật trạng thái: ' + error.message);
+            } else {
+                await loadKhamBenhMobile();
+            }
         }
 
         function timKiemKhamBenh() {
@@ -822,7 +860,7 @@
             document.getElementById('modalNhapVien').style.display = 'flex';
             document.getElementById('formNhapVien').reset();
             document.getElementById('nvIdKham').value = idKham;
-            document.getElementById('nvMaKhamHienThi').value = idKham; // Lưu số ID dạng int thuần để khớp với bảng nhatkynoitru
+            document.getElementById('nvMaKhamHienThi').value = idKham;
 
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
