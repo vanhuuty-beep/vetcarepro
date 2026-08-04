@@ -7,10 +7,13 @@ document.addEventListener("DOMContentLoaded", function() {
         currentUser = null;
     }
 
-    const vaitro = currentUser ? (currentUser.vaitro || currentUser.role || '').toLowerCase() : '';
+    // Chuẩn hóa chuỗi vai trò để nhận diện chính xác kể cả có dấu, viết hoa/thường hoặc khoảng trắng
+    const vaitroRaw = currentUser ? (currentUser.vaitro || currentUser.role || '') : '';
+    const vaitro = vaitroRaw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    
     const isAdmin = vaitro === 'admin';
-    const isBacSi = vaitro === 'bacsi';
-    const isLeTan = vaitro === 'letan';
+    const isBacSi = vaitro.includes('bac si') || vaitro === 'bacsi';
+    const isLeTan = vaitro.includes('letan') || vaitro.includes('le tan') || vaitro.includes('nhan vien');
 
     // Xây dựng danh mục HỆ THỐNG dựa theo phân quyền
     let heThongMenuHtml = '';
@@ -31,28 +34,26 @@ document.addEventListener("DOMContentLoaded", function() {
     const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
     const ngayHienTai = now.toLocaleDateString('vi-VN', options);
 
-    // 1. XÂY DỰNG CÁC NHÓM MENU THEO PHÂN QUYỀN
+    // 1. XÂY DỰNG CÁC NHÓM MENU THEO PHÂN QUYỀN TRÊN PC
     let dynamicMenuContent = '';
 
-    // Menu chung mà mọi role đều thấy (hoặc Lễ tân / Admin / Bác sĩ cần dùng)
-    if (!isBacSi) {
-        // Lễ tân và Admin thấy Thống kê / Tổng quan
-        dynamicMenuContent += `<li class="menu-item" id="menu-thongke" onclick="window.location.href='thongke.html'"><span>📈</span> <span class="menu-text">Thống kê</span></li>`;
-    }
+    // Thống kê / Tổng quan
+    dynamicMenuContent += `<li class="menu-item" id="menu-thongke" onclick="window.location.href='thongke.html'"><span>📈</span> <span class="menu-text">Thống kê</span></li>`;
 
+    // Khách hàng, Thú cưng, Lịch hẹn (Mọi role đều cần)
     dynamicMenuContent += `
         <li class="menu-item" id="menu-khachhang" onclick="window.location.href='khachhang.html'"><span>👤</span> <span class="menu-text">Khách hàng</span></li>
         <li class="menu-item" id="menu-thucung" onclick="window.location.href='thucung.html'"><span>🐶</span> <span class="menu-text">Thú cưng</span></li>
         <li class="menu-item" id="menu-lichhen" onclick="window.location.href='lichhen.html'"><span>📅</span> <span class="menu-text">Lịch hẹn</span></li>
     `;
 
-    // Nhóm Khám & Điều trị: Dành cho Bác sĩ và Admin (Lễ tân bị ẩn để tránh nhầm lẫn chuyên môn)
+    // Nhóm Khám & Điều trị: BẮT BUỘC hiển thị cho Admin và Bác sĩ
     if (isAdmin || isBacSi) {
         dynamicMenuContent += `
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+            <li class="menu-dropdown-toggle active-parent" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">🩺</span> <span class="menu-text">Khám & Điều trị</span></div> <span class="arrow">▼</span>
             </li>
-            <ul class="submenu-container">
+            <ul class="submenu-container open">
                 <li class="menu-item" id="menu-khambenh" onclick="window.location.href='khambenh.html'"><span>🏥</span> <span class="menu-text">Khám bệnh</span></li>
                 <li class="menu-item" id="menu-phieuchidinh" onclick="window.location.href='phieuchidinh.html'"><span>📋</span> <span class="menu-text">Phiếu chỉ định</span></li>
                 <li class="menu-item" id="menu-donthuoc" onclick="window.location.href='donthuoc.html'"><span>📜</span> <span class="menu-text">Đơn thuốc</span></li>
@@ -60,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // Nhóm Kho & Vắc-xin: Admin và Bác sĩ thấy đầy đủ, Lễ tân chỉ thấy dịch vụ cơ bản nếu cần
+    // Nhóm Kho & Vắc-xin: Mọi người đều cần để tra cứu thuốc/tiêm chủng
     dynamicMenuContent += `
         <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
             <div class="menu-label-wrap"><span class="group-icon">📦</span> <span class="menu-text">Kho & Vắc-xin</span></div> <span class="arrow">▼</span>
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </ul>
     `;
 
-    // Nhóm Lưu trú: Bác sĩ và Admin quản lý nội trú
+    // Nhóm Quản lý Lưu trú: Dành cho Admin và Bác sĩ
     if (isAdmin || isBacSi) {
         dynamicMenuContent += `
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
@@ -86,28 +87,35 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    // Nhóm Petshop & Bán hàng: Lễ tân và Admin dùng nhiều (bán hàng, thu ngân, in tem)
-    dynamicMenuContent += `
-        <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-            <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
-        </li>
-        <ul class="submenu-container">
-            <li class="menu-item" id="menu-danhmucsanpham" onclick="window.location.href='danhmucsanpham.html'"><span>📦</span> <span class="menu-text">Thêm sản phẩm</span></li>
-            <li class="menu-item" id="menu-nhatkykho" onclick="window.location.href='nhatkykho.html'"><span>📋</span> <span class="menu-text">Nhật ký kho</span></li>
-            <li class="menu-item" id="menu-donhang" onclick="window.location.href='donhang.html'"><span>📊</span> <span class="menu-text">Chi tiết bán hàng</span></li>
-            <li class="menu-item" id="menu-intem" onclick="window.location.href='intem.html'"><span>📥</span> <span class="menu-text">In tem mã vạch</span></li>
-        </ul>
+    // Petshop & Bán hàng: CHỈ ADMIN VÀ LỄ TÂN THẤY (Bác sĩ bị ẩn hoàn toàn)
+    if (!isBacSi) {
+        dynamicMenuContent += `
+            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+                <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
+            </li>
+            <ul class="submenu-container">
+                <li class="menu-item" id="menu-danhmucsanpham" onclick="window.location.href='danhmucsanpham.html'"><span>📦</span> <span class="menu-text">Thêm sản phẩm</span></li>
+                <li class="menu-item" id="menu-nhatkykho" onclick="window.location.href='nhatkykho.html'"><span>📋</span> <span class="menu-text">Nhật ký kho</span></li>
+                <li class="menu-item" id="menu-donhang" onclick="window.location.href='donhang.html'"><span>📊</span> <span class="menu-text">Chi tiết bán hàng</span></li>
+                <li class="menu-item" id="menu-intem" onclick="window.location.href='intem.html'"><span>📥</span> <span class="menu-text">In tem mã vạch</span></li>
+            </ul>
+        `;
+    }
 
-        <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-            <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
-        </li>
-        <ul class="submenu-container">
-            <li class="menu-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
-            <li class="menu-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
-        </ul>
+    // Quản lý Spa: CHỈ ADMIN VÀ LỄ TÂN THẤY (Bác sĩ bị ẩn hoàn toàn)
+    if (!isBacSi) {
+        dynamicMenuContent += `
+            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+                <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
+            </li>
+            <ul class="submenu-container">
+                <li class="menu-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
+                <li class="menu-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
+            </ul>
+        `;
+    }
 
-        ${heThongMenuHtml}
-    `;
+    dynamicMenuContent += heThongMenuHtml;
 
     const menuHTML = `
     <div class="sidebar" id="sidebar">
@@ -153,7 +161,6 @@ document.addEventListener("DOMContentLoaded", function() {
         .sidebar-header span:first-child { font-size: 22px !important; margin-right: 8px; }
         .sidebar-header .menu-text { font-size: 26px !important; letter-spacing: 0.5px; }
 
-        /* STYLE POPUP TỰ TẮT SAU 5 GIÂY & DROPDOWN LỊCH SỬ CHUÔNG */
         #notification-center-pc { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%; pointer-events: none; }
         .notify-toast-pc { background: #ffffff; border-left: 5px solid #059669; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 12px 15px; border-radius: 6px; pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; animation: slideInRight 0.3s ease-out forwards; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -195,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN
+    // 2. THANH TOP NAVBAR PHÍA TRÊN
     const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
         topnavContainer.innerHTML = `
