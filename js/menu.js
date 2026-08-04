@@ -164,9 +164,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 14px; margin-right: 10px;">
-                    <!-- Biểu tượng chuông được phóng to (font-size: 22px) và đổi màu vàng nổi bật -->
+                    <!-- Biểu tượng chuông màu vàng nổi bật và kích thước lớn -->
                     <div style="position: relative; display: flex; align-items: center; cursor: pointer; padding: 5px;" title="Thông báo hệ thống thời gian thực">
-                        <span style="font-size: 22px; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.2));">🔔</span>
+                        <span style="font-size: 22px; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">🔔</span>
                         <span id="navNotificationBadge" style="position: absolute; top: 0; right: 0; background: #dc2626; color: white; font-size: 10px; padding: 1px 5px; border-radius: 50%; display: none; font-weight: bold;">0</span>
                     </div>
 
