@@ -147,6 +147,7 @@
     </div>
 
     <script>
+        // Kiểm tra nếu đã đăng nhập trước đó thì tự động chuyển hướng
         window.addEventListener('DOMContentLoaded', () => {
             const currentUser = sessionStorage.getItem('currentUser');
             if (currentUser && currentUser !== "null" && currentUser !== "undefined") {
@@ -154,11 +155,24 @@
                 if (isMobile) {
                     window.location.replace('mobile/khachhang.html');
                 } else {
-                    window.location.replace('page/thongke.html');
+                    try {
+                        const userObj = JSON.parse(currentUser);
+                        const role = (userObj.vaitro || userObj.role || '').toLowerCase();
+                        if (role === 'bacsi') {
+                            window.location.replace('page/khambenh.html');
+                        } else if (role === 'letan') {
+                            window.location.replace('page/lichhen.html');
+                        } else {
+                            window.location.replace('page/thongke.html');
+                        }
+                    } catch (e) {
+                        window.location.replace('page/thongke.html');
+                    }
                 }
             }
         });
 
+        // Hàm mã hóa mật khẩu SHA-256
         async function maHoaMatKhau(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -167,6 +181,7 @@
             return hashHex;
         }
 
+        // Bắt sự kiện phím Enter khi nhập mật khẩu
         document.getElementById('password').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 xuLyDangNhap();
@@ -208,7 +223,16 @@
                     if (isMobile) {
                         window.location.href = 'mobile/khachhang.html';
                     } else {
-                        window.location.href = 'page/thongke.html';
+                        // Điều hướng thông minh dựa theo vai trò (vaitro / role)
+                        const userRole = (data.vaitro || data.role || '').toLowerCase();
+                        
+                        if (userRole === 'bacsi') {
+                            window.location.href = 'page/khambenh.html'; // Bác sĩ vào trang khám bệnh
+                        } else if (userRole === 'letan') {
+                            window.location.href = 'page/lichhen.html'; // Lễ tân vào trang lịch hẹn
+                        } else {
+                            window.location.href = 'page/thongke.html'; // Admin vào trang thống kê tổng quan
+                        }
                     }
                 }
             } catch (err) {
