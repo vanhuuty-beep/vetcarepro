@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Kiểm tra xem user hiện tại có phải là Admin hay không
     const isAdmin = currentUser && currentUser.vaitro === 'Admin';
 
-    // Phần menu Hệ thống phân quyền động (Vì đang ở trong thư mục page nên trỏ thẳng file cùng cấp)
+    // Phần menu Hệ thống phân quyền động
     const quanLyUserMenuHtml = isAdmin ? `
         <li class="menu-item" id="menu-quanlyuser" onclick="window.location.href='quanlyuser.html'"><span>🔐</span> <span class="menu-text">Quản lý nhân viên</span></li>
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
@@ -23,14 +23,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
     const ngayHienTai = now.toLocaleDateString('vi-VN', options);
 
-    // 1. CHÈN MENU BÊN TRÁI (CÓ NGÀY THÁNG, SUBMENU VÀ ĐƯỜNG DẪN CHUẨN TRONG PAGE)
+    // 1. CHÈN MENU BÊN TRÁI
     const menuHTML = `
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
             <div style="display: flex; align-items: center;">
                 <span>🐾</span> <span class="menu-text">VetCare Pro</span>
             </div>
-            <!-- Hiển thị ngày tháng dưới logo -->
             <div id="sidebar-date" style="font-size: 11px; font-weight: normal; color: rgba(255, 255, 255, 0.85); padding-left: 32px;">
                 📅 ${ngayHienTai}
             </div>
@@ -48,7 +47,6 @@ document.addEventListener("DOMContentLoaded", function() {
             <li class="menu-item" id="menu-thucung" onclick="window.location.href='thucung.html'"><span>🐶</span> <span class="menu-text">Thú cưng</span></li>
             <li class="menu-item" id="menu-lichhen" onclick="window.location.href='lichhen.html'"><span>📅</span> <span class="menu-text">Lịch hẹn</span></li>
 
-            <!-- NHÓM 1: KHÁM & ĐIỀU TRỊ (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">🩺</span> <span class="menu-text">Khám & Điều trị</span></div> <span class="arrow">▼</span>
             </li>
@@ -58,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 <li class="menu-item" id="menu-donthuoc" onclick="window.location.href='donthuoc.html'"><span>📜</span> <span class="menu-text">Đơn thuốc</span></li>
             </ul>
 
-            <!-- NHÓM 2: KHO & VẮC-XIN (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">📦</span> <span class="menu-text">Kho & Vắc-xin</span></div> <span class="arrow">▼</span>
             </li>
@@ -69,7 +66,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 <li class="menu-item" id="menu-dichvu" onclick="window.location.href='dichvu.html'"><span>📜</span> <span class="menu-text">Giá dịch vụ</span></li>
             </ul>
 
-            <!-- NHÓM 3: LƯU TRÚ (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">🏨</span> <span class="menu-text">Quản lý Lưu trú</span></div> <span class="arrow">▼</span>
             </li>
@@ -78,7 +74,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 <li class="menu-item" id="menu-nhatkynoitru" onclick="window.location.href='nhatkynoitru.html'"><span>📖</span> <span class="menu-text">Nhật ký Nội trú</span></li>
             </ul>
 
-            <!-- NHÓM 4: PETSHOP & KHO HÀNG (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
             </li>
@@ -89,7 +84,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 <li class="menu-item" id="menu-intem" onclick="window.location.href='intem.html'"><span>📥</span> <span class="menu-text">In tem mã vạch</span></li>
             </ul>
 
-            <!-- NHÓM 5: SPA & LÀM ĐẸP (SUBMENU) -->
             <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
                 <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
             </li>
@@ -98,158 +92,54 @@ document.addEventListener("DOMContentLoaded", function() {
                 <li class="menu-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
             </ul>
 
-            <!-- NHÓM 6: HỆ THỐNG -->
             <li class="menu-category">👨‍⚕️ HỆ THỐNG</li>
             ${quanLyUserMenuHtml}
         </ul>
     </div>
 
-    <!-- STYLE CHUẨN KHÔNG LẶP THẺ -->
     <style>
-        .sidebar {
-            width: 275px !important;
-            min-width: 275px !important;
-        }
+        .sidebar { width: 275px !important; min-width: 275px !important; }
+        .sidebar .menu-text, .sidebar .menu-category, .sidebar li { font-size: 14px !important; font-weight: 700 !important; }
+        .sidebar .menu-category { font-size: 12px !important; font-weight: 800 !important; }
+        .sidebar ul li { display: flex !important; align-items: center !important; white-space: nowrap !important; }
+        .sidebar ul li span.menu-text { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+        .sidebar .menu-list > li > span:first-child, .sidebar .menu-pos-highlight .pos-icon, .submenu-container .menu-item span:first-child { display: inline-block; width: 24px; text-align: center; font-size: 16px !important; margin-right: 8px; flex-shrink: 0; }
+        .menu-dropdown-toggle { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; cursor: pointer; color: #ffffff; font-weight: 800 !important; font-size: 13px !important; background: none !important; border: none !important; margin: 4px 8px; border-radius: 6px; transition: background 0.2s ease; user-select: none; }
+        .menu-dropdown-toggle .menu-label-wrap { display: flex; align-items: center; white-space: nowrap; overflow: hidden; gap: 8px; }
+        .menu-dropdown-toggle .group-icon { display: inline-block; width: 24px; text-align: center; font-size: 16px !important; flex-shrink: 0; }
+        .menu-dropdown-toggle:hover { background: rgba(255, 255, 255, 0.1) !important; color: #ffffff; }
+        .menu-dropdown-toggle .arrow { font-size: 10px; transition: transform 0.3s ease; flex-shrink: 0; margin-left: 6px; }
+        .submenu-container { display: none; list-style: none; padding-left: 10px; margin: 0; }
+        .submenu-container.open { display: block; }
+        .menu-dropdown-toggle.active-parent .arrow { transform: rotate(180deg); }
+        .menu-pos-highlight { background: linear-gradient(135deg, #2563eb, #1d4ed8) !important; color: #ffffff !important; border-radius: 6px; margin: 4px 8px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); cursor: pointer; transition: all 0.2s ease; }
+        .menu-pos-highlight:hover { background: linear-gradient(135deg, #1d4ed8, #1e40af) !important; transform: translateY(-1px); }
+        .menu-pos-highlight .pos-badge { background-color: #dc2626; color: white; font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: bold; margin-left: auto; }
+        .sidebar-header { font-size: 20px !important; font-weight: bold !important; padding: 15px 15px 10px 15px !important; }
+        .sidebar-header span:first-child { font-size: 22px !important; margin-right: 8px; }
+        .sidebar-header .menu-text { font-size: 26px !important; letter-spacing: 0.5px; }
 
-        .sidebar .menu-text, 
-        .sidebar .menu-category,
-        .sidebar li {
-            font-size: 14px !important;
-            font-weight: 700 !important;
-        }
-
-        .sidebar .menu-category {
-            font-size: 12px !important;
-            font-weight: 800 !important;
-        }
-
-        .sidebar ul li {
-            display: flex !important;
-            align-items: center !important;
-            white-space: nowrap !important;
-        }
-
-        .sidebar ul li span.menu-text {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        .sidebar .menu-list > li > span:first-child,
-        .sidebar .menu-pos-highlight .pos-icon,
-        .submenu-container .menu-item span:first-child {
-            display: inline-block;
-            width: 24px;
-            text-align: center;
-            font-size: 16px !important;
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
-
-        .menu-dropdown-toggle {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            cursor: pointer;
-            color: #ffffff;
-            font-weight: 800 !important;
-            font-size: 13px !important;
-            background: none !important;
-            border: none !important;
-            margin: 4px 8px;
-            border-radius: 6px;
-            transition: background 0.2s ease;
-            user-select: none;
-        }
-        
-        .menu-dropdown-toggle .menu-label-wrap {
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            overflow: hidden;
-            gap: 8px;
-        }
-
-        .menu-dropdown-toggle .group-icon {
-            display: inline-block;
-            width: 24px;
-            text-align: center;
-            font-size: 16px !important;
-            flex-shrink: 0;
-        }
-
-        .menu-dropdown-toggle:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-            color: #ffffff;
-        }
-        
-        .menu-dropdown-toggle .arrow {
-            font-size: 10px;
-            transition: transform 0.3s ease;
-            flex-shrink: 0;
-            margin-left: 6px;
-        }
-        
-        .submenu-container {
-            display: none;
-            list-style: none;
-            padding-left: 10px;
-            margin: 0;
-        }
-        .submenu-container.open {
-            display: block;
-        }
-        .menu-dropdown-toggle.active-parent .arrow {
-            transform: rotate(180deg);
-        }
-
-        .menu-pos-highlight {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-            color: #ffffff !important;
-            border-radius: 6px;
-            margin: 4px 8px;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .menu-pos-highlight:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
-            transform: translateY(-1px);
-        }
-        .menu-pos-highlight .pos-badge {
-            background-color: #dc2626;
-            color: white;
-            font-size: 9px;
-            padding: 2px 5px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-left: auto;
-        }
-        .sidebar-header {
-            font-size: 20px !important;
-            font-weight: bold !important;
-            padding: 15px 15px 10px 15px !important;
-        }
-        .sidebar-header span:first-child {
-            font-size: 22px !important;
-            margin-right: 8px;
-        }
-        .sidebar-header .menu-text {
-            font-size: 26px !important;
-            letter-spacing: 0.5px;
-        }
+        /* CSS KHU VỰC THÔNG BÁO */
+        #notification-center { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%; pointer-events: none; }
+        .notify-toast { background: #ffffff; border-left: 5px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 12px 15px; border-radius: 6px; pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; animation: slideInRight 0.3s ease-out forwards; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .notify-toast.khachhang { border-left-color: #059669; } 
+        .notify-toast.lichhen { border-left-color: #d97706; }    
+        .notify-toast.donhang { border-left-color: #dc2626; }    
+        .notify-content h4 { margin: 0 0 4px 0; font-size: 14px; color: #1e293b; }
+        .notify-content p { margin: 0; font-size: 12px; color: #64748b; }
+        .notify-close { background: none; border: none; font-size: 16px; cursor: pointer; color: #94a3b8; padding: 0 0 0 10px; }
+        .notify-close:hover { color: #1e293b; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
     </style>`;
 
     const container = document.getElementById('menu-container');
     if (container) {
         container.innerHTML = menuHTML;
-
         const currentPage = window.location.pathname.split("/").pop();
         const activeItem = document.querySelector(`[onclick*='${currentPage}']`);
         if (activeItem) {
             activeItem.classList.add('active');
-            
             const submenus = document.querySelectorAll('.submenu-container');
             submenus.forEach((sub) => {
                 if (sub.contains(activeItem)) {
@@ -264,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // 2. CHÈN THANH TOP NAVBAR PHÍA TRÊN
-     const topnavContainer = document.getElementById('topnav-container');
+    const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
         topnavContainer.innerHTML = `
             <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box;">
@@ -273,14 +163,19 @@ document.addEventListener("DOMContentLoaded", function() {
                     <h2 style="margin: 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px; margin-right: 10px;">
+                <div style="display: flex; align-items: center; gap: 14px; margin-right: 10px;">
+                    <!-- Biểu tượng chuông được phóng to (font-size: 22px) và đổi màu vàng nổi bật -->
+                    <div style="position: relative; display: flex; align-items: center; cursor: pointer; padding: 5px;" title="Thông báo hệ thống thời gian thực">
+                        <span style="font-size: 22px; filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.2));">🔔</span>
+                        <span id="navNotificationBadge" style="position: absolute; top: 0; right: 0; background: #dc2626; color: white; font-size: 10px; padding: 1px 5px; border-radius: 50%; display: none; font-weight: bold;">0</span>
+                    </div>
+
                     <div class="search-container" style="position: relative; margin: 0;">
                         <input type="text" id="globalSearchInput" class="search-box" placeholder="🔍 Tìm tên KH, SĐT, thú cưng..." autocomplete="off" style="padding: 7px 12px; width: 220px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;">
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
                     
-                    <!-- Sửa chỗ này thành trang mobile mặc định mà bạn chắc chắn đã tạo (ví dụ thucung.html hoặc khachhang.html) -->
-                    <a href="../mobile/khachhang.html" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
+                    <a href="../mobile/thucung.html" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
                         📱 Giao diện Mobile
                     </a>
 
@@ -291,7 +186,91 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
         `;
     }
+
+    if (!document.getElementById('notification-center')) {
+        const center = document.createElement('div');
+        center.id = 'notification-center';
+        document.body.appendChild(center);
+    }
+
+    setTimeout(langNgheThongBaoRealtime, 1500);
 });
+
+function hienThiThongBaoPC(tieuDe, noiDung, loai = 'khachhang') {
+    const center = document.getElementById('notification-center');
+    if (!center) return;
+
+    const toast = document.createElement('div');
+    toast.className = `notify-toast ${loai}`;
+    
+    let icon = '🔔';
+    if (loai === 'khachhang') icon = '👤';
+    if (loai === 'lichhen') icon = '📅';
+    if (loai === 'donhang') icon = '🛒';
+
+    toast.innerHTML = `
+        <div style="font-size: 18px; margin-right: 10px;">${icon}</div>
+        <div class="notify-content" style="flex: 1;">
+            <h4>${tieuDe}</h4>
+            <p>${noiDung}</p>
+        </div>
+        <button class="notify-close" onclick="this.parentElement.remove()">&times;</button>
+    `;
+
+    center.appendChild(toast);
+
+    const badge = document.getElementById('navNotificationBadge');
+    if (badge) {
+        let count = parseInt(badge.innerText || '0') + 1;
+        badge.innerText = count;
+        badge.style.display = 'inline-block';
+    }
+
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 6000);
+}
+
+// Hàm Realtime bọc bảo vệ an toàn chống treo trang
+function langNgheThongBaoRealtime() {
+    if (typeof db === 'undefined' || !db) return;
+
+    try {
+        if (!window._realtimeKhachHangSubscribed) {
+            db.channel('realtime-khachhang-pc-unique')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, payload => {
+                  const kh = payload.new;
+                  const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng mới';
+                  hienThiThongBaoPC('Có Khách Hàng Mới!', `Vừa thêm: ${ten}`, 'khachhang');
+              }).subscribe();
+            window._realtimeKhachHangSubscribed = true;
+        }
+
+        if (!window._realtimeLichHenSubscribed) {
+            db.channel('realtime-lichhen-pc-unique')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lichhen' }, payload => {
+                  const lh = payload.new;
+                  const ten = lh.tenkhachhang || lh.chunuoi || 'Khách hàng';
+                  const ngay = lh.ngayhen || lh.thoigian || '';
+                  hienThiThongBaoPC('Lịch Hẹn Mới!', `Khách: ${ten} - Lúc: ${ngay}`, 'lichhen');
+              }).subscribe();
+            window._realtimeLichHenSubscribed = true;
+        }
+
+        if (!window._realtimeDonHangSubscribed) {
+            db.channel('realtime-donhang-pc-unique')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'donhang' }, payload => {
+                  const dh = payload.new;
+                  const tong = Number(dh.tongtien || dh.thanhtien || 0).toLocaleString('vi-VN');
+                  hienThiThongBaoPC('Đơn Hàng Mới!', `Tổng tiền thanh toán: ${tong} đ`, 'donhang');
+              }).subscribe();
+            window._realtimeDonHangSubscribed = true;
+        }
+    } catch (err) {
+        console.error("Lỗi kết nối Realtime thông báo:", err);
+    }
+}
 
 function toggleSubmenu(element) {
     element.classList.toggle('active-parent');
