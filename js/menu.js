@@ -317,37 +317,43 @@ function langNgheThongBaoRealtimePC() {
 
         try {
             if (!window._realtimePCSubscribed) {
-                const channel = db.channel('realtime-quet-thong-bao-pc-v6');
+                // Lắng nghe chung mọi sự kiện INSERT trên toàn bộ schema public
+                const channel = db.channel('realtime-quet-thong-bao-pc-v9');
 
-                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, payload => {
-                    const kh = payload.new;
-                    const ten = kh.tenkhachhang || kh.hovaten || 'Khách mới';
-                    xuLyCoDuLieuMoiPC(`👤 Khách hàng mới: ${ten}`);
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
+                    console.log("Phát hiện dữ liệu INSERT mới từ bảng:", payload.table, payload);
+                    const data = payload.new;
+                    const tableName = payload.table.toLowerCase();
+
+                    let noiDung = "Có dữ liệu mới trên hệ thống";
+
+                    if (tableName.includes('khach')) {
+                        const ten = data.tenkhachhang || data.hovaten || data.ten_khach_hang || 'Khách mới';
+                        noiDung = `👤 Khách hàng mới: ${ten}`;
+                    } else if (tableName.includes('lich')) {
+                        const ten = data.tenkhachhang || data.chunuoi || 'Khách';
+                        noiDung = `📅 Lịch hẹn mới từ: ${ten}`;
+                    } else if (tableName.includes('don')) {
+                        const tong = Number(data.tongtien || data.thanhtien || 0).toLocaleString('vi-VN');
+                        noiDung = `🛒 Đơn hàng mới: ${tong} đ`;
+                    } else if (tableName.includes('spa') || tableName.includes('nhatky')) {
+                        const ten = data.chunuoi || data.tenkhachhang || 'Khách';
+                        noiDung = `✂️ Lượt Spa mới: ${ten}`;
+                    } else {
+                        noiDung = `🔔 Dữ liệu mới từ bảng [${payload.table}]`;
+                    }
+
+                    xuLyCoDuLieuMoiPC(noiDung);
                 });
 
-                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lichhen' }, payload => {
-                    const lh = payload.new;
-                    const ten = lh.tenkhachhang || lh.chunuoi || 'Khách';
-                    xuLyCoDuLieuMoiPC(`📅 Lịch hẹn mới từ: ${ten}`);
+                channel.subscribe((status) => {
+                    console.log("Trạng thái kênh Realtime PC v9:", status);
                 });
 
-                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'donhang' }, payload => {
-                    const dh = payload.new;
-                    const tong = Number(dh.tongtien || dh.thanhtien || 0).toLocaleString('vi-VN');
-                    xuLyCoDuLieuMoiPC(`🛒 Đơn hàng mới: ${tong} đ`);
-                });
-
-                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'nhatkyspa' }, payload => {
-                    const sp = payload.new;
-                    const ten = sp.chunuoi || 'Khách';
-                    xuLyCoDuLieuMoiPC(`✂️ Lượt Spa mới: ${ten} (${sp.thucung || ''})`);
-                });
-
-                channel.subscribe();
                 window._realtimePCSubscribed = true;
             }
         } catch (err) {
-            console.error("Lỗi Realtime:", err);
+            console.error("Lỗi Realtime PC:", err);
         }
     }, 1500);
 }
