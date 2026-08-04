@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nhật Ký Spa & Dịch Vụ - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
@@ -31,21 +31,33 @@
             background-color: var(--bg-body);
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; /* Chống tràn màn hình sang ngang */
+        }
+
+        /* Tối ưu khung chứa chính co giãn trên mọi thiết bị */
+        .main-content {
+            padding: 10px;
+            box-sizing: border-box;
+            width: 100%;
+            overflow-x: auto;
         }
 
         .spa-container {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
             gap: 15px;
-            padding: 15px;
+            padding: 10px;
             box-sizing: border-box;
             max-width: 1600px;
             margin: 0 auto;
+            width: 100%;
         }
 
+        /* Tự động chuyển về 1 cột khi xem trên màn hình nhỏ hoặc điện thoại */
         @media (max-width: 1024px) {
             .spa-container {
                 grid-template-columns: 1fr;
+                padding: 0;
             }
         }
 
@@ -55,6 +67,8 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             padding: 15px;
             box-sizing: border-box;
+            width: 100%;
+            overflow-x: auto;
         }
 
         .form-group-spa {
@@ -114,6 +128,7 @@
             border-collapse: collapse;
             font-size: 12px;
             margin-top: 10px;
+            white-space: nowrap; /* Giúp bảng không bị bóp méo chữ trên mobile */
         }
         .spa-table th {
             background: #1e3a8a;
@@ -283,7 +298,7 @@
                 <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e3a8a;">
                     📋 Danh Sách Nhật Ký Spa Gần Đây
                 </h3>
-                <div style="flex: 1; overflow-y: auto; max-height: calc(100vh - 200px);">
+                <div style="flex: 1; overflow-x: auto; max-height: calc(100vh - 200px);">
                     <table class="spa-table">
                         <thead>
                             <tr>
