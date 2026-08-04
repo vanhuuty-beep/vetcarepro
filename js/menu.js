@@ -7,10 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
         currentUser = null;
     }
 
-    // Kiểm tra xem user hiện tại có phải là Admin hay không
-    const isAdmin = currentUser && currentUser.vaitro === 'Admin';
-
-    // Phần menu Hệ thống phân quyền động
+    const isAdmin = currentUser && (currentUser.vaitro === 'Admin' || currentUser.role === 'admin');
     const quanLyUserMenuHtml = isAdmin ? `
         <li class="menu-item" id="menu-quanlyuser" onclick="window.location.href='quanlyuser.html'"><span>🔐</span> <span class="menu-text">Quản lý nhân viên</span></li>
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
@@ -18,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function() {
         <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
     `;
 
-    // Lấy ngày tháng hiện tại định dạng tiếng Việt
     const now = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
     const ngayHienTai = now.toLocaleDateString('vi-VN', options);
@@ -119,18 +115,26 @@ document.addEventListener("DOMContentLoaded", function() {
         .sidebar-header span:first-child { font-size: 22px !important; margin-right: 8px; }
         .sidebar-header .menu-text { font-size: 26px !important; letter-spacing: 0.5px; }
 
-        /* CSS KHU VỰC THÔNG BÁO */
-        #notification-center { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%; pointer-events: none; }
-        .notify-toast { background: #ffffff; border-left: 5px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 12px 15px; border-radius: 6px; pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; animation: slideInRight 0.3s ease-out forwards; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .notify-toast.khachhang { border-left-color: #059669; } 
-        .notify-toast.lichhen { border-left-color: #d97706; }    
-        .notify-toast.donhang { border-left-color: #dc2626; }    
-        .notify-content h4 { margin: 0 0 4px 0; font-size: 14px; color: #1e293b; }
-        .notify-content p { margin: 0; font-size: 12px; color: #64748b; }
-        .notify-close { background: none; border: none; font-size: 16px; cursor: pointer; color: #94a3b8; padding: 0 0 0 10px; }
-        .notify-close:hover { color: #1e293b; }
+        /* STYLE POPUP TỰ TẮT SAU 5 GIÂY & DROPDOWN LỊCH SỬ CHUÔNG */
+        #notification-center-pc { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%; pointer-events: none; }
+        .notify-toast-pc { background: #ffffff; border-left: 5px solid #059669; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 12px 15px; border-radius: 6px; pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; animation: slideInRight 0.3s ease-out forwards; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        #pcNotificationDropdown {
+            display: none;
+            position: absolute;
+            top: 55px;
+            right: 25px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            z-index: 99999;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border: 1px solid #cbd5e1;
+        }
     </style>`;
 
     const container = document.getElementById('menu-container');
@@ -157,15 +161,14 @@ document.addEventListener("DOMContentLoaded", function() {
     const topnavContainer = document.getElementById('topnav-container');
     if (topnavContainer) {
         topnavContainer.innerHTML = `
-            <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box;">
+            <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <button class="toggle-btn" onclick="toggleSidebar()" style="cursor: pointer; background: none; border: none; font-size: 18px;">☰</button>
                     <h2 style="margin: 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 14px; margin-right: 10px;">
-                    <!-- Biểu tượng chuông màu vàng nổi bật và kích thước lớn -->
-                    <div style="position: relative; display: flex; align-items: center; cursor: pointer; padding: 5px;" title="Thông báo hệ thống thời gian thực">
+                    <div id="headerBellBtnPC" style="position: relative; display: flex; align-items: center; cursor: pointer; padding: 5px;" title="Bấm để xem lịch sử thông báo">
                         <span style="font-size: 22px; color: #fbbf24; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">🔔</span>
                         <span id="navNotificationBadge" style="position: absolute; top: 0; right: 0; background: #dc2626; color: white; font-size: 10px; padding: 1px 5px; border-radius: 50%; display: none; font-weight: bold;">0</span>
                     </div>
@@ -187,38 +190,89 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
     }
 
-    if (!document.getElementById('notification-center')) {
+    // Khởi tạo các thành phần âm thanh và khung chứa thông báo ẩn
+    if (!document.getElementById('globalAudioNotification')) {
+        const audioTag = document.createElement('audio');
+        audioTag.id = 'globalAudioNotification';
+        audioTag.src = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
+        audioTag.preload = 'auto';
+        document.body.appendChild(audioTag);
+    }
+
+    if (!document.getElementById('notification-center-pc')) {
         const center = document.createElement('div');
-        center.id = 'notification-center';
+        center.id = 'notification-center-pc';
         document.body.appendChild(center);
     }
 
-    setTimeout(langNgheThongBaoRealtime, 1500);
+    if (!document.getElementById('pcNotificationDropdown')) {
+        const dropdown = document.createElement('div');
+        dropdown.id = 'pcNotificationDropdown';
+        dropdown.innerHTML = `
+            <div style="background: #1e3a8a; color: white; padding: 10px 12px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🔔 Lịch sử thông báo</span>
+                <button onclick="xoaTatCaThongBaoPC()" style="background: none; border: none; color: #fbbf24; font-size: 11px; cursor: pointer;">Xóa tất cả</button>
+            </div>
+            <div id="pcNotificationList" style="padding: 0;">
+                <div style="padding: 15px; text-align: center; color: #64748b; font-size: 12px;">Chưa có thông báo nào</div>
+            </div>
+        `;
+        document.body.appendChild(dropdown);
+    }
+
+    const bellBtn = document.getElementById('headerBellBtnPC');
+    const dropdown = document.getElementById('pcNotificationDropdown');
+    if (bellBtn && dropdown) {
+        bellBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const badge = document.getElementById('navNotificationBadge');
+            if (badge) {
+                badge.innerText = '0';
+                badge.style.display = 'none';
+            }
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!dropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    // Kích hoạt lắng nghe Realtime chạy ngầm an toàn tuyệt đối
+    langNgheThongBaoRealtimePC();
 });
 
-function hienThiThongBaoPC(tieuDe, noiDung, loai = 'khachhang') {
-    const center = document.getElementById('notification-center');
-    if (!center) return;
+function xuLyCoDuLieuMoiPC(noiDungThongBao) {
+    const audio = document.getElementById('globalAudioNotification');
+    if (audio) {
+        audio.play().catch(error => console.log("Trình duyệt chặn autoplay:", error));
+    }
 
-    const toast = document.createElement('div');
-    toast.className = `notify-toast ${loai}`;
-    
-    let icon = '🔔';
-    if (loai === 'khachhang') icon = '👤';
-    if (loai === 'lichhen') icon = '📅';
-    if (loai === 'donhang') icon = '🛒';
+    // 1. Tự động hiện Popup ở góc phải màn hình trong 5 giây rồi tự tắt
+    const center = document.getElementById('notification-center-pc');
+    if (center) {
+        const toast = document.createElement('div');
+        toast.className = 'notify-toast-pc';
+        toast.innerHTML = `
+            <div style="font-size: 18px; margin-right: 10px;">🔔</div>
+            <div style="flex: 1;">
+                <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #1e293b;">Thông Báo Mới</h4>
+                <p style="margin: 0; font-size: 12px; color: #64748b;">${noiDungThongBao}</p>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#94a3b8; padding-left:10px;">&times;</button>
+        `;
+        center.appendChild(toast);
 
-    toast.innerHTML = `
-        <div style="font-size: 18px; margin-right: 10px;">${icon}</div>
-        <div class="notify-content" style="flex: 1;">
-            <h4>${tieuDe}</h4>
-            <p>${noiDung}</p>
-        </div>
-        <button class="notify-close" onclick="this.parentElement.remove()">&times;</button>
-    `;
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s ease';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
 
-    center.appendChild(toast);
-
+    // 2. Tăng số đếm đỏ và lưu vào lịch sử chuông
     const badge = document.getElementById('navNotificationBadge');
     if (badge) {
         let count = parseInt(badge.innerText || '0') + 1;
@@ -226,50 +280,76 @@ function hienThiThongBaoPC(tieuDe, noiDung, loai = 'khachhang') {
         badge.style.display = 'inline-block';
     }
 
-    setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 6000);
+    const listDiv = document.getElementById('pcNotificationList');
+    if (listDiv) {
+        if (listDiv.innerHTML.includes('Chưa có thông báo nào')) {
+            listDiv.innerHTML = '';
+        }
+        const timeNow = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const itemHtml = `
+            <div style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; display: flex; justify-content: space-between; align-items: flex-start; background: #f8fafc;">
+                <div>
+                    <div style="font-weight: bold; color: #1e293b; margin-bottom: 2px;">${noiDungThongBao}</div>
+                    <div style="font-size: 10px; color: #64748b;">${timeNow}</div>
+                </div>
+            </div>
+        `;
+        listDiv.innerHTML = itemHtml + listDiv.innerHTML;
+    }
 }
 
-// Hàm Realtime bọc bảo vệ an toàn chống treo trang
-function langNgheThongBaoRealtime() {
-    if (typeof db === 'undefined' || !db) return;
-
-    try {
-        if (!window._realtimeKhachHangSubscribed) {
-            db.channel('realtime-khachhang-pc-unique')
-              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, payload => {
-                  const kh = payload.new;
-                  const ten = kh.tenkhachhang || kh.hovaten || 'Khách hàng mới';
-                  hienThiThongBaoPC('Có Khách Hàng Mới!', `Vừa thêm: ${ten}`, 'khachhang');
-              }).subscribe();
-            window._realtimeKhachHangSubscribed = true;
-        }
-
-        if (!window._realtimeLichHenSubscribed) {
-            db.channel('realtime-lichhen-pc-unique')
-              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lichhen' }, payload => {
-                  const lh = payload.new;
-                  const ten = lh.tenkhachhang || lh.chunuoi || 'Khách hàng';
-                  const ngay = lh.ngayhen || lh.thoigian || '';
-                  hienThiThongBaoPC('Lịch Hẹn Mới!', `Khách: ${ten} - Lúc: ${ngay}`, 'lichhen');
-              }).subscribe();
-            window._realtimeLichHenSubscribed = true;
-        }
-
-        if (!window._realtimeDonHangSubscribed) {
-            db.channel('realtime-donhang-pc-unique')
-              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'donhang' }, payload => {
-                  const dh = payload.new;
-                  const tong = Number(dh.tongtien || dh.thanhtien || 0).toLocaleString('vi-VN');
-                  hienThiThongBaoPC('Đơn Hàng Mới!', `Tổng tiền thanh toán: ${tong} đ`, 'donhang');
-              }).subscribe();
-            window._realtimeDonHangSubscribed = true;
-        }
-    } catch (err) {
-        console.error("Lỗi kết nối Realtime thông báo:", err);
+function xoaTatCaThongBaoPC() {
+    const listDiv = document.getElementById('pcNotificationList');
+    if (listDiv) {
+        listDiv.innerHTML = `<div style="padding: 15px; text-align: center; color: #64748b; font-size: 12px;">Chưa có thông báo nào</div>`;
     }
+    const badge = document.getElementById('navNotificationBadge');
+    if (badge) {
+        badge.innerText = '0';
+        badge.style.display = 'none';
+    }
+}
+
+// Hàm kết nối Realtime chạy ngầm an toàn chống đơ trang
+function langNgheThongBaoRealtimePC() {
+    setTimeout(() => {
+        if (typeof db === 'undefined' || !db) return;
+
+        try {
+            if (!window._realtimePCSubscribed) {
+                const channel = db.channel('realtime-quet-thong-bao-pc-v6');
+
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, payload => {
+                    const kh = payload.new;
+                    const ten = kh.tenkhachhang || kh.hovaten || 'Khách mới';
+                    xuLyCoDuLieuMoiPC(`👤 Khách hàng mới: ${ten}`);
+                });
+
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lichhen' }, payload => {
+                    const lh = payload.new;
+                    const ten = lh.tenkhachhang || lh.chunuoi || 'Khách';
+                    xuLyCoDuLieuMoiPC(`📅 Lịch hẹn mới từ: ${ten}`);
+                });
+
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'donhang' }, payload => {
+                    const dh = payload.new;
+                    const tong = Number(dh.tongtien || dh.thanhtien || 0).toLocaleString('vi-VN');
+                    xuLyCoDuLieuMoiPC(`🛒 Đơn hàng mới: ${tong} đ`);
+                });
+
+                channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'nhatkyspa' }, payload => {
+                    const sp = payload.new;
+                    const ten = sp.chunuoi || 'Khách';
+                    xuLyCoDuLieuMoiPC(`✂️ Lượt Spa mới: ${ten} (${sp.thucung || ''})`);
+                });
+
+                channel.subscribe();
+                window._realtimePCSubscribed = true;
+            }
+        } catch (err) {
+            console.error("Lỗi Realtime:", err);
+        }
+    }, 1500);
 }
 
 function toggleSubmenu(element) {
