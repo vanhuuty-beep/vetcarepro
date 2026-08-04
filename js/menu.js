@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 0. Lấy thông tin user đang đăng nhập từ sessionStorage
+    // 0. Lấy thông tin user đang đăng nhập từ sessionStorage và chuẩn hóa role
     let currentUser = null;
     try {
         currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -7,19 +7,108 @@ document.addEventListener("DOMContentLoaded", function() {
         currentUser = null;
     }
 
-    const isAdmin = currentUser && (currentUser.vaitro === 'Admin' || currentUser.role === 'admin');
-    const quanLyUserMenuHtml = isAdmin ? `
-        <li class="menu-item" id="menu-quanlyuser" onclick="window.location.href='quanlyuser.html'"><span>🔐</span> <span class="menu-text">Quản lý nhân viên</span></li>
-        <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
-    ` : `
-        <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
-    `;
+    const vaitro = currentUser ? (currentUser.vaitro || currentUser.role || '').toLowerCase() : '';
+    const isAdmin = vaitro === 'admin';
+    const isBacSi = vaitro === 'bacsi';
+    const isLeTan = vaitro === 'letan';
+
+    // Xây dựng danh mục HỆ THỐNG dựa theo phân quyền
+    let heThongMenuHtml = '';
+    if (isAdmin) {
+        heThongMenuHtml = `
+            <li class="menu-category">👨‍⚕️ HỆ THỐNG</li>
+            <li class="menu-item" id="menu-quanlyuser" onclick="window.location.href='quanlyuser.html'"><span>🔐</span> <span class="menu-text">Quản lý nhân viên</span></li>
+            <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
+        `;
+    } else {
+        heThongMenuHtml = `
+            <li class="menu-category">👨‍⚕️ HỆ THỐNG</li>
+            <li class="menu-item" id="menu-lienhe" onclick="window.location.href='lienhe.html'"><span>📞</span> <span class="menu-text">Liên hệ</span></li>
+        `;
+    }
 
     const now = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
     const ngayHienTai = now.toLocaleDateString('vi-VN', options);
 
-    // 1. CHÈN MENU BÊN TRÁI
+    // 1. XÂY DỰNG CÁC NHÓM MENU THEO PHÂN QUYỀN
+    let dynamicMenuContent = '';
+
+    // Menu chung mà mọi role đều thấy (hoặc Lễ tân / Admin / Bác sĩ cần dùng)
+    if (!isBacSi) {
+        // Lễ tân và Admin thấy Thống kê / Tổng quan
+        dynamicMenuContent += `<li class="menu-item" id="menu-thongke" onclick="window.location.href='thongke.html'"><span>📈</span> <span class="menu-text">Thống kê</span></li>`;
+    }
+
+    dynamicMenuContent += `
+        <li class="menu-item" id="menu-khachhang" onclick="window.location.href='khachhang.html'"><span>👤</span> <span class="menu-text">Khách hàng</span></li>
+        <li class="menu-item" id="menu-thucung" onclick="window.location.href='thucung.html'"><span>🐶</span> <span class="menu-text">Thú cưng</span></li>
+        <li class="menu-item" id="menu-lichhen" onclick="window.location.href='lichhen.html'"><span>📅</span> <span class="menu-text">Lịch hẹn</span></li>
+    `;
+
+    // Nhóm Khám & Điều trị: Dành cho Bác sĩ và Admin (Lễ tân bị ẩn để tránh nhầm lẫn chuyên môn)
+    if (isAdmin || isBacSi) {
+        dynamicMenuContent += `
+            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+                <div class="menu-label-wrap"><span class="group-icon">🩺</span> <span class="menu-text">Khám & Điều trị</span></div> <span class="arrow">▼</span>
+            </li>
+            <ul class="submenu-container">
+                <li class="menu-item" id="menu-khambenh" onclick="window.location.href='khambenh.html'"><span>🏥</span> <span class="menu-text">Khám bệnh</span></li>
+                <li class="menu-item" id="menu-phieuchidinh" onclick="window.location.href='phieuchidinh.html'"><span>📋</span> <span class="menu-text">Phiếu chỉ định</span></li>
+                <li class="menu-item" id="menu-donthuoc" onclick="window.location.href='donthuoc.html'"><span>📜</span> <span class="menu-text">Đơn thuốc</span></li>
+            </ul>
+        `;
+    }
+
+    // Nhóm Kho & Vắc-xin: Admin và Bác sĩ thấy đầy đủ, Lễ tân chỉ thấy dịch vụ cơ bản nếu cần
+    dynamicMenuContent += `
+        <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+            <div class="menu-label-wrap"><span class="group-icon">📦</span> <span class="menu-text">Kho & Vắc-xin</span></div> <span class="arrow">▼</span>
+        </li>
+        <ul class="submenu-container">
+            <li class="menu-item" id="menu-khothuoc" onclick="window.location.href='khothuoc.html'"><span>💊</span> <span class="menu-text">Kho thuốc</span></li>
+            <li class="menu-item" id="menu-khovaccine" onclick="window.location.href='khovaccine.html'"><span>💉</span> <span class="menu-text">Kho vắc-xin</span></li>
+            <li class="menu-item" id="menu-nhatkylamvaccine" onclick="window.location.href='nhatkylamvaccine.html'"><span>⏰</span> <span class="menu-text">Nhật ký tiêm</span></li>
+            <li class="menu-item" id="menu-dichvu" onclick="window.location.href='dichvu.html'"><span>📜</span> <span class="menu-text">Giá dịch vụ</span></li>
+        </ul>
+    `;
+
+    // Nhóm Lưu trú: Bác sĩ và Admin quản lý nội trú
+    if (isAdmin || isBacSi) {
+        dynamicMenuContent += `
+            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+                <div class="menu-label-wrap"><span class="group-icon">🏨</span> <span class="menu-text">Quản lý Lưu trú</span></div> <span class="arrow">▼</span>
+            </li>
+            <ul class="submenu-container">
+                <li class="menu-item" id="menu-noitru" onclick="window.location.href='noitru.html'"><span>🏨</span> <span class="menu-text">Nội trú</span></li>
+                <li class="menu-item" id="menu-nhatkynoitru" onclick="window.location.href='nhatkynoitru.html'"><span>📖</span> <span class="menu-text">Nhật ký Nội trú</span></li>
+            </ul>
+        `;
+    }
+
+    // Nhóm Petshop & Bán hàng: Lễ tân và Admin dùng nhiều (bán hàng, thu ngân, in tem)
+    dynamicMenuContent += `
+        <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+            <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
+        </li>
+        <ul class="submenu-container">
+            <li class="menu-item" id="menu-danhmucsanpham" onclick="window.location.href='danhmucsanpham.html'"><span>📦</span> <span class="menu-text">Thêm sản phẩm</span></li>
+            <li class="menu-item" id="menu-nhatkykho" onclick="window.location.href='nhatkykho.html'"><span>📋</span> <span class="menu-text">Nhật ký kho</span></li>
+            <li class="menu-item" id="menu-donhang" onclick="window.location.href='donhang.html'"><span>📊</span> <span class="menu-text">Chi tiết bán hàng</span></li>
+            <li class="menu-item" id="menu-intem" onclick="window.location.href='intem.html'"><span>📥</span> <span class="menu-text">In tem mã vạch</span></li>
+        </ul>
+
+        <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
+            <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
+        </li>
+        <ul class="submenu-container">
+            <li class="menu-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
+            <li class="menu-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
+        </ul>
+
+        ${heThongMenuHtml}
+    `;
+
     const menuHTML = `
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
@@ -38,58 +127,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </li>
         
         <ul class="menu-list">
-            <li class="menu-item" id="menu-thongke" onclick="window.location.href='thongke.html'"><span>📈</span> <span class="menu-text">Thống kê</span></li>
-            <li class="menu-item" id="menu-khachhang" onclick="window.location.href='khachhang.html'"><span>👤</span> <span class="menu-text">Khách hàng</span></li>
-            <li class="menu-item" id="menu-thucung" onclick="window.location.href='thucung.html'"><span>🐶</span> <span class="menu-text">Thú cưng</span></li>
-            <li class="menu-item" id="menu-lichhen" onclick="window.location.href='lichhen.html'"><span>📅</span> <span class="menu-text">Lịch hẹn</span></li>
-
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <div class="menu-label-wrap"><span class="group-icon">🩺</span> <span class="menu-text">Khám & Điều trị</span></div> <span class="arrow">▼</span>
-            </li>
-            <ul class="submenu-container">
-                <li class="menu-item" id="menu-khambenh" onclick="window.location.href='khambenh.html'"><span>🏥</span> <span class="menu-text">Khám bệnh</span></li>
-                <li class="menu-item" id="menu-phieuchidinh" onclick="window.location.href='phieuchidinh.html'"><span>📋</span> <span class="menu-text">Phiếu chỉ định</span></li>
-                <li class="menu-item" id="menu-donthuoc" onclick="window.location.href='donthuoc.html'"><span>📜</span> <span class="menu-text">Đơn thuốc</span></li>
-            </ul>
-
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <div class="menu-label-wrap"><span class="group-icon">📦</span> <span class="menu-text">Kho & Vắc-xin</span></div> <span class="arrow">▼</span>
-            </li>
-            <ul class="submenu-container">
-                <li class="menu-item" id="menu-khothuoc" onclick="window.location.href='khothuoc.html'"><span>💊</span> <span class="menu-text">Kho thuốc</span></li>
-                <li class="menu-item" id="menu-khovaccine" onclick="window.location.href='khovaccine.html'"><span>💉</span> <span class="menu-text">Kho vắc-xin</span></li>
-                <li class="menu-item" id="menu-nhatkylamvaccine" onclick="window.location.href='nhatkylamvaccine.html'"><span>⏰</span> <span class="menu-text">Nhật ký tiêm</span></li>
-                <li class="menu-item" id="menu-dichvu" onclick="window.location.href='dichvu.html'"><span>📜</span> <span class="menu-text">Giá dịch vụ</span></li>
-            </ul>
-
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <div class="menu-label-wrap"><span class="group-icon">🏨</span> <span class="menu-text">Quản lý Lưu trú</span></div> <span class="arrow">▼</span>
-            </li>
-            <ul class="submenu-container">
-                <li class="menu-item" id="menu-noitru" onclick="window.location.href='noitru.html'"><span>🏨</span> <span class="menu-text">Nội trú</span></li>
-                <li class="menu-item" id="menu-nhatkynoitru" onclick="window.location.href='nhatkynoitru.html'"><span>📖</span> <span class="menu-text">Nhật ký Nội trú</span></li>
-            </ul>
-
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <div class="menu-label-wrap"><span class="group-icon">🛍️</span> <span class="menu-text">Petshop & Bán hàng</span></div> <span class="arrow">▼</span>
-            </li>
-            <ul class="submenu-container">
-                <li class="menu-item" id="menu-danhmucsanpham" onclick="window.location.href='danhmucsanpham.html'"><span>📦</span> <span class="menu-text">Thêm sản phẩm</span></li>
-                <li class="menu-item" id="menu-nhatkykho" onclick="window.location.href='nhatkykho.html'"><span>📋</span> <span class="menu-text">Nhật ký kho</span></li>
-                <li class="menu-item" id="menu-donhang" onclick="window.location.href='donhang.html'"><span>📊</span> <span class="menu-text">Chi tiết bán hàng</span></li>
-                <li class="menu-item" id="menu-intem" onclick="window.location.href='intem.html'"><span>📥</span> <span class="menu-text">In tem mã vạch</span></li>
-            </ul>
-
-            <li class="menu-dropdown-toggle" onclick="toggleSubmenu(this)">
-                <div class="menu-label-wrap"><span class="group-icon">✨</span> <span class="menu-text">Quản lý Spa</span></div> <span class="arrow">▼</span>
-            </li>
-            <ul class="submenu-container">
-                <li class="menu-item" id="menu-spa" onclick="window.location.href='spa.html'"><span>✨</span> <span class="menu-text">Bảng giá Spa</span></li>
-                <li class="menu-item" id="menu-nhatkyspa" onclick="window.location.href='nhatkyspa.html'"><span>✂️</span> <span class="menu-text">Nhật ký Spa</span></li>
-            </ul>
-
-            <li class="menu-category">👨‍⚕️ HỆ THỐNG</li>
-            ${quanLyUserMenuHtml}
+            ${dynamicMenuContent}
         </ul>
     </div>
 
@@ -339,7 +377,6 @@ function xuLySuKienRealtime(hanhDong, payload) {
     const tableName = payload.table.toLowerCase();
     const data = payload.new && Object.keys(payload.new).length > 0 ? payload.new : payload.old;
     
-    // 1. Lấy tên nhân viên từ phiên đăng nhập hiện tại trên trình duyệt
     let tenNhanVien = "Nhân viên";
     try {
         const user = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -348,7 +385,6 @@ function xuLySuKienRealtime(hanhDong, payload) {
         }
     } catch (e) {}
 
-    // 2. Nếu dữ liệu trả về từ Database có sẵn thông tin người thao tác (như nguoitao, nguoisua, nguoixoa, bacsi...)
     if (data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi) {
         tenNhanVien = data.nguoi_xoa || data.nguoixoa || data.nhanvien || data.nguoi_tao || data.nguoithuchien || data.bacsi;
     }
@@ -405,7 +441,6 @@ function xuLySuKienRealtime(hanhDong, payload) {
     else if (hanhDong === 'Cập nhật') icon = "✏️";
     else if (hanhDong === 'Xóa') icon = "🗑️";
 
-    // Hiển thị rõ ràng tên nhân viên thực hiện hành động (kể cả Xóa)
     const noiDung = `${icon} <b>${tenNhanVien}</b> vừa <b>${hanhDong.toLowerCase()}</b> ${tenDoiTuong}`;
     
     xuLyCoDuLieuMoiPC(noiDung);
