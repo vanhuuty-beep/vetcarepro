@@ -8,6 +8,24 @@ document.addEventListener("DOMContentLoaded", function() {
         document.body.appendChild(audioTag);
     }
 
+    // Vùng chứa Popup tự động ẩn trên mobile
+    if (!document.getElementById('notification-center-mobile')) {
+        const center = document.createElement('div');
+        center.id = 'notification-center-mobile';
+        center.style.cssText = `
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(center);
+    }
+
     // 2. Tạo khung chứa danh sách lịch sử thông báo (Dropdown Popup khi bấm chuông)
     if (!document.getElementById('mobileNotificationDropdown')) {
         const dropdown = document.createElement('div');
@@ -29,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
         dropdown.innerHTML = `
             <div style="background: #1e3a8a; color: white; padding: 10px 12px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
-                <span>🔔 Thông báo hệ thống</span>
+                <span>🔔 Lịch sử thông báo</span>
                 <button onclick="xoaTatCaThongBaoMobile()" style="background: none; border: none; color: #fbbf24; font-size: 11px; cursor: pointer;">Xóa tất cả</button>
             </div>
             <div id="mobileNotificationList" style="padding: 0;">
@@ -57,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
             <span id="mobileNotificationBadge" style="position: absolute; top: -4px; right: -6px; background: #dc2626; color: white; font-size: 10px; padding: 1px 5px; border-radius: 50%; display: none; font-weight: bold;">0</span>
         `;
         
-        // Sự kiện bấm vào chuông
         bellContainer.addEventListener('click', function(e) {
             e.stopPropagation();
             const audio = document.getElementById('globalAudioNotification');
@@ -80,12 +97,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-        // Tìm nút Thoát trên header để chèn chuông vào ngay bên cạnh
         const thoatBtn = Array.from(document.querySelectorAll('button, a')).find(el => el.innerText.includes('Thoát') || el.innerText.includes('Đăng xuất'));
         if (thoatBtn && thoatBtn.parentElement) {
             thoatBtn.parentElement.insertBefore(bellContainer, thoatBtn);
         } else {
-            // Fallback nếu không tìm thấy nút Thoát thì đưa vào body góc phải
             bellContainer.style.cssText += `position: fixed; top: 12px; right: 15px; z-index: 9999;`;
             document.body.appendChild(bellContainer);
         }
@@ -102,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (typeof db !== 'undefined' && db) {
         try {
             if (!window._realtimeMobileSubscribed) {
-                db.channel('realtime-quet-thong-bao-mobile-v5')
+                db.channel('realtime-quet-thong-bao-mobile-v7')
                   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'khachhang' }, (payload) => {
                       const kh = payload.new;
                       const ten = kh.tenkhachhang || kh.hovaten || 'Khách mới';
@@ -138,6 +153,39 @@ function xuLyCoDuLieuMoiMobile(loai, noiDungThongBao) {
         audio.play().catch(error => console.log("Trình duyệt chặn autoplay mobile:", error));
     }
 
+    // 1. Tự động hiện Popup nổi trên mobile trong 5 giây rồi tự tắt
+    const center = document.getElementById('notification-center-mobile');
+    if (center) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: #ffffff;
+            border-left: 5px solid #059669;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            padding: 12px 15px;
+            border-radius: 6px;
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        `;
+        toast.innerHTML = `
+            <div style="font-size: 18px; margin-right: 10px;">🔔</div>
+            <div style="flex: 1;">
+                <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #1e293b;">Thông Báo Mới</h4>
+                <p style="margin: 0; font-size: 12px; color: #64748b;">${noiDungThongBao}</p>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#94a3b8; padding-left:10px;">&times;</button>
+        `;
+        center.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s ease';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // 2. Tăng số đếm đỏ và lưu vào lịch sử chuông
     const badge = document.getElementById('mobileNotificationBadge');
     if (badge) {
         let count = parseInt(badge.innerText || '0') + 1;
