@@ -17,8 +17,6 @@
     <link rel="stylesheet" href="../css/style1.css">
 	<link rel="stylesheet" href="../css/smart-search.css">
 
-
-
     <style>
         .search-box {
             padding: 8px 12px;
@@ -72,30 +70,31 @@
             padding-top: 10px;
         }
 		/* Cố định cột Thao tác thu gọn */
-table td:last-child, 
-table th:last-child {
-    width: 170px;
-    text-align: center;
-}
+        table td:last-child, 
+        table th:last-child {
+            width: 190px;
+            text-align: center;
+        }
 
-table td:last-child {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-}
+        table td:last-child {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
 
-/* Kích thước các nút nhỏ gọn không bị tràn */
-table td:last-child button {
-    padding: 4px 6px;
-    font-size: 11px;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-}
-@media print {
+        /* Kích thước các nút nhỏ gọn không bị tràn */
+        table td:last-child button {
+            padding: 4px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        @media print {
             body * {
                 visibility: hidden !important;
             }
@@ -130,7 +129,7 @@ table td:last-child button {
                 left: 0 !important;
                 top: 0 !important;
                 width: 95% !important;
-                margin: 30px auto 0 auto !important; /* Đẩy nội dung xuống 30px */
+                margin: 30px auto 0 auto !important;
                 padding: 10px !important;
                 background: #fff !important;
                 color: #000 !important;
@@ -152,7 +151,7 @@ table td:last-child button {
 
     <!-- NỘI DUNG CHÍNH -->
     <div class="main-content">
-   <div id="topnav-container"></div>
+        <div id="topnav-container"></div>
 
         <div class="content-body">
             <div class="card">
@@ -208,7 +207,6 @@ table td:last-child button {
                 <input type="text" id="loai" placeholder="Ví dụ: Chó, Mèo...">
             </div>
 
-            <!-- Giống và Màu lông chung 1 hàng -->
             <div class="form-row">
                 <div class="form-group-modal">
                     <label>Giống:</label>
@@ -220,7 +218,6 @@ table td:last-child button {
                 </div>
             </div>
 
-            <!-- Tuổi và Cân nặng chung 1 hàng -->
             <div class="form-row">
                 <div class="form-group-modal">
                     <label>Tuổi:</label>
@@ -245,23 +242,20 @@ table td:last-child button {
     </div>
 
     <script>
-       
-
         let danhSachThuCungGoc = [];
-        let mapKhachHang = {}; // Lưu trữ tên khách hàng theo ID
+        let mapKhachHang = {}; 
+
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const maKH = urlParams.get('makhachhang');
             if (maKH) {
                 moModalThem(); 
-                document.getElementById('makhachhang').value = formatMaKhachHang(maKH); 
+                document.getElementById('makhachhang').value = maKH; 
             }
             fetchDuLieu();
         });
 
-        // 1. Tải danh sách khách hàng trước, sau đó tải thú cưng để ghép tên an toàn tuyệt đối
         async function fetchDuLieu() {
-            // Lấy danh sách khách hàng để tạo từ điển tra cứu tên
             const { data: khData } = await db.from('khachhang').select('id, hovaten');
             if (khData) {
                 khData.forEach(kh => {
@@ -269,7 +263,6 @@ table td:last-child button {
                 });
             }
 
-            // Lấy danh sách thú cưng
             const { data, error } = await db
                 .from('thucung')
                 .select('*')
@@ -284,7 +277,6 @@ table td:last-child button {
             }
         }
 
-        // Hiển thị dữ liệu ra bảng
         function hienThiBang(data) {
             const tableBody = document.getElementById('data-table');
             tableBody.innerHTML = '';
@@ -295,51 +287,51 @@ table td:last-child button {
             }
 
             data.forEach(item => {
-    const maTC = formatMaThuCung(item.id);
-    const maKHText = formatMaKhachHang(item.makhachhang);
-    
-    let tenKhachHang = "Chưa có tên";
-    if (item.makhachhang && mapKhachHang[item.makhachhang]) {
-        tenKhachHang = mapKhachHang[item.makhachhang];
-    }
+                const maTC = formatMaThuCung(item.id);
+                const maKHText = formatMaKhachHang(item.makhachhang);
+                
+                let tenKhachHang = "Chưa có tên";
+                if (item.makhachhang && mapKhachHang[item.makhachhang]) {
+                    tenKhachHang = mapKhachHang[item.makhachhang];
+                }
 
-    tableBody.innerHTML += `<tr>
-        <td><strong>${maTC}</strong></td>
-        <td>${item.tenthucung || ''}</td>
-        <td>${item.loai || ''}</td>
-        <td>${item.giong || ''}</td>
-        <td>${item.maulong || ''}</td>
-        <td>${item.tuoi !== null && item.tuoi !== undefined ? item.tuoi : ''}</td>
-        <td>${item.cannang !== null && item.cannang !== undefined ? item.cannang + ' kg' : ''}</td>
-        <td>
-            <span style="color: #2563eb; font-weight: bold;">${maKHText}</span><br>
-            <span style="color: #555; font-size: 13px;">${tenKhachHang}</span>
-        </td>
-        <td>
-		<button class="btn-primary" style="background-color: #7c3aed; padding: 5px 10px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer;" onclick="moModalNhatKy(${item.id})">Nhật ký</button>
-            <button style="background: #0284c7; color: white;" onclick="window.location.href='nhatkylamvaccine.html?mathucung=${item.id}'">Tiêm vắc-xin</button>
-            <button class="btn-primary" style="background: #10b981; color: white;" onclick="window.location.href='khambenh.html?mathucung=${item.id}'">Khám bệnh</button>
-			<button class="btn-spa" onclick="moNhatKySpa(${item.id}, '${item.ten_thu_cung || item.thucung || ''}', '${item.id_chu_nuoi || item.makhachhang || ''}')" style="background-color: #8b5cf6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: 500; margin-right: 4px;">Spa</button>
-            <button class="btn-edit" style="background: #d97706; color: white;" onclick="moModalSua(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi !== null ? item.tuoi : ''}', '${item.cannang !== null ? item.cannang : ''}', '${item.makhachhang !== null ? item.makhachhang : ''}')">Sửa</button>
-            <button class="btn-delete" style="background: #dc2626; color: white;" onclick="xoaThuCung(${item.id})">Xóa</button>
-        </td>
-    </tr>`;
-});
+                tableBody.innerHTML += `<tr>
+                    <td><strong>${maTC}</strong></td>
+                    <td>${item.tenthucung || ''}</td>
+                    <td>${item.loai || ''}</td>
+                    <td>${item.giong || ''}</td>
+                    <td>${item.maulong || ''}</td>
+                    <td>${item.tuoi !== null && item.tuoi !== undefined ? item.tuoi : ''}</td>
+                    <td>${item.cannang !== null && item.cannang !== undefined ? item.cannang + ' kg' : ''}</td>
+                    <td>
+                        <span style="color: #2563eb; font-weight: bold;">${maKHText}</span><br>
+                        <span style="color: #555; font-size: 13px;">${tenKhachHang}</span>
+                    </td>
+                    <td>
+                        <button class="btn-primary" style="background-color: #7c3aed; padding: 4px 6px; font-size: 11px; border-radius: 3px; border: none; cursor: pointer;" onclick="moModalNhatKy(${item.id})">Nhật ký</button>
+                        <button style="background: #0284c7; color: white;" onclick="window.location.href='nhatkylamvaccine.html?mathucung=${item.id}'">Tiêm vắc-xin</button>
+                        <button class="btn-primary" style="background: #10b981; color: white;" onclick="window.location.href='khambenh.html?mathucung=${item.id}'">Khám bệnh</button>
+                        <button class="btn-primary" style="background: #6366f1; color: white;" onclick="window.location.href='nhatkynoitru.html?mathucung=${item.id}&open_modal=true'" title="Tạo phiếu lưu trú cho thú cưng này">Lưu trú</button>
+                        <button class="btn-spa" onclick="moNhatKySpa(${item.id}, '${item.tenthucung || ''}', '${item.makhachhang || ''}')" style="background-color: #8b5cf6; color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-weight: 500;">Spa</button>
+                        <button class="btn-edit" style="background: #d97706; color: white;" onclick="moModalSua(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi !== null ? item.tuoi : ''}', '${item.cannang !== null ? item.cannang : ''}', '${item.makhachhang !== null ? item.makhachhang : ''}')">Sửa</button>
+                        <button class="btn-delete" style="background: #dc2626; color: white;" onclick="xoaThuCung(${item.id})">Xóa</button>
+                    </td>
+                </tr>`;
+            });
         }
-function moNhatKySpa(idThucung, tenThuCung, idChuNuoi) {
-            // Kiểm tra các trường hợp tên thú cưng có thể nằm ở biến nào
+
+        function moNhatKySpa(idThucung, tenThuCung, idChuNuoi) {
             let tenPet = tenThuCung;
             if (!tenPet) {
-                // Nếu truyền object hoặc chưa đúng biến, tìm trực tiếp trong mảng dữ liệu gốc của thú cưng
                 const pet = danhSachThuCungGoc.find(x => x.id === idThucung);
                 if (pet) {
-                    tenPet = pet.tenthucong || pet.tenthucung || pet.name || pet.thucung || '';
+                    tenPet = pet.tenthucung || '';
                 }
             }
-
             const tenEnc = encodeURIComponent(tenPet || '');
             window.location.href = `nhatkyspa.html?thucung_id=${idThucung}&thucung_ten=${tenEnc}&makhachhang=${idChuNuoi}`;
         }
+
         function timKiemThuCung() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachThuCungGoc.filter(item => {
@@ -455,25 +447,12 @@ function moNhatKySpa(idThucung, tenThuCung, idChuNuoi) {
                 }
             }
         }
-		window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const maKH = urlParams.get('makhachhang');
-    if (maKH) {
-        moModalThem(); // Mở sẵn modal thêm thú cưng
-        
-        // Nếu bạn muốn hiển thị dạng ID thuần (số 1) để lưu database chính xác:
-        document.getElementById('makhachhang').value = maKH; 
-        
-        // Hoặc nếu bạn muốn hiển thị dạng 'KH0001' đẹp mắt trong ô input:
-        // document.getElementById('makhachhang').value = 'KH' + String(maKH).padStart(4, '0');
-    }
-});
-async function moModalNhatKy(petId) {
+
+        async function moModalNhatKy(petId) {
             document.getElementById('modalNhatKyThuCung').style.display = 'flex';
             const container = document.getElementById('nkNoiDungTimeline');
             container.innerHTML = 'Đang tải dữ liệu nhật ký...';
 
-            // 1. Lấy thông tin thú cưng và chủ nuôi
             const { data: petData } = await db.from('thucung').select('*').eq('id', petId).single();
             let tenChu = 'Không rõ';
             let sdtChu = '---';
@@ -488,7 +467,6 @@ async function moModalNhatKy(petId) {
                     }
                 }
 
-                // Đổ thông tin chi tiết lên phần đầu của phiếu in
                 document.getElementById('nkPetInfo').innerHTML = `
                     <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-bottom: 15px; text-align: left; font-size: 13px; line-height: 1.6;">
                         <div style="display: flex; justify-content: space-between;">
@@ -505,7 +483,6 @@ async function moModalNhatKy(petId) {
 
             let htmlSuKien = [];
 
-            // 2. Tải lịch sử Khám bệnh
             const { data: kbData } = await db.from('khambenh').select('*').eq('mathucung', petId);
             if (kbData) {
                 kbData.forEach(kb => {
@@ -528,7 +505,6 @@ async function moModalNhatKy(petId) {
                 });
             }
 
-            // 3. Tải lịch sử Tiêm Vaccine
             const { data: vcData } = await db.from('nhatkylamvaccine').select('*').eq('mathucung', petId);
             if (vcData) {
                 vcData.forEach(vc => {
@@ -551,7 +527,6 @@ async function moModalNhatKy(petId) {
                 });
             }
 
-            // 4. Tải lịch sử Nội trú
             if (kbData && kbData.length > 0) {
                 let kbIds = kbData.map(k => k.id);
                 const { data: ntData } = await db.from('nhatkynoitru').select('*').in('makhambenh', kbIds);
@@ -577,7 +552,6 @@ async function moModalNhatKy(petId) {
                 }
             }
 
-            // Sắp xếp các sự kiện theo thời gian mới nhất lên đầu
             htmlSuKien.sort((a, b) => new Date(b.ngay) - new Date(a.ngay));
 
             if (htmlSuKien.length === 0) {
@@ -595,33 +569,32 @@ async function moModalNhatKy(petId) {
             window.print();
         }
     </script>
-	<!-- POPUP XEM VÀ IN NHẬT KÝ THÚ CƯNG -->
-<div class="modal-overlay" id="modalNhatKyThuCung" style="display: none;">
-    <div class="modal-container" style="width: 700px; max-height: 90vh; overflow-y: auto;">
-        <div class="modal-header">
-            <h3>Nhật ký Y tế & Tiêm Vaccine Thú Cưng</h3>
-            <button class="close-modal" onclick="dongModalNhatKy()">&times;</button>
-        </div>
-        
-        <!-- Khu vực nội dung nhật ký để xem và in -->
-		<div class="print-header"></div>
-        <div id="printAreaTimeline" style="padding: 15px; background: #fff; color: #000; font-family: Arial, sans-serif;">
-		
-            <div style="text-align: center; margin-bottom: 15px;">
-                <h3 style="margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; color: #1e293b;">Hồ Sơ Nhật Ký Y Tế Thú Cưng</h3>
-                <p id="nkPetInfo" style="margin: 0; font-size: 13px; font-weight: bold; color: #2563eb;"></p>
+
+    <!-- POPUP XEM VÀ IN NHẬT KÝ THÚ CƯNG -->
+    <div class="modal-overlay" id="modalNhatKyThuCung" style="display: none;">
+        <div class="modal-container" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Nhật ký Y tế & Tiêm Vaccine Thú Cưng</h3>
+                <button class="close-modal" onclick="dongModalNhatKy()">&times;</button>
+            </div>
+            
+            <div class="print-header"></div>
+            <div id="printAreaTimeline" style="padding: 15px; background: #fff; color: #000; font-family: Arial, sans-serif;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; color: #1e293b;">Hồ Sơ Nhật Ký Y Tế Thú Cưng</h3>
+                    <p id="nkPetInfo" style="margin: 0; font-size: 13px; font-weight: bold; color: #2563eb;"></p>
+                </div>
+
+                <div id="nkNoiDungTimeline" style="font-size: 13px; line-height: 1.5;">
+                    <!-- Dữ liệu timeline -->
+                </div>
             </div>
 
-            <div id="nkNoiDungTimeline" style="font-size: 13px; line-height: 1.5;">
-                <!-- Dữ liệu timeline lịch sử khám & tiêm sẽ được nạp tự động vào đây -->
+            <div class="modal-footer" style="margin-top: 15px;">
+                <button class="btn-secondary" onclick="dongModalNhatKy()">Đóng</button>
+                <button class="btn-primary" onclick="inNhatKyThuCung()" style="background-color: #2563eb;">In Nhật Ký</button>
             </div>
-        </div>
-
-        <div class="modal-footer" style="margin-top: 15px;">
-            <button class="btn-secondary" onclick="dongModalNhatKy()">Đóng</button>
-            <button class="btn-primary" onclick="inNhatKyThuCung()" style="background-color: #2563eb;">In Nhật Ký</button>
         </div>
     </div>
-</div>
 </body>
 </html>
