@@ -40,13 +40,14 @@
             width: 100%;
         }
 
+        /* Thu gọn khung form bên trái, mở rộng bảng bên phải cho cân đối */
         .spa-container {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 0.8fr 1.2fr;
             gap: 15px;
             padding: 0;
             box-sizing: border-box;
-            max-width: 1600px;
+            max-width: 1500px;
             margin: 0 auto;
             width: 100%;
         }
@@ -64,14 +65,14 @@
             background: #ffffff;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 15px;
+            padding: 12px 15px;
             box-sizing: border-box;
             width: 100%;
             overflow-x: auto;
         }
 
         .form-group-spa {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             position: relative;
         }
         .form-group-spa label {
@@ -124,18 +125,18 @@
         }
 
         .service-checkbox-list {
-            max-height: 220px;
+            max-height: 140px;
             overflow-y: auto;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
-            padding: 8px;
+            padding: 6px 8px;
             background: #f8fafc;
         }
         .service-item-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 8px;
+            padding: 5px 8px;
             border-bottom: 1px solid #e2e8f0;
             font-size: 13px;
         }
@@ -175,12 +176,12 @@
             color: white;
             border: none;
             width: 100%;
-            padding: 12px;
-            font-size: 14px;
+            padding: 10px;
+            font-size: 13px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 12px;
         }
         .btn-spa-action:hover {
             opacity: 0.9;
@@ -192,11 +193,11 @@
             border: none;
             width: 100%;
             padding: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 6px;
             display: none;
         }
         .btn-cancel-edit:hover {
@@ -283,14 +284,14 @@
         <div class="spa-container">
             <!-- CỘT 1: FORM TẠO/SỬA NHẬT KÝ SPA -->
             <div class="spa-card">
-                <h3 id="formTitle" style="margin-top: 0; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e3a8a;">
+                <h3 id="formTitle" style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; color: #1e3a8a;">
                     ✨ Thêm Lượt Spa & Dịch Vụ Mới
                 </h3>
 
                 <input type="hidden" id="editId" value="">
 
                 <div class="form-group-spa">
-                    <label>1. Chọn Khách Hàng (Gõ tên hoặc SĐT để tìm) (*):</label>
+                    <label>1. Chọn Khách Hàng (Gõ tên hoặc SĐT):</label>
                     <input type="text" id="inputTimKhachHang" placeholder="Gõ tên hoặc SĐT khách hàng..." autocomplete="off" oninput="locGoiYKhachHang()">
                     <div id="autocompleteList" class="autocomplete-items" style="display: none;"></div>
                 </div>
@@ -301,18 +302,18 @@
                 </div>
 
                 <div class="form-group-spa">
-                    <label>3. Tên Thú Cưng (thucung) (*):</label>
+                    <label>3. Tên Thú Cưng (*):</label>
                     <input type="text" id="thucung" placeholder="Nhập tên thú cưng (VD: Miko, Lu...):">
                 </div>
 
                 <div class="form-group-spa">
-                    <label>4. Chọn Nhiều Dịch Vụ Sử Dụng (dichvusudung):</label>
+                    <label>4. Chọn Dịch Vụ Sử Dụng:</label>
                     <div class="service-checkbox-list" id="danhSachDichVuCheckbox"></div>
                 </div>
 
                 <div class="form-group-spa">
                     <label>Tổng Tiền Dịch Vụ:</label>
-                    <input type="text" id="tongTienHienThi" value="0 đ" readonly style="background: #f1f5f9; font-weight: bold; color: var(--danger-color); font-size: 15px;">
+                    <input type="text" id="tongTienHienThi" value="0 đ" readonly style="background: #f1f5f9; font-weight: bold; color: var(--danger-color); font-size: 14px;">
                     <input type="hidden" id="tongtien" value="0">
                 </div>
 
@@ -322,10 +323,10 @@
 
             <!-- CỘT 2: BẢNG LỊCH SỬ NHẬT KÝ SPA -->
             <div class="spa-card" style="display: flex; flex-direction: column;">
-                <h3 style="margin-top: 0; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e3a8a;">
+                <h3 style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; color: #1e3a8a;">
                     📋 Danh Sách Nhật Ký Spa Gần Đây
                 </h3>
-                <div style="flex: 1; overflow-x: auto; max-height: calc(100vh - 200px);">
+                <div style="flex: 1; overflow-x: auto; max-height: calc(100vh - 180px);">
                     <table class="spa-table">
                         <thead>
                             <tr>
@@ -388,7 +389,6 @@
         let danhSachDichVuGoc = [];
         let danhSachNhatKyGoc = [];
 
-        // Kiểm tra quyền Admin (hỗ trợ session hoặc local storage)
         function laAdmin() {
             const user = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
             const role = (user.role || user.chucvu || user.username || '').toLowerCase();
@@ -400,7 +400,6 @@
             await taiDanhSachDichVu();
             await taiNhatKySpa();
 
-            // Ẩn khung gợi ý tìm kiếm khi click ra ngoài
             document.addEventListener('click', function (e) {
                 if (!e.target.closest('#inputTimKhachHang')) {
                     document.getElementById('autocompleteList').style.display = 'none';
@@ -432,7 +431,6 @@
             }
         }
 
-        // Tìm kiếm khách hàng khi gõ phím & ẩn SĐT với nhân viên thường
         function locGoiYKhachHang() {
             const keyword = document.getElementById('inputTimKhachHang').value.toLowerCase().trim();
             const listContainer = document.getElementById('autocompleteList');
@@ -470,7 +468,7 @@
                 div.innerHTML = `<b>${ten}</b> - <span style="color:#2563eb;">${sdtHienThi || 'Không có SĐT'}</span>`;
                 div.onclick = function() {
                     document.getElementById('inputTimKhachHang').value = ten;
-                    document.getElementById('sdt').value = sdtGoc; // Gán SĐT thật vào ô ẩn/readonly để lưu DB
+                    document.getElementById('sdt').value = sdtGoc;
                     listContainer.style.display = 'none';
                 };
                 listContainer.appendChild(div);
