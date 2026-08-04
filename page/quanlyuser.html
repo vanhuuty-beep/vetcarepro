@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Quản Lý Nhân Viên - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
 	<link rel="stylesheet" href="../css/smart-search.css">
-
 
     <style>
         .search-box {
@@ -91,7 +90,7 @@
                 <div class="card-header">
                     <h3>Quản Lý Tài Khoản Hệ Thống</h3>
                     <div class="card-header-actions">
-                        <input type="text" id="searchInput" class="search-box" placeholder="Tìm tên tài khoản, vai trò..." onkeyup="timKiemUser()">
+                        <input type="text" id="searchInput" class="search-box" placeholder="Tìm tên, email, vai trò..." onkeyup="timKiemUser()">
                         <button class="btn-primary" onclick="moModalThem()" style="background-color: #0284c7;">+ Thêm Tài Khoản</button>
                     </div>
                 </div>
@@ -102,6 +101,7 @@
                             <tr style="background: #1e3a8a; color: white;">
                                 <th>ID</th>
                                 <th>Tên Đăng Nhập</th>
+                                <th>Email</th>
                                 <th>Vai Trò (Quyền)</th>
                                 <th>Trạng Thái</th>
                                 <th>Ngày Tạo</th>
@@ -130,6 +130,11 @@
             <div class="form-group-modal">
                 <label>Tên đăng nhập (tentaikhoan) (*):</label>
                 <input type="text" id="tentaikhoan" placeholder="Ví dụ: admin, bacsi01...">
+            </div>
+
+            <div class="form-group-modal">
+                <label>Email:</label>
+                <input type="email" id="email" placeholder="Nhập địa chỉ email...">
             </div>
 
             <div class="form-group-modal">
@@ -195,7 +200,7 @@
             tableBody.innerHTML = '';
             
             if(data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#777; padding: 20px;">Chưa có tài khoản nào</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777; padding: 20px;">Chưa có tài khoản nào</td></tr>`;
                 return;
             }
 
@@ -216,6 +221,7 @@
                     <tr style="border-bottom: 1px solid #e2e8f0;">
                         <td style="padding: 10px;"><strong>#${item.id}</strong></td>
                         <td style="padding: 10px; color: #2563eb; font-weight: bold;">${item.tentaikhoan || ''}</td>
+                        <td style="padding: 10px; color: #475569;">${item.email || '---'}</td>
                         <td style="padding: 10px;">${vaiTroBadge}</td>
                         <td style="padding: 10px;">${trangThaiBadge}</td>
                         <td style="padding: 10px; font-size: 12px; color: #64748b;">${ngayTao}</td>
@@ -232,8 +238,9 @@
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachUserGoc.filter(item => {
                 const username = (item.tentaikhoan || '').toLowerCase();
+                const email = (item.email || '').toLowerCase();
                 const vaitro = (item.vaitro || '').toLowerCase();
-                return username.includes(tuKhoa) || vaitro.includes(tuKhoa);
+                return username.includes(tuKhoa) || email.includes(tuKhoa) || vaitro.includes(tuKhoa);
             });
             hienThiBang(ketQuaLoc);
         }
@@ -241,6 +248,7 @@
         function moModalThem() {
             document.getElementById('editingId').value = '';
             document.getElementById('tentaikhoan').value = '';
+            document.getElementById('email').value = '';
             document.getElementById('matkhau').value = '';
             document.getElementById('vaitro').value = 'Nhân viên';
             document.getElementById('trangthai').value = 'Hoạt động';
@@ -255,6 +263,7 @@
 
             document.getElementById('editingId').value = item.id;
             document.getElementById('tentaikhoan').value = item.tentaikhoan || '';
+            document.getElementById('email').value = item.email || '';
             document.getElementById('matkhau').value = ''; // Cố tình để trống để nhập mật khẩu mới nếu muốn đổi
             document.getElementById('vaitro').value = item.vaitro || 'Nhân viên';
             document.getElementById('trangthai').value = item.trangthai || 'Hoạt động';
@@ -270,6 +279,7 @@
         async function luuUser() {
             const id = document.getElementById('editingId').value;
             const tentaikhoan = document.getElementById('tentaikhoan').value.trim();
+            const email = document.getElementById('email').value.trim();
             const matKhauPlain = document.getElementById('matkhau').value.trim();
             const vaitro = document.getElementById('vaitro').value;
             const trangthai = document.getElementById('trangthai').value;
@@ -287,6 +297,7 @@
 
             const payload = {
                 tentaikhoan,
+                email,
                 vaitro,
                 trangthai
             };
