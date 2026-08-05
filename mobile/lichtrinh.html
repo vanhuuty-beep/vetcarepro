@@ -20,9 +20,10 @@
         .form-control { width: 100%; padding: 7px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
         .preview-img-container { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
         .preview-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; }
+        .preview-video-thumb { width: 60px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; background: #000; }
         .mobile-container { padding-bottom: 80px; }
 
-        /* Bố cục nội dung tiến trình và hình ảnh nằm cùng 1 hàng */
+        /* Bố cục nội dung tiến trình và hình ảnh/video nằm cùng 1 hàng */
         .progress-row {
             display: flex;
             gap: 10px;
@@ -45,7 +46,7 @@
             gap: 4px;
             flex-wrap: wrap;
             justify-content: flex-end;
-            max-width: 130px;
+            max-width: 140px;
         }
         .progress-thumb {
             width: 55px;
@@ -53,6 +54,14 @@
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid #cbd5e1;
+        }
+        .progress-video-thumb {
+            width: 65px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #000;
         }
 
         /* --- CSS CHO THANH PHÂN TRANG (PAGINATION) --- */
@@ -92,7 +101,7 @@
         <!-- THANH TIÊU ĐỀ PHÍA TRÊN -->
         <div class="top-header">
             <h3>📖 Lịch Trình Điều Trị</h3>
-            <a href="../page/thongke.html" class="btn-desktop">🏥 Quản Lý Nội Trú</a>
+            <a href="noitru.html" class="btn-desktop">🏥 Quản Lý Nội Trú</a>
             <button onclick="dangXuatMobile()" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                 <span>🚪</span> Thoát
             </button>
@@ -148,8 +157,8 @@
                 </div>
 
                 <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Chọn hoặc chụp nhiều ảnh cùng lúc:</label>
-                    <input type="file" id="hinhAnhFile" accept="image/*" multiple capture="environment" class="form-control" style="font-size: 11px; padding: 5px;" onchange="previewSelectedFiles(this)">
+                    <label style="font-size: 11px; font-weight: bold; color: #475569;">Chọn hoặc chụp ảnh / video:</label>
+                    <input type="file" id="hinhAnhFile" accept="image/*,video/*" multiple capture="environment" class="form-control" style="font-size: 11px; padding: 5px;" onchange="previewSelectedFiles(this)">
                     <div id="previewImages" class="preview-img-container"></div>
                 </div>
 
@@ -166,7 +175,6 @@
         let danhSachHienThiHienTai = [];
         let thongTinKhamBenh = {};
         
-        // --- CẤU HÌNH PHÂN TRANG (Mỗi trang hiển thị tối đa 5 card) ---
         let trangThaiPhanTrang = {
             trangHienTai: 1,
             soDongMoiTrang: 2
@@ -186,7 +194,11 @@
                 Array.from(input.files).forEach(file => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        previewContainer.innerHTML += `<img src="${e.target.result}" class="preview-thumb">`;
+                        if (file.type.startsWith('video/')) {
+                            previewContainer.innerHTML += `<video src="${e.target.result}" class="preview-video-thumb" controls muted></video>`;
+                        } else {
+                            previewContainer.innerHTML += `<img src="${e.target.result}" class="preview-thumb">`;
+                        }
                     }
                     reader.readAsDataURL(file);
                 });
@@ -300,7 +312,12 @@
                         imgGalleryHtml = `<div class="progress-gallery">`;
                         listImg.forEach(url => {
                             if (url && url.trim() !== '') {
-                                imgGalleryHtml += `<a href="${url}" target="_blank"><img src="${url}" class="progress-thumb"></a>`;
+                                const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i);
+                                if (isVideo) {
+                                    imgGalleryHtml += `<a href="${url}" target="_blank"><video src="${url}" class="progress-video-thumb" muted></video></a>`;
+                                } else {
+                                    imgGalleryHtml += `<a href="${url}" target="_blank"><img src="${url}" class="progress-thumb"></a>`;
+                                }
                             }
                         });
                         imgGalleryHtml += `</div>`;
@@ -423,7 +440,11 @@
                     if (!Array.isArray(listImg)) listImg = [item.hinhanh];
                     listImg.forEach(url => {
                         if (url) {
-                            previewContainer.innerHTML += `<img src="${url}" class="preview-thumb">`;
+                            if (url.match(/\.(mp4|webm|ogg|mov)$/i)) {
+                                previewContainer.innerHTML += `<video src="${url}" class="preview-video-thumb" controls muted></video>`;
+                            } else {
+                                previewContainer.innerHTML += `<img src="${url}" class="preview-thumb">`;
+                            }
                         }
                     });
                 } catch(e) {}
@@ -447,7 +468,7 @@
 
             const btn = document.getElementById('btnSave');
             btn.disabled = true;
-            btn.textContent = 'Đang tải ảnh và lưu...';
+            btn.textContent = 'Đang tải tệp và lưu...';
 
             let imageUrls = [];
             let oldHinhanh = document.getElementById('hinhanhOld').value;
