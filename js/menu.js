@@ -140,7 +140,8 @@ document.addEventListener("DOMContentLoaded", function() {
     </div>
 
     <style>
-        .sidebar { width: 275px !important; min-width: 275px !important; }
+        /* Cấu hình cơ bản ban đầu của Sidebar */
+        .sidebar { width: 275px !important; min-width: 275px !important; transition: width 0.3s ease; }
         .sidebar .menu-text, .sidebar .menu-category, .sidebar li { font-size: 14px !important; font-weight: 700 !important; }
         .sidebar .menu-category { font-size: 12px !important; font-weight: 800 !important; }
         .sidebar ul li { display: flex !important; align-items: center !important; white-space: nowrap !important; }
@@ -160,6 +161,35 @@ document.addEventListener("DOMContentLoaded", function() {
         .sidebar-header { font-size: 20px !important; font-weight: bold !important; padding: 15px 15px 10px 15px !important; }
         .sidebar-header span:first-child { font-size: 22px !important; margin-right: 8px; }
         .sidebar-header .menu-text { font-size: 26px !important; letter-spacing: 0.5px; }
+
+        /* --- BỔ SUNG: XỬ LÝ ẨN/HIỆN THU GỌN SIDEBAR VÀ ĐỒNG BỘ NỘI DUNG CHÍNH --- */
+        .main-content {
+            margin-left: 275px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: 70px !important;
+            min-width: 70px !important;
+            overflow: hidden;
+        }
+
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px !important;
+        }
+
+        /* Ẩn chữ và các thành phần thừa khi thu gọn menu để không bị tràn */
+        body.sidebar-collapsed .sidebar .menu-text,
+        body.sidebar-collapsed .sidebar .menu-category,
+        body.sidebar-collapsed .sidebar .arrow,
+        body.sidebar-collapsed .sidebar .pos-badge,
+        body.sidebar-collapsed .sidebar #sidebar-date {
+            display: none !important;
+        }
+
+        body.sidebar-collapsed .submenu-container.open {
+            display: none !important; /* Tự động ẩn các menu con mở rộng khi thu gọn sidebar */
+        }
 
         #notification-center-pc { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; width: 100%; pointer-events: none; }
         .notify-toast-pc { background: #ffffff; border-left: 5px solid #059669; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 12px 15px; border-radius: 6px; pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; animation: slideInRight 0.3s ease-out forwards; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -285,7 +315,21 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     langNgheThongBaoRealtimePC();
+
+    // Khôi phục trạng thái thu gọn của menu nếu trước đó đã bấm
+    const savedSidebarState = localStorage.getItem('sidebarState');
+    if (savedSidebarState === 'collapsed') {
+        document.body.classList.add('sidebar-collapsed');
+    }
 });
+
+// Hàm xử lý ẩn/hiện Sidebar khi bấm nút ☰
+function toggleSidebar() {
+    const body = document.body;
+    body.classList.toggle('sidebar-collapsed');
+    const isCollapsed = body.classList.contains('sidebar-collapsed');
+    localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+}
 
 function xuLyCoDuLieuMoiPC(noiDungThongBao) {
     const audio = document.getElementById('globalAudioNotification');
