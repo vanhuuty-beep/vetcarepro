@@ -6,17 +6,16 @@
     <title>Nhật Ký Spa & Dịch Vụ - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         :root {
@@ -40,38 +39,52 @@
             width: 100%;
         }
 
-        .spa-container {
-            display: grid;
-            grid-template-columns: 0.8fr 1.2fr;
-            gap: 15px;
-            padding: 0;
+        .card-header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            padding: 7px 12px;
+            width: 250px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+        .search-box:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Tối ưu Modal */
+        .modal-container {
+            width: 92%;
+            max-width: 650px;
+            padding: 20px 24px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-sizing: border-box;
-            max-width: 1500px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        @media (max-width: 1024px) {
-            .spa-container {
-                grid-template-columns: 1fr;
-            }
-            .main-content {
-                padding: 10px;
-            }
-        }
-
-        .spa-card {
-            background: #ffffff;
+            background: #fff;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 12px 15px;
-            box-sizing: border-box;
-            width: 100%;
-            overflow-x: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #1e3a8a;
         }
 
         .form-group-spa {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             position: relative;
         }
         .form-group-spa label {
@@ -96,13 +109,11 @@
             box-shadow: 0 0 0 2px rgba(30,58,138,0.1);
         }
 
-        /* Style hộp gợi ý tìm kiếm khách hàng */
+        /* Style hộp gợi ý tìm kiếm khách hàng & thú cưng */
         .autocomplete-items {
             position: absolute;
             border: 1px solid #cbd5e1;
-            border-bottom: none;
-            border-top: none;
-            z-index: 99;
+            z-index: 999;
             top: 100%;
             left: 0;
             right: 0;
@@ -124,7 +135,7 @@
         }
 
         .service-checkbox-list {
-            max-height: 140px;
+            max-height: 150px;
             overflow-y: auto;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
@@ -155,55 +166,61 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            margin-top: 10px;
             white-space: nowrap;
         }
         .spa-table th {
             background: #1e3a8a;
             color: white;
-            padding: 8px;
+            padding: 9px 8px;
             text-align: left;
         }
         .spa-table td {
-            padding: 8px;
+            padding: 9px 8px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
         }
 
-        .btn-spa-action {
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 10px;
+        /* Giao diện phân trang */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
             font-size: 13px;
-            font-weight: bold;
-            border-radius: 6px;
+            color: #475569;
+        }
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-page {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 5px 10px;
+            border-radius: 4px;
             cursor: pointer;
-            margin-top: 12px;
-        }
-        .btn-spa-action:hover {
-            opacity: 0.9;
-        }
-
-        .btn-cancel-edit {
-            background-color: #64748b;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 8px;
             font-size: 12px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 6px;
-            display: none;
+            font-weight: 500;
         }
-        .btn-cancel-edit:hover {
-            background-color: #475569;
+        .btn-page:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .btn-page:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-page.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
         }
 
-        /* --- CẤU HÌNH IN HÓA ĐƠN NHIỆT TỐI ƯU --- */
+        /* --- CẤU HÌNH IN HÓA ĐƠN NHIỆT KHỔ 80MM --- */
         #printInvoiceArea {
             display: none;
         }
@@ -280,69 +297,85 @@
     <div class="main-content">
        <div id="topnav-container"></div>
 
-        <div class="spa-container">
-            <!-- CỘT 1: FORM TẠO/SỬA NHẬT KÝ SPA -->
-            <div class="spa-card">
-                <h3 id="formTitle" style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; color: #1e3a8a;">
-                    ✨ Thêm Lượt Spa & Dịch Vụ Mới
-                </h3>
-
-                <input type="hidden" id="editId" value="">
-
-                <div class="form-group-spa">
-                    <label>1. Chọn Khách Hàng (Gõ tên hoặc SĐT):</label>
-                    <input type="text" id="inputTimKhachHang" placeholder="Gõ tên hoặc SĐT khách hàng..." autocomplete="off" oninput="locGoiYKhachHang()">
-                    <div id="autocompleteList" class="autocomplete-items" style="display: none;"></div>
+        <div class="card">
+            <div class="card-header">
+                <h3>Danh Sách Nhật Ký Spa & Grooming</h3>
+                <div class="card-header-actions">
+                    <input type="text" id="searchInput" class="search-box" placeholder="Tìm theo chủ nuôi, thú cưng..." onkeyup="timKiemSpa()">
+                    <button class="btn-primary" onclick="moModalThem()">+ Thêm Lượt Spa Mới</button>
                 </div>
-
-                <div class="form-group-spa">
-                    <label>2. Số Điện Thoại (sdt):</label>
-                    <input type="text" id="sdt" placeholder="Tự động điền SĐT..." readonly style="background: #f1f5f9;">
-                </div>
-
-                <div class="form-group-spa">
-                    <label>3. Tên Thú Cưng (*):</label>
-                    <input type="text" id="thucung" placeholder="Nhập tên thú cưng (VD: Miko, Lu...):">
-                </div>
-
-                <div class="form-group-spa">
-                    <label>4. Chọn Dịch Vụ Sử Dụng:</label>
-                    <div class="service-checkbox-list" id="danhSachDichVuCheckbox"></div>
-                </div>
-
-                <div class="form-group-spa">
-                    <label>Tổng Tiền Dịch Vụ:</label>
-                    <input type="text" id="tongTienHienThi" value="0 đ" readonly style="background: #f1f5f9; font-weight: bold; color: var(--danger-color); font-size: 14px;">
-                    <input type="hidden" id="tongtien" value="0">
-                </div>
-
-                <button id="btnAction" class="btn-spa-action" onclick="luuNhatKySpa()">💾 LƯU NHẬT KÝ & IN HÓA ĐƠN</button>
-                <button id="btnCancel" class="btn-cancel-edit" onclick="huySuaNhatKy()">✖ HỦY BỎ SỬA</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="spa-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Chủ nuôi</th>
+                            <th>Thú cưng</th>
+                            <th>Dịch vụ sử dụng</th>
+                            <th style="text-align: center;">Trạng thái</th>
+                            <th style="text-align: right;">Tổng tiền</th>
+                            <th style="text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableNhatKySpa">
+                        <tr><td colspan="7" style="text-align: center; color: #777; padding: 20px;">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- CỘT 2: BẢNG LỊCH SỬ NHẬT KÝ SPA -->
-            <div class="spa-card" style="display: flex; flex-direction: column;">
-                <h3 style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; color: #1e3a8a;">
-                    📋 Danh Sách Nhật Ký Spa Gần Đây
-                </h3>
-                <div style="flex: 1; overflow-x: auto; max-height: calc(100vh - 180px);">
-                    <table class="spa-table">
-                        <thead>
-                            <tr>
-                                <th>Thời gian</th>
-                                <th>Chủ nuôi</th>
-                                <th>Thú cưng</th>
-                                <th>Dịch vụ sử dụng</th>
-                                <th style="text-align: center;">Trạng thái</th>
-                                <th style="text-align: right;">Tổng tiền</th>
-                                <th style="text-align: center;">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableNhatKySpa">
-                            <tr><td colspan="7" style="text-align: center; color: #777; padding: 20px;">Đang tải dữ liệu...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- PHÂN TRANG -->
+            <div class="pagination-container">
+                <div id="pageInfo">Hiển thị 0 - 0 của 0 bản ghi</div>
+                <div class="pagination-buttons" id="paginationControls"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM NHẬP / SỬA NHẬT KÝ SPA -->
+    <div class="modal-overlay" id="spaModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="formTitle">✨ Thêm Lượt Spa & Dịch Vụ Mới</h3>
+                <button class="close-modal" onclick="dongModal()">&times;</button>
+            </div>
+
+            <input type="hidden" id="editId" value="">
+            <input type="hidden" id="selectedKhachHangId" value="">
+            <input type="hidden" id="selectedKhachHangTen" value="">
+
+            <div class="form-group-spa">
+                <label>1. Chọn Khách Hàng (Gõ tên hoặc SĐT):</label>
+                <input type="text" id="inputTimKhachHang" placeholder="Gõ tên hoặc SĐT khách hàng..." autocomplete="off" oninput="locGoiYKhachHang()">
+                <div id="autocompleteList" class="autocomplete-items" style="display: none;"></div>
+            </div>
+
+            <div class="form-group-spa">
+                <label>2. Số Điện Thoại (sdt):</label>
+                <input type="text" id="sdt" placeholder="Tự động điền SĐT..." readonly style="background: #f1f5f9;">
+            </div>
+
+            <div class="form-group-spa">
+                <label>3. Tên Thú Cưng (*):</label>
+                <input type="text" id="thucung" placeholder="Nhập hoặc bấm chọn tên thú cưng..." autocomplete="off" onclick="hienThiTatCaThuCungCuaKhach()" oninput="locGoiYThuCung()">
+                <div id="autocompleteListThuCung" class="autocomplete-items" style="display: none;"></div>
+            </div>
+
+            <div class="form-group-spa">
+                <label>4. Chọn Dịch Vụ Sử Dụng (từ bảng Spa):</label>
+                <div class="service-checkbox-list" id="danhSachDichVuCheckbox"></div>
+            </div>
+
+            <div class="form-group-spa">
+                <label>Tổng Tiền Dịch Vụ:</label>
+                <input type="text" id="tongTienHienThi" value="0 đ" readonly style="background: #f1f5f9; font-weight: bold; color: var(--danger-color); font-size: 14px;">
+                <input type="hidden" id="tongtien" value="0">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-secondary" style="flex: 1;" onclick="dongModal()">Hủy bỏ</button>
+                <button id="btnAction" class="btn-primary" style="flex: 2; background-color: var(--success-color);" onclick="luuNhatKySpa()">💾 Lưu Nhật Ký & In Hóa Đơn</button>
             </div>
         </div>
     </div>
@@ -386,8 +419,14 @@
 
     <script>
         let danhSachKhachHang = [];
-        let danhSachDichVuGoc = [];
+        let danhSachThuCungGoc = [];
+        let danhSachDichVuSpaGoc = [];
         let danhSachNhatKyGoc = [];
+        let filteredDataCache = [];
+
+        // Biến phục vụ phân trang
+        let currentPage = 1;
+        const rowsPerPage = 10;
 
         function laAdmin() {
             const user = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
@@ -397,7 +436,8 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             await taiKhachHang();
-            await taiDanhSachDichVu();
+            await taiThuCung();
+            await taiDanhSachSpa();
             await taiNhatKySpa();
 
             // Đăng ký Realtime tự động cập nhật khi có thay đổi từ thiết bị khác
@@ -411,15 +451,29 @@
 
             document.addEventListener('click', function (e) {
                 if (!e.target.closest('#inputTimKhachHang')) {
-                    document.getElementById('autocompleteList').style.display = 'none';
+                    const listContainer = document.getElementById('autocompleteList');
+                    if (listContainer) listContainer.style.display = 'none';
+                }
+                if (!e.target.closest('#thucung')) {
+                    const listContainerTC = document.getElementById('autocompleteListThuCung');
+                    if (listContainerTC) listContainerTC.style.display = 'none';
                 }
             });
         });
 
         async function taiKhachHang() {
+            if (typeof db === 'undefined' || !db) return;
             const { data, error } = await db.from('khachhang').select('*');
             if (!error && data) {
                 danhSachKhachHang = data;
+            }
+        }
+
+        async function taiThuCung() {
+            if (typeof db === 'undefined' || !db) return;
+            const { data, error } = await db.from('thucung').select('*');
+            if (!error && data) {
+                danhSachThuCungGoc = data;
             }
         }
 
@@ -431,6 +485,8 @@
             if (!keyword) {
                 listContainer.style.display = 'none';
                 document.getElementById('sdt').value = '';
+                document.getElementById('selectedKhachHangId').value = '';
+                document.getElementById('selectedKhachHangTen').value = '';
                 return;
             }
 
@@ -460,7 +516,10 @@
                 div.innerHTML = `<b>${ten}</b> - <span style="color:#2563eb;">${sdtHienThi || 'Không có SĐT'}</span>`;
                 div.onclick = function() {
                     document.getElementById('inputTimKhachHang').value = ten;
+                    document.getElementById('selectedKhachHangTen').value = ten;
                     document.getElementById('sdt').value = sdtGoc;
+                    document.getElementById('selectedKhachHangId').value = kh.id;
+                    document.getElementById('thucung').value = ''; // Reset thú cưng khi đổi chủ
                     listContainer.style.display = 'none';
                 };
                 listContainer.appendChild(div);
@@ -469,23 +528,108 @@
             listContainer.style.display = 'block';
         }
 
-        async function taiDanhSachDichVu() {
+        // Lấy danh sách thú cưng theo khách hàng đã chọn (khớp cả ID hoặc khớp theo tên chủ nuôi)
+        function layDanhSachThuCungCuaKhach() {
+            const khId = document.getElementById('selectedKhachHangId').value;
+            const khTen = document.getElementById('selectedKhachHangTen').value.toLowerCase().trim();
+
+            return danhSachThuCungGoc.filter(tc => {
+                const tcKhId = String(tc.makhachhang || tc.makh || tc.khachhang_id || tc.chủ_id || '');
+                const tcChuNuoi = (tc.chunuoi || tc.tenkhachhang || tc.chủ_nuôi || '').toLowerCase().trim();
+
+                if (khId && tcKhId === String(khId)) return true;
+                if (khTen && tcChuNuoi && tcChuNuoi.includes(khTen)) return true;
+                return false;
+            });
+        }
+
+        // Khi bấm vào ô Thú Cưng, tự động xổ ra toàn bộ thú cưng của chủ đó
+        function hienThiTatCaThuCungCuaKhach() {
+            const listContainer = document.getElementById('autocompleteListThuCung');
+            listContainer.innerHTML = '';
+
+            let dsThuCung = layDanhSachThuCungCuaKhach();
+            // Nếu khách chưa chọn hoặc khách không có thú cưng liên kết, hiển thị toàn bộ kho thú cưng để phòng hờ
+            if (dsThuCung.length === 0) {
+                dsThuCung = danhSachThuCungGoc;
+            }
+
+            if (dsThuCung.length === 0) {
+                listContainer.style.display = 'none';
+                return;
+            }
+
+            dsThuCung.forEach(tc => {
+                const tenTC = tc.tenthucung || tc.name || tc.tentc || 'Thú cưng';
+                const giong = tc.giong || tc.giongloai || '';
+
+                const div = document.createElement('div');
+                div.innerHTML = `<b>🐾 ${tenTC}</b> ${giong ? '('+giong+')' : ''}`;
+                div.onclick = function() {
+                    document.getElementById('thucung').value = tenTC;
+                    listContainer.style.display = 'none';
+                };
+                listContainer.appendChild(div);
+            });
+
+            listContainer.style.display = 'block';
+        }
+
+        function locGoiYThuCung() {
+            const keyword = document.getElementById('thucung').value.toLowerCase().trim();
+            const listContainer = document.getElementById('autocompleteListThuCung');
+            listContainer.innerHTML = '';
+
+            let dsThuCung = layDanhSachThuCungCuaKhach();
+            if (dsThuCung.length === 0) {
+                dsThuCung = danhSachThuCungGoc;
+            }
+
+            const filtered = dsThuCung.filter(tc => {
+                const tenTC = (tc.tenthucung || tc.name || tc.tentc || '').toLowerCase();
+                return tenTC.includes(keyword);
+            });
+
+            if (filtered.length === 0) {
+                listContainer.style.display = 'none';
+                return;
+            }
+
+            filtered.forEach(tc => {
+                const tenTC = tc.tenthucung || tc.name || tc.tentc || 'Thú cưng';
+                const giong = tc.giong || tc.giongloai || '';
+
+                const div = document.createElement('div');
+                div.innerHTML = `<b>🐾 ${tenTC}</b> ${giong ? '('+giong+')' : ''}`;
+                div.onclick = function() {
+                    document.getElementById('thucung').value = tenTC;
+                    listContainer.style.display = 'none';
+                };
+                listContainer.appendChild(div);
+            });
+
+            listContainer.style.display = 'block';
+        }
+
+        async function taiDanhSachSpa() {
+            if (typeof db === 'undefined' || !db) return;
+            
             const { data, error } = await db.from('spa').select('*');
             if (error) {
                 console.error('Lỗi tải danh mục dịch vụ spa:', error);
                 return;
             }
             
-            danhSachDichVuGoc = data || [];
+            danhSachDichVuSpaGoc = data || [];
             const container = document.getElementById('danhSachDichVuCheckbox');
             container.innerHTML = '';
             
-            if (danhSachDichVuGoc.length === 0) {
+            if (danhSachDichVuSpaGoc.length === 0) {
                 container.innerHTML = `<div style="padding:10px; text-align:center; color:#777;">Chưa có dịch vụ nào trong bảng spa</div>`;
                 return;
             }
 
-            danhSachDichVuGoc.forEach(item => {
+            danhSachDichVuSpaGoc.forEach(item => {
                 const tenDichVu = item.tendichvu || item.tensanpham || item.tendv || 'Dịch vụ spa';
                 const giaDichVu = parseFloat(item.gia || item.giaban || item.giadichvu || item.giatien || 0);
 
@@ -524,27 +668,51 @@
         }
 
         async function taiNhatKySpa() {
+            if (typeof db === 'undefined' || !db) return;
             const { data, error } = await db.from('nhatkyspa').select('*').order('id', { ascending: false });
             if (error) {
                 console.error('Lỗi tải nhật ký spa:', error);
             } else {
                 danhSachNhatKyGoc = data || [];
-                hienThiBangNhatKy(danhSachNhatKyGoc);
+                timKiemSpa();
             }
         }
 
+        function timKiemSpa() {
+            currentPage = 1;
+            const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
+            filteredDataCache = danhSachNhatKyGoc.filter(item => {
+                const tenKH = (item.chunuoi || item.tenkhachhang || '').toLowerCase();
+                const tenTC = (item.thucung || item.tenthucung || '').toLowerCase();
+                const sdt = (item.sdt || '').toLowerCase();
+                return tenKH.includes(tuKhoa) || tenTC.includes(tuKhoa) || sdt.includes(tuKhoa);
+            });
+            hienThiBangNhatKy(filteredDataCache);
+        }
+
         function hienThiBangNhatKy(data) {
+            const totalRows = data.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+            
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIdx = (currentPage - 1) * rowsPerPage;
+            const endIdx = startIdx + rowsPerPage;
+            const pageData = data.slice(startIdx, endIdx);
+
             const tbody = document.getElementById('tableNhatKySpa');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
+            if (pageData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #777; padding: 20px;">Chưa có nhật ký spa nào</td></tr>`;
+                renderPagination(0, 0, 0, 1);
                 return;
             }
 
             const isAdmin = laAdmin();
 
-            data.forEach(item => {
+            pageData.forEach(item => {
                 const ngay = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : '---';
                 let sdtGoc = item.sdt || '';
                 let sdtHienThi = sdtGoc;
@@ -552,25 +720,24 @@
                     sdtHienThi = sdtGoc.substring(0, 3) + '****' + sdtGoc.substring(sdtGoc.length - 3);
                 }
 
-                // Xử lý trạng thái và màu sắc huy hiệu (Badge) trên PC
                 const trangThaiHienTai = item.trangthai || 'Chưa hoàn thành';
-                let badgeColor = '#dc2626'; // Đỏ: Chưa hoàn thành
+                let badgeColor = '#dc2626'; 
                 let nextStatus = 'Đã hoàn thành';
 
                 if (trangThaiHienTai === 'Đã hoàn thành') {
-                    badgeColor = '#2563eb'; // Xanh dương: Đã hoàn thành
+                    badgeColor = '#2563eb'; 
                     nextStatus = 'Đã trả khách';
                 } else if (trangThaiHienTai === 'Đã trả khách') {
-                    badgeColor = '#059669'; // Xanh lá: Đã trả khách
+                    badgeColor = '#059669'; 
                     nextStatus = 'Chưa hoàn thành';
                 }
 
                 tbody.innerHTML += `
                     <tr>
                         <td style="font-size: 11px; color: #64748b;">${ngay}</td>
-                        <td style="font-weight: 500;">${item.chunuoi || '---'} ${sdtHienThi ? '('+sdtHienThi+')' : ''}</td>
-                        <td style="font-weight: bold; color: #1e3a8a;">${item.thucung || '---'}</td>
-                        <td style="font-size: 11px;">${item.dichvusudung || '---'}</td>
+                        <td style="font-weight: 500;">${item.chunuoi || item.tenkhachhang || '---'} ${sdtHienThi ? '('+sdtHienThi+')' : ''}</td>
+                        <td style="font-weight: bold; color: #1e3a8a;">${item.thucung || item.tenthucung || '---'}</td>
+                        <td style="font-size: 11px;">${item.dichvusudung || item.dichvu || '---'}</td>
                         <td style="text-align: center;">
                             <span onclick="capNhatTrangThaiSpaPC(${item.id}, '${nextStatus}')" 
                                   style="background-color: ${badgeColor}; color: white; font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; font-weight: bold; display: inline-block;" 
@@ -587,9 +754,46 @@
                     </tr>
                 `;
             });
+
+            renderPagination(startIdx + 1, Math.min(endIdx, totalRows), totalRows, totalPages);
         }
 
-        // Hàm gọi Database cập nhật trạng thái trực tiếp trên PC
+        function renderPagination(start, end, total, totalPages) {
+            document.getElementById('pageInfo').innerText = total === 0 ? 'Không có bản ghi' : `Hiển thị ${start} - ${end} của ${total} bản ghi`;
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            if (total === 0) return;
+
+            const btnPrev = document.createElement('button');
+            btnPrev.className = 'btn-page';
+            btnPrev.innerText = '‹ Trước';
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.onclick = () => { if (currentPage > 1) { currentPage--; hienThiBangNhatKy(filteredDataCache); } };
+            controls.appendChild(btnPrev);
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const btn = document.createElement('button');
+                    btn.className = `btn-page ${i === currentPage ? 'active' : ''}`;
+                    btn.innerText = i;
+                    btn.onclick = (function(page) { return function() { currentPage = page; hienThiBangNhatKy(filteredDataCache); }; })(i);
+                    controls.appendChild(btn);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const span = document.createElement('span');
+                    span.innerText = '...';
+                    controls.appendChild(span);
+                }
+            }
+
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn-page';
+            btnNext.innerText = 'Sau ›';
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.onclick = () => { if (currentPage < totalPages) { currentPage++; hienThiBangNhatKy(filteredDataCache); } };
+            controls.appendChild(btnNext);
+        }
+
         async function capNhatTrangThaiSpaPC(id, trangThaiMoi) {
             if (typeof db === 'undefined' || !db) return;
 
@@ -603,6 +807,18 @@
             } else {
                 await taiNhatKySpa();
             }
+        }
+
+        function moModalThem() {
+            resetFormSpa();
+            document.getElementById('formTitle').innerText = '✨ Thêm Lượt Spa & Dịch Vụ Mới';
+            document.getElementById('btnAction').innerText = '💾 Lưu Nhật Ký & In Hóa Đơn';
+            document.getElementById('btnAction').style.backgroundColor = 'var(--success-color)';
+            document.getElementById('spaModal').style.display = 'flex';
+        }
+
+        function dongModal() {
+            document.getElementById('spaModal').style.display = 'none';
         }
 
         async function luuNhatKySpa() {
@@ -632,14 +848,14 @@
             const payload = { chunuoi, sdt, thucung, dichvusudung, tongtien };
 
             if (!editId) {
-                payload.trangthai = 'Chưa hoàn thành'; // Mặc định bản ghi mới tạo
+                payload.trangthai = 'Chưa hoàn thành';
                 const { error } = await db.from('nhatkyspa').insert([payload]);
                 if (error) {
                     alert('Lỗi lưu nhật ký: ' + error.message);
                 } else {
                     alert('Lưu nhật ký spa thành công!');
                     inHoaDonSpa(chunuoi, sdt, thucung, checkboxes, tongtien);
-                    resetFormSpa();
+                    dongModal();
                     await taiNhatKySpa();
                 }
             } else {
@@ -649,7 +865,7 @@
                 } else {
                     alert('Cập nhật nhật ký spa thành công!');
                     inHoaDonSpa(chunuoi, sdt, thucung, checkboxes, tongtien);
-                    resetFormSpa();
+                    dongModal();
                     await taiNhatKySpa();
                 }
             }
@@ -660,12 +876,15 @@
             if (!item) return;
 
             document.getElementById('editId').value = item.id;
-            document.getElementById('inputTimKhachHang').value = item.chunuoi || '';
-            document.getElementById('thucung').value = item.thucung || '';
+            document.getElementById('inputTimKhachHang').value = item.chunuoi || item.tenkhachhang || '';
+            document.getElementById('selectedKhachHangTen').value = item.chunuoi || item.tenkhachhang || '';
+            document.getElementById('thucung').value = item.thucung || item.tenthucung || '';
             document.getElementById('sdt').value = item.sdt || '';
 
             const checkboxes = document.querySelectorAll('#danhSachDichVuCheckbox input[type="checkbox"]');
-            const arrDichVuCu = item.dichvusudung ? item.dichvusudung.split(', ').map(s => s.trim()) : [];
+            const strDV = item.dichvusudung || item.dichvu || '';
+            const arrDichVuCu = strDV ? strDV.split(', ').map(s => s.trim()) : [];
+            
             checkboxes.forEach(cb => {
                 const tenDV = cb.getAttribute('data-ten');
                 cb.checked = arrDichVuCu.includes(tenDV);
@@ -674,31 +893,22 @@
             tinhTongTienSpa();
 
             document.getElementById('formTitle').innerText = '✏️ Cập Nhật Lượt Spa (ID: ' + item.id + ')';
-            document.getElementById('btnAction').innerText = '💾 CẬP NHẬT NHẬT KÝ & IN HĐ';
+            document.getElementById('btnAction').innerText = '💾 Cập Nhật & In HĐ';
             document.getElementById('btnAction').style.backgroundColor = 'var(--warning-color)';
-            document.getElementById('btnCancel').style.display = 'block';
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function huySuaNhatKy() {
-            resetFormSpa();
+            document.getElementById('spaModal').style.display = 'flex';
         }
 
         function resetFormSpa() {
             document.getElementById('editId').value = '';
             document.getElementById('inputTimKhachHang').value = '';
+            document.getElementById('selectedKhachHangId').value = '';
+            document.getElementById('selectedKhachHangTen').value = '';
             document.getElementById('sdt').value = '';
             document.getElementById('thucung').value = '';
 
             const checkboxes = document.querySelectorAll('#danhSachDichVuCheckbox input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = false);
             tinhTongTienSpa();
-
-            document.getElementById('formTitle').innerText = '✨ Thêm Lượt Spa & Dịch Vụ Mới';
-            document.getElementById('btnAction').innerText = '💾 LƯU NHẬT KÝ & IN HÓA ĐƠN';
-            document.getElementById('btnAction').style.backgroundColor = 'var(--success-color)';
-            document.getElementById('btnCancel').style.display = 'none';
         }
 
         function inLaiHoaDon(id) {
@@ -706,15 +916,16 @@
             if (!item) return;
 
             document.getElementById('printTime').innerText = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
-            document.getElementById('printChuNuoi').innerText = item.chunuoi || '---';
+            document.getElementById('printChuNuoi').innerText = item.chunuoi || item.tenkhachhang || '---';
             document.getElementById('printSdt').innerText = item.sdt || '---';
-            document.getElementById('printThuCung').innerText = item.thucung || '---';
+            document.getElementById('printThuCung').innerText = item.thucung || item.tenthucung || '---';
 
             let htmlList = '';
-            const arrDichVu = item.dichvusudung ? item.dichvusudung.split(', ') : [];
+            const strDV = item.dichvusudung || item.dichvu || '';
+            const arrDichVu = strDV ? strDV.split(', ') : [];
             
             arrDichVu.forEach((tenDV, index) => {
-                const matchDv = danhSachDichVuGoc.find(d => (d.tendichvu || d.tensanpham || d.tendv) === tenDV);
+                const matchDv = danhSachDichVuSpaGoc.find(d => (d.tendichvu || d.tensanpham || d.tendv) === tenDV);
                 const giaDV = matchDv ? parseFloat(matchDv.gia || matchDv.giaban || matchDv.giadichvu || matchDv.giatien || 0) : 0;
 
                 htmlList += `
