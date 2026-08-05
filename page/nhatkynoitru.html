@@ -282,11 +282,11 @@
             <div class="form-row">
                 <div class="form-group-modal">
                     <label>Ngày vào (ngayvao):</label>
-                    <input type="datetime-local" id="ngayvao" onchange="tinhUocTinh()">
+                    <input type="date" id="ngayvao" onchange="tinhUocTinh()">
                 </div>
                 <div class="form-group-modal">
                     <label>Ngày ra (ngayra):</label>
-                    <input type="datetime-local" id="ngayra" onchange="tinhUocTinh()">
+                    <input type="date" id="ngayra" onchange="tinhUocTinh()">
                 </div>
             </div>
 
@@ -515,14 +515,17 @@
                 .replace(/Đ/g, 'D');
         }
 
+        // --- ĐIỀU CHỈNH CÔNG THỨC TÍNH SỐ NGÀY ĐÚNG TRỌN VẸN ---
         function tinhUocTinh() {
-            const ngayvao = new Date(document.getElementById('ngayvao').value);
-            const ngayra = new Date(document.getElementById('ngayra').value);
+            const ngayvaoStr = document.getElementById('ngayvao').value;
+            const ngayraStr = document.getElementById('ngayra').value;
             const chiphingay = parseFloat(document.getElementById('chiphingay').value) || 0;
 
-            if (!isNaN(ngayvao.getTime()) && !isNaN(ngayra.getTime())) {
+            if (ngayvaoStr && ngayraStr) {
+                const ngayvao = new Date(ngayvaoStr);
+                const ngayra = new Date(ngayraStr);
                 const diffTime = ngayra - ngayvao;
-                let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1; // Cộng bù 1 ngày trọn vẹn
                 if (diffDays <= 0) diffDays = 1;
 
                 document.getElementById('hienThiSoNgayModal').innerText = diffDays + ' ngày';
@@ -579,8 +582,8 @@
 
                 const infoLong = mapLong[item.malong] || { phong: 'N/A', long: 'N/A' };
                 
-                const ngayVao = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
-                const ngayRa = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
+                const ngayVao = item.ngayvao ? new Date(item.ngayvao).toLocaleDateString('vi-VN') : '---';
+                const ngayRa = item.ngayra ? new Date(item.ngayra).toLocaleDateString('vi-VN') : '---';
 
                 const trangThaiHienTai = item.trangthai || 'Đang nằm viện';
                 let badgeColor = '#d97706'; 
@@ -620,8 +623,8 @@
                     </td>
                     <td style="text-align: center;">
                         <span onclick="capNhatTrangThaiPC(${item.id}, '${nextStatus}', ${item.malong})" 
-                              style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: ${bgBadge}; color: ${badgeColor}; font-weight: bold; cursor: pointer; display: inline-block; white-space: nowrap;" 
-                              title="Bấm để đổi trạng thái">
+                            style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: ${bgBadge}; color: ${badgeColor}; font-weight: bold; cursor: pointer; display: inline-block; white-space: nowrap;" 
+                            title="Bấm để đổi trạng thái">
                             ${trangThaiHienTai} 🔄
                         </span>
                     </td>
@@ -705,9 +708,8 @@
             document.getElementById('thucung_search').value = '';
             document.getElementById('malong').value = '';
             
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('ngayvao').value = now.toISOString().slice(0, 16);
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('ngayvao').value = today;
             document.getElementById('ngayra').value = '';
             
             document.getElementById('bacsiphutrach').value = '';
@@ -748,8 +750,8 @@
             }
 
             document.getElementById('malong').value = item.malong || '';
-            document.getElementById('ngayvao').value = item.ngayvao ? new Date(new Date(item.ngayvao).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
-            document.getElementById('ngayra').value = item.ngayra ? new Date(new Date(item.ngayra).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+            document.getElementById('ngayvao').value = item.ngayvao ? item.ngayvao.split('T')[0] : '';
+            document.getElementById('ngayra').value = item.ngayra ? item.ngayra.split('T')[0] : '';
             document.getElementById('bacsiphutrach').value = item.bacsiphutrach || '';
             document.getElementById('trangthai').value = item.trangthai || 'Đang nằm viện';
             document.getElementById('chiphingay').value = item.chiphingay || '';
@@ -799,8 +801,8 @@
                 makhambenh: makhambenh,
                 mathucung: mathucung ? parseInt(mathucung) : null,
                 malong: parseInt(malong),
-                ngayvao: ngayvao ? new Date(ngayvao).toISOString() : null,
-                ngayra: ngayra ? new Date(ngayra).toISOString() : null,
+                ngayvao: ngayvao || null,
+                ngayra: ngayra || null,
                 trangthai: trangthai,
                 chiphingay: chiphingay,
                 bacsiphutrach: bacsiphutrach,
@@ -929,6 +931,7 @@
     </div>
 
     <script>
+        // --- ĐIỀU CHỈNH CÔNG THỨC HÓA ĐƠN TRỌN VẸN SỐ NGÀY ---
         function moModalHoaDon(id) {
             const item = danhSachNhatKyGoc.find(x => x.id === id);
             if (!item) return;
@@ -948,7 +951,7 @@
             let diffDays = 1;
             if (item.ngayvao && item.ngayra) {
                 const diffTime = new Date(item.ngayra) - new Date(item.ngayvao);
-                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1; // Cộng bù 1 ngày trọn vẹn
                 if (diffDays <= 0) diffDays = 1;
             }
 
@@ -965,8 +968,8 @@
             document.getElementById('hdMaNKNT').innerText = `Mã phiếu: ${maNKNT}`;
             document.getElementById('hdTenChu').innerText = infoPet.tenchu;
             document.getElementById('hdTenThuCung').innerText = infoPet.tenthucung;
-            document.getElementById('hdNgayVao').innerText = item.ngayvao ? new Date(item.ngayvao).toLocaleString('vi-VN') : '---';
-            document.getElementById('hdNgayRa').innerText = item.ngayra ? new Date(item.ngayra).toLocaleString('vi-VN') : '---';
+            document.getElementById('hdNgayVao').innerText = item.ngayvao ? new Date(item.ngayvao).toLocaleDateString('vi-VN') : '---';
+            document.getElementById('hdNgayRa').innerText = item.ngayra ? new Date(item.ngayra).toLocaleDateString('vi-VN') : '---';
             document.getElementById('hdPhongLong').innerText = `${infoLong.phong} - ${infoLong.long}`;
             document.getElementById('hdBacSi').innerText = item.bacsiphutrach || '---';
 
