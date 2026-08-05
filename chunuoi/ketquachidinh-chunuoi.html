@@ -223,12 +223,10 @@
                 });
                 const kbIds = kbData.map(k => k.id);
 
-                // 3. Lấy dữ liệu từ bảng chỉ định (hoặc phieuchidinh / chidinh tùy theo tên bảng trong DB của bạn)
-                // Lưu ý: Nếu tên bảng ở database của bạn là 'phieuchidinh' hoặc 'chidinh', hãy đổi tên bên dưới cho khớp
+                // 3. Lấy dữ liệu từ bảng chỉ định
                 let { data: cdData, error } = await db.from('phieuchidinh').select('*').in('makhambenh', kbIds).order('id', { ascending: false });
                 
                 if (error) {
-                    // Thử fallback sang tên bảng khác nếu bảng 'phieuchidinh' không tồn tại
                     let { data: cdDataAlt } = await db.from('chidinh').select('*').in('makhambenh', kbIds).order('id', { ascending: false });
                     cdData = cdDataAlt;
                 }
@@ -241,11 +239,14 @@
                 container.innerHTML = '';
                 cdData.forEach(item => {
                     const tenPet = kbMap[item.makhambenh] || 'Thú cưng';
-                    const ngayTaoStr = item.ngaytao || item.created_at ? new Date(item.ngaytao || item.created_at).toLocaleString('vi-VN') : '---';
+                    
+                    // Sử dụng chính xác cột 'ngaychidinh' từ Database của bạn
+                    const ngayTaoStr = item.ngaychidinh ? new Date(item.ngaychidinh).toLocaleString('vi-VN') : '---';
+                    
                     const tenLoaiChiDinh = item.loai || item.tenchidinh || item.tendichvu || 'Chỉ định Y tế';
                     const ketLuan = item.ketluan || item.chiso || item.ketqua || 'Chưa có kết quả chi tiết.';
 
-                    // Xử lý hiển thị hình ảnh hoặc video kết quả (nếu có lưu)
+                    // Xử lý hiển thị hình ảnh hoặc video kết quả
                     let mediaHtml = '';
                     const mediaField = item.hinhanh || item.filedinhkem || item.media;
                     if (mediaField) {
