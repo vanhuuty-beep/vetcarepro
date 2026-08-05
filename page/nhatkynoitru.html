@@ -254,7 +254,7 @@
             
             <div class="form-row">
                 <div class="form-group-modal">
-                    <label>Mã khám bệnh (makhambenh) (*):</label>
+                    <label>Mã khám bệnh (makhambenh) (Không bắt buộc):</label>
                     <input type="text" id="makhambenh" placeholder="Nhập mã khám (VD: 1)...">
                 </div>
                 <div class="form-group-modal">
@@ -787,6 +787,11 @@
 
             if (!malong) {
                 alert('Vui lòng chọn Lồng/Phòng!');
+                return;
+            }
+
+            if (!mathucung) {
+                alert('Vui lòng chọn Thú cưng!');
                 return;
             }
 
