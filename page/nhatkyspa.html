@@ -444,7 +444,7 @@
             return role.includes('admin') || role === 'quản lý';
         }
 
-        window.addEventListener('DOMContentLoaded', async () => {
+       window.addEventListener('DOMContentLoaded', async () => {
             await taiKhachHang();
             await taiThuCung();
             await taiDanhSachSpa();
@@ -469,8 +469,36 @@
                     if (listContainerTC) listContainerTC.style.display = 'none';
                 }
             });
-        });
 
+            // --- TỰ ĐỘNG BẬT POPUP VÀ ĐIỀN THÔNG TIN KHI GỌI TỪ TRANG THÚ CƯNG ---
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('open_modal') === 'true') {
+                const thucungTen = urlParams.get('thucung_ten');
+                const maKhachHang = urlParams.get('makhachhang');
+
+                // 1. Mở Modal Spa lên
+                moModalThem();
+
+                // 2. Điền tên thú cưng nếu có
+                if (thucungTen) {
+                    document.getElementById('thucung').value = decodeURIComponent(thucungTen);
+                }
+
+                // 3. Tự động tìm và điền thông tin chủ nuôi dựa vào makhachhang truyền sang
+                if (maKhachHang && danhSachKhachHang.length > 0) {
+                    const kh = danhSachKhachHang.find(x => String(x.id) === String(maKhachHang));
+                    if (kh) {
+                        const ten = kh.tenkhachhang || kh.hovaten || '';
+                        const sdt = kh.sdt || kh.sodienthoai || '';
+
+                        document.getElementById('inputTimKhachHang').value = ten;
+                        document.getElementById('selectedKhachHangTen').value = ten;
+                        document.getElementById('selectedKhachHangId').value = kh.id;
+                        document.getElementById('sdt').value = sdt;
+                    }
+                }
+            }
+        });
         async function taiKhachHang() {
             if (typeof db === 'undefined' || !db) return;
             const { data, error } = await db.from('khachhang').select('*');
