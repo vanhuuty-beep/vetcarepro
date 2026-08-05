@@ -312,7 +312,10 @@
                         <button style="background: #0284c7; color: white;" onclick="window.location.href='nhatkylamvaccine.html?mathucung=${item.id}'">Tiêm vắc-xin</button>
                         <button class="btn-primary" style="background: #10b981; color: white;" onclick="window.location.href='khambenh.html?mathucung=${item.id}'">Khám bệnh</button>
                         <button class="btn-primary" style="background: #6366f1; color: white;" onclick="window.location.href='nhatkynoitru.html?mathucung=${item.id}&open_modal=true'" title="Tạo phiếu lưu trú cho thú cưng này">Lưu trú</button>
-                        <button class="btn-spa" onclick="moNhatKySpa(${item.id}, '${item.tenthucung || ''}', '${item.makhachhang || ''}')" style="background-color: #8b5cf6; color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-weight: 500;">Spa</button>
+                        
+                        <!-- Nút Spa chuẩn kết nối sang nhatkyspa.html -->
+                        <button class="btn-spa" onclick="moNhatKySpa(${item.id}, '${item.tenthucung || ''}', '${item.makhachhang || ''}')" style="background-color: #8b5cf6; color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-weight: 500;">✨ Spa</button>
+                        
                         <button class="btn-edit" style="background: #d97706; color: white;" onclick="moModalSua(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi !== null ? item.tuoi : ''}', '${item.cannang !== null ? item.cannang : ''}', '${item.makhachhang !== null ? item.makhachhang : ''}')">Sửa</button>
                         <button class="btn-delete" style="background: #dc2626; color: white;" onclick="xoaThuCung(${item.id})">Xóa</button>
                     </td>
@@ -329,9 +332,9 @@
                 }
             }
             const tenEnc = encodeURIComponent(tenPet || '');
-            window.location.href = `nhatkyspa.html?thucung_id=${idThucung}&thucung_ten=${tenEnc}&makhachhang=${idChuNuoi}`;
+            // Truyền sang nhatkyspa.html để trang Spa tự động nhận diện và mở modal/lọc thông tin
+            window.location.href = `nhatkyspa.html?thucung_id=${idThucung}&thucung_ten=${tenEnc}&makhachhang=${idChuNuoi}&open_modal=true`;
         }
-
         function timKiemThuCung() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachThuCungGoc.filter(item => {
