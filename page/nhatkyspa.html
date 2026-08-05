@@ -243,14 +243,15 @@
 
             #printInvoiceArea {
                 position: absolute;
-                left: 0;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
                 top: 0;
-                width: 100% !important;
-                max-width: 80mm !important;
-                padding: 4mm 4mm !important;
+                width: 76mm !important;
+                padding: 4mm 2mm !important;
                 font-family: 'Courier New', Courier, monospace;
                 color: #000;
                 background: #fff;
+                text-align: left;
             }
 
             .print-divider {
@@ -262,10 +263,18 @@
                 margin: 8px 0 12px 0 !important;
             }
 
+            /* Ép các dòng thông tin khách hàng nằm liền mạch trên một dòng */
+            #printInvoiceArea div {
+                display: block;
+                width: 100%;
+                word-break: break-word;
+            }
+
             #printInvoiceArea table {
                 width: 100% !important;
                 border-collapse: collapse !important;
                 border: none !important;
+                margin: 0 auto !important;
             }
 
             #printInvoiceArea tr {
@@ -382,23 +391,24 @@
 
     <!-- KHUNG IN HÓA ĐƠN NHIỆT KHỔ 80MM -->
     <div id="printInvoiceArea">
-        <div class="print-header"></div>
-        <div class="print-divider"></div>
+         <div class="print-header"></div>
+      <div class="print-divider"></div>
         <div style="text-align: center; font-size: 14px; font-weight: bold; margin: 4px 0;">PHIẾU DỊCH VỤ SPA</div>
-        <div class="print-divider" style="margin-bottom: 10px;"></div>
+        <div class="print-divider" style="margin-bottom: 8px;"></div>
         
-        <div style="font-size: 12px; margin-bottom: 4px;">TG: <span id="printTime"></span></div>
-        <div style="font-size: 12px; margin-bottom: 4px;">Khách hàng: <span id="printChuNuoi"></span></div>
-        <div style="font-size: 12px; margin-bottom: 4px;">Điện thoại: <span id="printSdt"></span></div>
-        <div style="font-size: 12px; margin-bottom: 6px;">Thú cưng: <span id="printThuCung"></span></div>
+        <!-- Đặt nhãn và span chứa giá trị nằm liền kề trên một dòng -->
+        <div style="font-size: 11px; margin-bottom: 3px;">Tg: <span id="printTime"></span></div>
+        <div style="font-size: 11px; margin-bottom: 3px;">Khách hàng: <span id="printChuNuoi"></span></div>
+        <div style="font-size: 11px; margin-bottom: 3px;">Điện thoại: <span id="printSdt"></span></div>
+        <div style="font-size: 11px; margin-bottom: 6px;">Thú cưng: <span id="printThuCung"></span></div>
         
         <div class="print-divider"></div>
 
         <!-- BẢNG DỊCH VỤ -->
         <table>
             <tr style="border-bottom: 1px dashed #000;">
-                <td style="font-weight: bold; width: 20%; padding: 4px 0;">STT</td>
-                <td style="font-weight: bold; width: 70%; padding: 4px 4px;">Tên dịch vụ</td>
+                <td style="font-weight: bold; width: 15%; padding: 4px 0;">STT</td>
+                <td style="font-weight: bold; width: 55%; padding: 4px 4px;">Tên dịch vụ</td>
                 <td style="font-weight: bold; width: 30%; padding: 4px 0; text-align: right;">Giá</td>
             </tr>
             <tbody id="printListDichVu"></tbody>
@@ -406,13 +416,13 @@
 
         <div class="print-divider"></div>
         
-        <div style="text-align: right; font-size: 14px; font-weight: bold; margin: 8px 0;">
+        <div style="text-align: right; font-size: 13px; font-weight: bold; margin: 6px 0;">
             TỔNG TIỀN: <span id="printTongTien">0 đ</span>
         </div>
         
         <div class="print-divider-thick"></div>
 
-        <div style="text-align: center; font-size: 12px; font-style: italic;">
+        <div style="text-align: center; font-size: 11px; font-style: italic;">
             Cảm ơn quý khách & Hẹn gặp lại!
         </div>
     </div>
@@ -912,36 +922,70 @@
         }
 
         function inLaiHoaDon(id) {
-            const item = danhSachNhatKyGoc.find(x => x.id == id);
-            if (!item) return;
+        const item = danhSachNhatKyGoc.find(x => x.id == id);
+        if (!item) return;
 
-            document.getElementById('printTime').innerText = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
-            document.getElementById('printChuNuoi').innerText = item.chunuoi || item.tenkhachhang || '---';
-            document.getElementById('printSdt').innerText = item.sdt || '---';
-            document.getElementById('printThuCung').innerText = item.thucung || item.tenthucung || '---';
+        const thoiGian = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
+        const chuNuoi = item.chunuoi || item.tenkhachhang || '---';
+        const sdt = item.sdt || '---';
+        const thuCung = item.thucung || item.tenthucung || '---';
 
-            let htmlList = '';
-            const strDV = item.dichvusudung || item.dichvu || '';
-            const arrDichVu = strDV ? strDV.split(', ') : [];
+        // Gộp chung thông tin trên cùng 1 hàng gọn gàng
+        document.getElementById('printTime').innerText = thoiGian;
+        document.getElementById('printChuNuoi').innerText = chuNuoi;
+        document.getElementById('printSdt').innerText = sdt;
+        document.getElementById('printThuCung').innerText = thuCung;
+
+        let htmlList = '';
+        const strDV = item.dichvusudung || item.dichvu || '';
+        const arrDichVu = strDV ? strDV.split(', ') : [];
+        
+        arrDichVu.forEach((tenDV, index) => {
+            const matchDv = danhSachDichVuSpaGoc.find(d => (d.tendichvu || d.tensanpham || d.tendv) === tenDV);
+            const giaDV = matchDv ? parseFloat(matchDv.gia || matchDv.giaban || matchDv.giadichvu || matchDv.giatien || 0) : 0;
+
+            htmlList += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${tenDV}</td>
+                    <td>${giaDV > 0 ? giaDV.toLocaleString('vi-VN') : ''}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('printListDichVu').innerHTML = htmlList;
+        document.getElementById('printTongTien').innerText = Number(item.tongtien || 0).toLocaleString('vi-VN') + ' đ';
+
+        window.print();
+    }
+
+    function inHoaDonSpa(chunuoi, sdt, thucung, checkboxes, tongtien) {
+        const thoiGian = new Date().toLocaleString('vi-VN');
+
+        // Gộp chung thông tin trên cùng 1 hàng gọn gàng
+        document.getElementById('printTime').innerText = thoiGian;
+        document.getElementById('printChuNuoi').innerText = chunuoi;
+        document.getElementById('printSdt').innerText = sdt || '---';
+        document.getElementById('printThuCung').innerText = thucung;
+
+        let htmlList = '';
+        checkboxes.forEach((cb, index) => {
+            const ten = cb.getAttribute('data-ten');
+            const gia = parseFloat(cb.getAttribute('data-gia')) || 0;
             
-            arrDichVu.forEach((tenDV, index) => {
-                const matchDv = danhSachDichVuSpaGoc.find(d => (d.tendichvu || d.tensanpham || d.tendv) === tenDV);
-                const giaDV = matchDv ? parseFloat(matchDv.gia || matchDv.giaban || matchDv.giadichvu || matchDv.giatien || 0) : 0;
+            htmlList += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${ten}</td>
+                    <td>${gia.toLocaleString('vi-VN')}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('printListDichVu').innerHTML = htmlList;
+        document.getElementById('printTongTien').innerText = tongtien.toLocaleString('vi-VN') + ' đ';
 
-                htmlList += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${tenDV}</td>
-                        <td>${giaDV > 0 ? giaDV.toLocaleString('vi-VN') : ''}</td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('printListDichVu').innerHTML = htmlList;
-            document.getElementById('printTongTien').innerText = Number(item.tongtien || 0).toLocaleString('vi-VN') + ' đ';
-
-            window.print();
-        }
+        window.print();
+    }
 
         function inHoaDonSpa(chunuoi, sdt, thucung, checkboxes, tongtien) {
             document.getElementById('printTime').innerText = new Date().toLocaleString('vi-VN');
