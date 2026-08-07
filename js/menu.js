@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; height: 55px; box-sizing: border-box; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <button class="toggle-btn" onclick="toggleSidebar()" style="cursor: pointer; background: none; border: none; font-size: 18px;">☰</button>
-                    <h2 style="margin: 0; font-size: 11px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
+                    <h2 style="margin: 0; font-size: 10px; font-weight: bold; color: #1e3a8a;">HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÚ Y</h2>
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 14px; margin-right: 10px;">
