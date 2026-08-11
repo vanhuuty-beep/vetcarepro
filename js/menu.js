@@ -253,7 +253,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
                     
-                    <a href="../mobile/thucung.html" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
+                    <a href="../mb/trangchu.html" style="background-color: #0284c7; color: white; text-decoration: none; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px;">
                         📱 Giao diện Mobile
                     </a>
 
