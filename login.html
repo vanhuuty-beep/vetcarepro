@@ -153,7 +153,7 @@
             if (currentUser && currentUser !== "null" && currentUser !== "undefined") {
                 const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 if (isMobile) {
-                    window.location.replace('mobile/khachhang.html');
+                    window.location.replace('mb/trangchu.html');
                 } else {
                     try {
                         const userObj = JSON.parse(currentUser);
@@ -221,7 +221,7 @@
                     const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                     if (isMobile) {
-                        window.location.href = 'mobile/khachhang.html';
+                        window.location.href = 'mb/trangchu.html';
                     } else {
                         // Điều hướng thông minh dựa theo vai trò (vaitro / role)
                         const userRole = (data.vaitro || data.role || '').toLowerCase();
