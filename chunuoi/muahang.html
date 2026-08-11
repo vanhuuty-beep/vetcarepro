@@ -23,25 +23,27 @@
             margin: 0; 
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
         }
         .mobile-shell {
             width: 100%;
             max-width: 414px;
-            height: 100vh;
-            max-height: 896px;
+            min-height: 100vh;
             background: #f8fafc;
             display: flex;
             flex-direction: column;
             position: relative;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            overflow: hidden;
+            margin: 0 auto;
         }
         @media (min-width: 415px) {
             .mobile-shell {
+                margin: 20px 0;
+                min-height: 896px;
                 border-radius: 40px;
                 border: 10px solid #1e293b;
+                overflow: hidden;
             }
         }
 
@@ -60,12 +62,13 @@
             font-size: 15px;
         }
 
-        /* Vùng nội dung cuộn */
+        /* Vùng nội dung cuộn linh hoạt */
         .app-content {
             flex: 1;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 16px;
-            padding-bottom: 75px;
+            padding-bottom: 90px;
         }
         
         .search-container { display: flex; gap: 6px; margin-bottom: 12px; align-items: stretch; }
@@ -83,12 +86,11 @@
         .page-btn.active { background: #008080; color: #ffffff; border-color: #008080; }
         .page-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
 
-        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; padding: 16px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99999; justify-content: center; align-items: center; padding: 16px; }
         .modal-content-custom { background: #fff; width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .form-control { width: 100%; padding: 8px 10px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box; margin-bottom: 8px; background: #fff; }
 
-        /* Thanh menu đáy ghim chặt bên trong khung mobile */
-       /* Thanh menu đáy nổi và cố định tuyệt đối */
+        /* Thanh menu đáy nổi cố định chuẩn di động */
         .mobile-bottom-nav {
             position: fixed;
             bottom: 12px;
@@ -103,7 +105,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            z-index: 99999;
+            z-index: 9999;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
@@ -122,14 +124,6 @@
         }
         .mobile-bottom-nav a i { font-size: 18px; margin-bottom: 2px; }
         .mobile-bottom-nav a.active { color: #008080; font-weight: 700; }
-
-        /* Đảm bảo vùng nội dung cuộn bên trong không bị menu nổi che mất dòng cuối */
-        .app-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            padding-bottom: 90px;
-        }
     </style>
 </head>
 <body>
@@ -142,7 +136,6 @@
             </button>
         </div>
 
-        <!-- BẮT ĐẦU VÙNG NỘI DUNG CUỘN -->
         <div class="app-content">
             <div class="search-container">
                 <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm thức ăn, phụ kiện, đồ chơi..." onkeyup="timKiemSanPham()">
@@ -157,17 +150,37 @@
 
             <div id="paginationContainer" class="pagination-container"></div>
         </div>
-        <!-- KẾT THÚC VÙNG NỘI DUNG CUỘN -->
 
-        <!-- THANH MENU ĐÁY NỔI -->
+        <!-- THANH MENU ĐÁY NỔI CỐ ĐỊNH -->
         <div class="mobile-bottom-nav">
-            <a href="trangchu.html"><i class="fa-solid fa-house"></i>Trang chủ</a>
-            <a href="lichsu.html"><i class="fa-solid fa-notes-medical"></i>Lịch sử</a>
-            <a href="ketquachidinh-chunuoi.html"><i class="fa-solid fa-microscope"></i>Chỉ định</a>
-            <a href="noitru-chunuoi.html"><i class="fa-solid fa-hotel"></i>Lịch trình</a>
-            <a href="muahang.html" class="active"><i class="fa-solid fa-bag-shopping"></i>Cửa hàng</a>
-            <a href="datlich.html"><i class="fa-solid fa-calendar-days"></i>Đặt lịch</a>
-            <a href="timkiem.html"><i class="fa-solid fa-magnifying-glass"></i>Tìm kiếm</a>
+            <a href="trangchu.html">
+                <i class="fa-solid fa-house"></i>
+                Trang chủ
+            </a>
+            <a href="lichsu.html">
+                <i class="fa-solid fa-notes-medical"></i>
+                Lịch sử
+            </a>
+            <a href="ketquachidinh-chunuoi.html">
+                <i class="fa-solid fa-microscope"></i>
+                Chỉ định
+            </a>
+            <a href="noitru-chunuoi.html">
+                <i class="fa-solid fa-hotel"></i>
+                Lịch trình
+            </a>
+            <a href="muahang.html" class="active">
+                <i class="fa-solid fa-bag-shopping"></i>
+                Cửa hàng
+            </a>
+            <a href="datlich.html">
+                <i class="fa-solid fa-calendar-days"></i>
+                Đặt lịch
+            </a>
+            <a href="timkiem.html">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Tìm kiếm
+            </a>
         </div>
     </div>
 
