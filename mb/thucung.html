@@ -301,7 +301,7 @@
         .btn-medical { color: #0284c7; background: #e0f2fe; }   /* Khám bệnh */
         .btn-vaccine { color: #16a34a; background: #dcfce7; }   /* Tiêm vaccine */
         .btn-boarding { color: #ea580c; background: #ffedd5; }  /* Lưu trú */
-        .btn-edit { color: #d97706; background: #fef3c7; }       /* Sửa */
+        .btn-edit { color: #d97706; background: #fef3c7; }        /* Sửa */
         .btn-delete { color: #dc2626; background: #fee2e2; }     /* Xóa */
 
         /* Bottom Nav cố định dưới đáy */
@@ -382,14 +382,14 @@
             
             <input type="hidden" id="editingId">
             
-            <!-- Ô TẢI ẢNH THÚ CƯNG -->
+            <!-- Ô CHỤP ẢNH TRỰC TIẾP TỪ CAMERA ĐIỆN THOẠI (CÓ NÉN ẢNH TỐC ĐỘ CAO) -->
             <div class="input-group">
-                <label>Hình ảnh thú cưng</label>
-                <input type="file" id="pet_anhFile" accept="image/*" onchange="xuLyChonFileAnhThuCung(this)" style="padding: 5px; background: #f8fafc; font-size: 11px; cursor: pointer;">
+                <label>Hình ảnh thú cưng (Chụp từ Camera)</label>
+                <input type="file" id="pet_anhFile" accept="image/*" capture="environment" onchange="xuLyChonFileAnhThuCung(this)" style="padding: 5px; background: #f8fafc; font-size: 11px; cursor: pointer;">
                 <input type="hidden" id="pet_anhUrlHidden">
                 <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
                     <img id="pet_imgPreview" src="" alt="Ảnh thú cưng" style="width: 50px; height: 50px; border-radius: 6px; border: 2px dashed #cbd5e1; object-fit: cover; background: #f8fafc; display: none;">
-                    <span style="font-size: 11px; color: #64748b;">Chọn ảnh từ điện thoại.</span>
+                    <span style="font-size: 11px; color: #64748b;">Chạm để mở camera chụp ảnh trực tiếp.</span>
                 </div>
             </div>
 
@@ -534,7 +534,6 @@
             const maKH = item.makhachhang || item.khachhang_id;
             const tenChu = (maKH && mapKhachHang[maKH]) ? mapKhachHang[maKH] : 'Chưa rõ chủ';
             
-            // Xử lý hiển thị ảnh (nếu có lấy từ item.hinhanh, không có dùng icon mặc định)
             const anhPet = item.hinhanh && item.hinhanh.trim() !== '' 
                 ? item.hinhanh 
                 : 'https://cdn-icons-png.flaticon.com/512/616/616408.png';
@@ -569,40 +568,58 @@
         });
     }
 
-    // Hàm tự động upload ảnh thú cưng lên Supabase Storage
+    // --- HÀM NÉN VÀ TẢI ẢNH CHỤP TỪ CAMERA (TỐC ĐỘ CAO) ---
     async function xuLyChonFileAnhThuCung(input) {
         if (!input.files || input.files.length === 0) return;
         const file = input.files[0];
         const maphongkham = sessionStorage.getItem('maphongkham') || 'chung';
 
-        const fileExt = file.name.split('.').pop();
-        const fileName = `pet_${maphongkham}_${Date.now()}.${fileExt}`;
+        alert('⏳ Đang nén và tải ảnh lên hệ thống...');
 
-        alert('⏳ Đang tải ảnh thú cưng lên hệ thống...');
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800; // Giới hạn kích thước tối ưu cho mobile
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
 
-        let { data, error } = await db.storage
-            .from('logo')
-            .upload(fileName, file, { upsert: true });
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        if (error) {
-            alert('❌ Lỗi tải ảnh: ' + error.message);
-            return;
-        }
+                canvas.toBlob(async (blob) => {
+                    const fileName = `pet_cam_${maphongkham}_${Date.now()}.jpg`;
 
-        const { data: publicURLData } = db.storage
-            .from('logo')
-            .getPublicUrl(fileName);
+                    let { data, error } = await db.storage
+                        .from('logo')
+                        .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
 
-        const publicUrl = publicURLData.publicUrl;
+                    if (error) {
+                        alert('❌ Lỗi tải ảnh: ' + error.message);
+                        return;
+                    }
 
-        document.getElementById('pet_anhUrlHidden').value = publicUrl;
-        const preview = document.getElementById('pet_imgPreview');
-        if (preview) {
-            preview.src = publicUrl;
-            preview.style.display = 'block';
-        }
-        
-        alert('✅ Tải ảnh thú cưng thành công!');
+                    const { data: publicURLData } = db.storage
+                        .from('logo')
+                        .getPublicUrl(fileName);
+
+                    const publicUrl = publicURLData.publicUrl;
+
+                    document.getElementById('pet_anhUrlHidden').value = publicUrl;
+                    const preview = document.getElementById('pet_imgPreview');
+                    if (preview) {
+                        preview.src = publicUrl;
+                        preview.style.display = 'block';
+                    }
+                    
+                    alert('✅ Tải ảnh thành công!');
+                }, 'image/jpeg', 0.7);
+            };
+        };
     }
 
     function timKiemThuCung() {
