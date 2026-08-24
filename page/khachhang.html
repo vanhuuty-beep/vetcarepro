@@ -121,46 +121,16 @@
         let mapThuCung = {};
         let mapLichSuKham = {};
 
-        // --- HÀM KIỂM TRA QUYỀN ADMIN VÀ ẨN SỐ ĐIỆN THOẠI AN TOÀN ---
-        function anSoDienThoaiChoPC(sdt) {
+        // --- HIỂN THỊ TRỰC TIẾP SỐ ĐIỆN THOẠI KÈM NÚT GỌI ---
+        function hienThiSoDienThoai(sdt) {
             if (!sdt) return '---';
-            
             let sdtStr = String(sdt).trim();
             let displaySdt = sdtStr.startsWith('0') ? sdtStr : '0' + sdtStr;
-            
-            // Đọc thông tin user từ sessionStorage an toàn tuyệt đối không gây sập chương trình
-            let isAdmin = false;
-            try {
-                let rawUser = sessionStorage.getItem('currentUser');
-                if (rawUser) {
-                    let currentUser = JSON.parse(rawUser);
-                    let role = String(currentUser.vaitro || currentUser.role || '').trim().toLowerCase();
-                    let username = String(currentUser.tentaikhoan || currentUser.username || '').trim().toLowerCase();
-                    
-                    if (role === 'admin' || username === 'admin') {
-                        isAdmin = true;
-                    }
-                }
-            } catch (e) {
-                // Trường hợp currentUser lưu dưới dạng chuỗi thông thường không phải JSON
-                let rawStr = sessionStorage.getItem('currentUser') || '';
-                if (rawStr.toLowerCase().includes('admin')) {
-                    isAdmin = true;
-                }
-            }
-            
-            // Nếu là Admin -> Hiển thị số điện thoại đầy đủ kèm nút gọi
-            if (isAdmin) {
-                return `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>`;
-            }
-            
-            // Nếu không phải Admin -> Ẩn toàn bộ số thành dấu sao
-            let sdtBiDau = '*'.repeat(displaySdt.length);
-            return `<span style="color: #d97706; font-weight: bold;" title="Số điện thoại đã được bảo mật">${sdtBiDau} 🔒</span>`;
+            return `<a href="tel:${displaySdt}" style="color: #2563eb; text-decoration: none; font-weight: bold;" title="Bấm để gọi">${displaySdt} 📞</a>`;
         }
 
         async function fetchKhachHang() {
-            // 1. Tải danh sách thú cưng và lập bản đồ ánh xạ (ID thú cưng -> Mã khách hàng)[cite: 1]
+            // 1. Tải danh sách thú cưng và lập bản đồ ánh xạ (ID thú cưng -> Mã khách hàng)
             const { data: tcData } = await db.from('thucung').select('*');
             let petToKhach = {};
             if (tcData) {
@@ -215,7 +185,7 @@
                 }
             }
 
-            // 2. Tải dữ liệu khám bệnh[cite: 1]
+            // 2. Tải dữ liệu khám bệnh
             window.khamToPet = {};
             const { data: kbData } = await db.from('khambenh').select('*');
             if (kbData) {
@@ -228,7 +198,7 @@
                 });
             }
 
-            // 3. Tải dữ liệu Tiêm vaccine[cite: 1]
+            // 3. Tải dữ liệu Tiêm vaccine
             const { data: vcData } = await db.from('nhatkylamvaccine').select('*');
             if (vcData) {
                 vcData.forEach(vc => {
@@ -242,7 +212,7 @@
                 });
             }
 
-            // 4. Tải dữ liệu Mua hàng POS / Petshop[cite: 1]
+            // 4. Tải dữ liệu Mua hàng POS / Petshop
             const { data: dhData } = await db.from('donhang').select('*');
             if (dhData) {
                 dhData.forEach(dh => {
@@ -251,7 +221,7 @@
                 });
             }
 
-            // 5. Tải dữ liệu Nội trú[cite: 1]
+            // 5. Tải dữ liệu Nội trú
             const { data: ntData } = await db.from('nhatkynoitru').select('*');
             if (ntData) {
                 ntData.forEach(nt => {
@@ -260,7 +230,7 @@
                 });
             }
 
-            // 6. Tải dữ liệu Đơn thuốc[cite: 1]
+            // 6. Tải dữ liệu Đơn thuốc
             const { data: dtData } = await db.from('hoadonthuoc').select('*');
             if (dtData) {
                 dtData.forEach(dt => {
@@ -278,7 +248,7 @@
                 });
             }
 
-            // 7. Tải dữ liệu Spa[cite: 1]
+            // 7. Tải dữ liệu Spa
             const { data: spaData } = await db.from('nhatkyspa').select('*');
             if (spaData) {
                 spaData.forEach(sp => {
@@ -289,7 +259,7 @@
 
             mapLichSuKham = thongKeChiTieu;
 
-            // 8. Tải danh sách khách hàng chính từ Supabase[cite: 1]
+            // 8. Tải danh sách khách hàng chính từ Supabase
             const { data, error } = await db.from('khachhang').select('*').order('id', { ascending: true });
             if (error) {
                 console.error('Lỗi tải dữ liệu:', error);
@@ -311,8 +281,8 @@
             data.forEach(item => {
                 const maKhachHang = formatMaKhachHang(item.id);
                 
-                // Gọi hàm ẩn số điện thoại phân quyền bảo mật cho PC
-                const soDienThoaiHtml = anSoDienThoaiChoPC(item.sodienthoai);
+                // Hiển thị trực tiếp số điện thoại đầy đủ
+                const soDienThoaiHtml = hienThiSoDienThoai(item.sodienthoai);
 
                 let rawSdt = String(item.sodienthoai || '').trim();
                 let displaySdt = rawSdt ? (rawSdt.startsWith('0') ? rawSdt : '0' + rawSdt) : '';
