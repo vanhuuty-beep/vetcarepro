@@ -5,17 +5,17 @@
     <title>Quản lý Thú cưng - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="../css/smart-search.css">
 
     <style>
         .search-box {
@@ -69,7 +69,7 @@
             margin-top: 15px;
             padding-top: 10px;
         }
-		/* Cố định cột Thao tác thu gọn */
+        /* Cố định cột Thao tác thu gọn */
         table td:last-child, 
         table th:last-child {
             width: 190px;
@@ -221,7 +221,8 @@
             <div class="form-row">
                 <div class="form-group-modal">
                     <label>Tuổi:</label>
-                    <input type="number" id="tuoi" placeholder="Ví dụ: 2">
+                    <!-- Đã chuyển từ type="number" sang type="text" để nhập được chữ như "2 tháng", "4 năm" -->
+                    <input type="text" id="tuoi" placeholder="Ví dụ: 2 tháng, 4 năm...">
                 </div>
                 <div class="form-group-modal">
                     <label>Cân nặng (kg):</label>
@@ -332,9 +333,9 @@
                 }
             }
             const tenEnc = encodeURIComponent(tenPet || '');
-            // Truyền sang nhatkyspa.html để trang Spa tự động nhận diện và mở modal/lọc thông tin
             window.location.href = `nhatkyspa.html?thucung_id=${idThucung}&thucung_ten=${tenEnc}&makhachhang=${idChuNuoi}&open_modal=true`;
         }
+
         function timKiemThuCung() {
             const tuKhoa = document.getElementById('searchInput').value.toLowerCase().trim();
             const ketQuaLoc = danhSachThuCungGoc.filter(item => {
@@ -342,11 +343,12 @@
                 const loai = (item.loai || '').toLowerCase();
                 const giong = (item.giong || '').toLowerCase();
                 const mau = (item.maulong || '').toLowerCase();
+                const tuoiStr = String(item.tuoi || '').toLowerCase();
                 const ma = formatMaThuCung(item.id).toLowerCase();
                 const maKH = formatMaKhachHang(item.makhachhang).toLowerCase();
                 const tenKH = (item.makhachhang && mapKhachHang[item.makhachhang]) ? mapKhachHang[item.makhachhang].toLowerCase() : '';
                 
-                return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || mau.includes(tuKhoa) || ma.includes(tuKhoa) || maKH.includes(tuKhoa) || tenKH.includes(tuKhoa);
+                return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || mau.includes(tuKhoa) || tuoiStr.includes(tuKhoa) || ma.includes(tuKhoa) || maKH.includes(tuKhoa) || tenKH.includes(tuKhoa);
             });
             hienThiBang(ketQuaLoc);
         }
@@ -374,8 +376,8 @@
             document.getElementById('loai').value = loai;
             document.getElementById('giong').value = giong;
             document.getElementById('maulong').value = maulong;
-            document.getElementById('tuoi').value = tuoi;
-            document.getElementById('cannang').value = cannang;
+            document.getElementById('tuoi').value = tuoi !== 'null' && tuoi !== 'undefined' ? tuoi : '';
+            document.getElementById('cannang').value = cannang !== 'null' && cannang !== 'undefined' ? cannang : '';
             document.getElementById('makhachhang').value = formatMaKhachHang(makhachhang);
             
             document.getElementById('modalTitle').innerText = 'Cập nhật thông tin thú cưng (Mã: ' + formatMaThuCung(id) + ')';
@@ -392,7 +394,7 @@
             const loai = document.getElementById('loai').value.trim();
             const giong = document.getElementById('giong').value.trim();
             const maulong = document.getElementById('maulong').value.trim();
-            const tuoiStr = document.getElementById('tuoi').value.trim();
+            const tuoi = document.getElementById('tuoi').value.trim(); // Lấy trực tiếp dưới dạng chuỗi (text)
             const cannangStr = document.getElementById('cannang').value.trim();
             
             let rawMaKH = document.getElementById('makhachhang').value.trim();
@@ -409,7 +411,7 @@
                 loai,
                 giong,
                 maulong,
-                tuoi: tuoiStr !== "" ? parseFloat(tuoiStr) : null,
+                tuoi: tuoi !== "" ? tuoi : null, // Lưu trực tiếp chuỗi text vào cột tuoi (đảm bảo cột trong Supabase là kiểu text hoặc varchar)
                 cannang: cannangStr !== "" ? parseFloat(cannangStr) : null,
                 makhachhang
             };
