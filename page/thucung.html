@@ -52,9 +52,13 @@
             margin-bottom: 3px;
             display: block;
         }
-        .form-group-modal input {
+        .form-group-modal input, .form-group-modal select {
             padding: 7px 10px;
             font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
         }
         .form-row {
             display: flex;
@@ -171,6 +175,7 @@
                                 <th>Tên thú cưng</th>
                                 <th>Loài</th>
                                 <th>Giống</th>
+                                <th>Giới tính</th>
                                 <th>Màu lông</th>
                                 <th>Tuổi</th>
                                 <th>Cân nặng</th>
@@ -202,9 +207,21 @@
                 <input type="text" id="tenthucung" placeholder="Nhập tên thú cưng...">
             </div>
             
-            <div class="form-group-modal">
-                <label>Loài:</label>
-                <input type="text" id="loai" placeholder="Ví dụ: Chó, Mèo...">
+            <div class="form-row">
+                <div class="form-group-modal">
+                    <label>Loài:</label>
+                    <input type="text" id="loai" placeholder="Ví dụ: Chó, Mèo...">
+                </div>
+                <div class="form-group-modal">
+                    <label>Giới tính:</label>
+                    <select id="gioitinh">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="Đực">Đực</option>
+                        <option value="Cái">Cái</option>
+                        <option value="Đực (Đã triệt sản)">Đực (Đã triệt sản)</option>
+                        <option value="Cái (Đã triệt sản)">Cái (Đã triệt sản)</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-row">
@@ -221,7 +238,6 @@
             <div class="form-row">
                 <div class="form-group-modal">
                     <label>Tuổi:</label>
-                    <!-- Đã chuyển từ type="number" sang type="text" để nhập được chữ như "2 tháng", "4 năm" -->
                     <input type="text" id="tuoi" placeholder="Ví dụ: 2 tháng, 4 năm...">
                 </div>
                 <div class="form-group-modal">
@@ -283,7 +299,7 @@
             tableBody.innerHTML = '';
             
             if(data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#777;">Không có dữ liệu thú cưng</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#777;">Không có dữ liệu thú cưng</td></tr>`;
                 return;
             }
 
@@ -301,6 +317,7 @@
                     <td>${item.tenthucung || ''}</td>
                     <td>${item.loai || ''}</td>
                     <td>${item.giong || ''}</td>
+                    <td><span style="color: #0284c7; font-weight: 500;">${item.gioitinh || '---'}</span></td>
                     <td>${item.maulong || ''}</td>
                     <td>${item.tuoi !== null && item.tuoi !== undefined ? item.tuoi : ''}</td>
                     <td>${item.cannang !== null && item.cannang !== undefined ? item.cannang + ' kg' : ''}</td>
@@ -314,10 +331,9 @@
                         <button class="btn-primary" style="background: #10b981; color: white;" onclick="window.location.href='khambenh.html?mathucung=${item.id}'">Khám bệnh</button>
                         <button class="btn-primary" style="background: #6366f1; color: white;" onclick="window.location.href='nhatkynoitru.html?mathucung=${item.id}&open_modal=true'" title="Tạo phiếu lưu trú cho thú cưng này">Lưu trú</button>
                         
-                        <!-- Nút Spa chuẩn kết nối sang nhatkyspa.html -->
                         <button class="btn-spa" onclick="moNhatKySpa(${item.id}, '${item.tenthucung || ''}', '${item.makhachhang || ''}')" style="background-color: #8b5cf6; color: white; border: none; padding: 4px 6px; border-radius: 3px; cursor: pointer; font-weight: 500;">✨ Spa</button>
                         
-                        <button class="btn-edit" style="background: #d97706; color: white;" onclick="moModalSua(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi !== null ? item.tuoi : ''}', '${item.cannang !== null ? item.cannang : ''}', '${item.makhachhang !== null ? item.makhachhang : ''}')">Sửa</button>
+                        <button class="btn-edit" style="background: #d97706; color: white;" onclick="moModalSua(${item.id}, '${item.tenthucung || ''}', '${item.loai || ''}', '${item.giong || ''}', '${item.maulong || ''}', '${item.tuoi !== null ? item.tuoi : ''}', '${item.cannang !== null ? item.cannang : ''}', '${item.makhachhang !== null ? item.makhachhang : ''}', '${item.gioitinh || ''}')">Sửa</button>
                         <button class="btn-delete" style="background: #dc2626; color: white;" onclick="xoaThuCung(${item.id})">Xóa</button>
                     </td>
                 </tr>`;
@@ -342,13 +358,14 @@
                 const ten = (item.tenthucung || '').toLowerCase();
                 const loai = (item.loai || '').toLowerCase();
                 const giong = (item.giong || '').toLowerCase();
+                const gioitinh = (item.gioitinh || '').toLowerCase();
                 const mau = (item.maulong || '').toLowerCase();
                 const tuoiStr = String(item.tuoi || '').toLowerCase();
                 const ma = formatMaThuCung(item.id).toLowerCase();
                 const maKH = formatMaKhachHang(item.makhachhang).toLowerCase();
                 const tenKH = (item.makhachhang && mapKhachHang[item.makhachhang]) ? mapKhachHang[item.makhachhang].toLowerCase() : '';
                 
-                return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || mau.includes(tuKhoa) || tuoiStr.includes(tuKhoa) || ma.includes(tuKhoa) || maKH.includes(tuKhoa) || tenKH.includes(tuKhoa);
+                return ten.includes(tuKhoa) || loai.includes(tuKhoa) || giong.includes(tuKhoa) || gioitinh.includes(tuKhoa) || mau.includes(tuKhoa) || tuoiStr.includes(tuKhoa) || ma.includes(tuKhoa) || maKH.includes(tuKhoa) || tenKH.includes(tuKhoa);
             });
             hienThiBang(ketQuaLoc);
         }
@@ -357,6 +374,7 @@
             document.getElementById('editingId').value = '';
             document.getElementById('tenthucung').value = '';
             document.getElementById('loai').value = '';
+            document.getElementById('gioitinh').value = '';
             document.getElementById('giong').value = '';
             document.getElementById('maulong').value = '';
             document.getElementById('tuoi').value = '';
@@ -370,10 +388,11 @@
             document.getElementById('petModal').style.display = 'flex';
         }
 
-        function moModalSua(id, tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang) {
+        function moModalSua(id, tenthucung, loai, giong, maulong, tuoi, cannang, makhachhang, gioitinh) {
             document.getElementById('editingId').value = id;
             document.getElementById('tenthucung').value = tenthucung;
             document.getElementById('loai').value = loai;
+            document.getElementById('gioitinh').value = gioitinh !== 'null' && gioitinh !== 'undefined' ? gioitinh : '';
             document.getElementById('giong').value = giong;
             document.getElementById('maulong').value = maulong;
             document.getElementById('tuoi').value = tuoi !== 'null' && tuoi !== 'undefined' ? tuoi : '';
@@ -392,9 +411,10 @@
             const id = document.getElementById('editingId').value;
             const tenthucung = document.getElementById('tenthucung').value.trim();
             const loai = document.getElementById('loai').value.trim();
+            const gioitinh = document.getElementById('gioitinh').value;
             const giong = document.getElementById('giong').value.trim();
             const maulong = document.getElementById('maulong').value.trim();
-            const tuoi = document.getElementById('tuoi').value.trim(); // Lấy trực tiếp dưới dạng chuỗi (text)
+            const tuoi = document.getElementById('tuoi').value.trim();
             const cannangStr = document.getElementById('cannang').value.trim();
             
             let rawMaKH = document.getElementById('makhachhang').value.trim();
@@ -409,9 +429,10 @@
             const payload = {
                 tenthucung,
                 loai,
+                gioitinh: gioitinh !== "" ? gioitinh : null,
                 giong,
                 maulong,
-                tuoi: tuoi !== "" ? tuoi : null, // Lưu trực tiếp chuỗi text vào cột tuoi (đảm bảo cột trong Supabase là kiểu text hoặc varchar)
+                tuoi: tuoi !== "" ? tuoi : null,
                 cannang: cannangStr !== "" ? parseFloat(cannangStr) : null,
                 makhachhang
             };
@@ -480,7 +501,7 @@
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span><b>🐾 Tên thú cưng:</b> <span style="color: #2563eb; font-weight: bold;">${petData.tenthucung}</span></span>
-                            <span><b>🧬 Giống:</b> ${petData.giong || '---'}</span>
+                            <span><b>🧬 Giới tính:</b> ${petData.gioitinh || '---'} | <b>Giống:</b> ${petData.giong || '---'}</span>
                         </div>
                     </div>
                 `;
