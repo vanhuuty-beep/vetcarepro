@@ -5,17 +5,18 @@
     <title>Nhật ký Tiêm Vắc-xin - VetCare Pro</title>
     <!-- Thư viện Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../js/env.js"></script>
+    <script src="../js/env.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/supabase.js"></script>
     <script src="../js/utils.js"></script>
     <script src="../js/menu.js"></script>
-	<script src="../js/smart-search.js"></script>
+    <script src="../js/smart-search.js"></script>
     <!-- Gọi file CSS chung -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mobile.css">
     <link rel="stylesheet" href="../css/style1.css">
-	<link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="../css/smart-search.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
         .search-box {
@@ -33,7 +34,15 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
+        .btn-excel {
+            border: 0; border-radius: 8px; height: 38px;
+            padding: 0 14px; font-weight: 700; color: #4338ca; cursor: pointer;
+            background: #eef2ff; border: 1px solid #c7d2fe;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-excel:hover { background: #e0e7ff; }
 
         .modal-container {
             width: 600px;
@@ -42,6 +51,7 @@
         .modal-header {
             margin-bottom: 12px;
             padding-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .form-group-modal {
             margin-bottom: 10px;
@@ -93,6 +103,7 @@
                     <h3>Nhật ký Tiêm Vắc-xin</h3>
                     <div class="card-header-actions">
                         <input type="text" id="searchInput" class="search-box" placeholder="Tìm tên vắc-xin, bác sĩ, thú cưng..." onkeyup="timKiemNhatKy()">
+                        <button class="btn-excel" onclick="moModalBaoCaoDai()"><i class="fa-solid fa-file-excel"></i> Xuất Báo Cáo Vắc-xin Dại</button>
                         <button class="btn-primary" onclick="moModalThem()">+ Thêm mũi tiêm mới</button>
                     </div>
                 </div>
@@ -121,11 +132,11 @@
     </div>
 
     <!-- POPUP FORM THÊM / SỬA NHẬT KÝ TIÊM -->
-    <div class="modal-overlay" id="nhatKyModal">
-        <div class="modal-container">
+    <div class="modal-overlay" id="nhatKyModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;">
+        <div class="modal-container" style="background: #fff; border-radius: 8px;">
             <div class="modal-header">
-                <h3 id="modalTitle">Thêm mũi tiêm vắc-xin mới</h3>
-                <button class="close-modal" onclick="dongModal()">&times;</button>
+                <h3 id="modalTitle" style="margin: 0; font-size: 16px; color: #1e3a8a;">Thêm mũi tiêm vắc-xin mới</h3>
+                <button class="close-modal" onclick="dongModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
             </div>
             
             <input type="hidden" id="editingId">
@@ -175,10 +186,73 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="dongModal()">Hủy</button>
-                <button class="btn-primary" onclick="luuNhatKy()">Lưu & Cập nhật kho</button>
+                <button class="btn-secondary" onclick="dongModal()" style="padding: 6px 14px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Hủy</button>
+                <button class="btn-primary" onclick="luuNhatKy()" style="padding: 6px 14px; background: #2563eb; color: #fff; border: 0; border-radius: 4px; cursor: pointer;">Lưu & Cập nhật kho</button>
             </div>
         </div>
+    </div>
+
+    <!-- MODAL CHỌN KHOẢNG THỜI GIAN XUẤT BÁO CÁO VẮC-XIN DẠI -->
+    <div class="modal-overlay" id="modalBaoCaoDai" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 3000;">
+        <div class="modal-container" style="background: #fff; border-radius: 8px; width: 400px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 16px; color: #1e3a8a;">📊 Xuất Báo Cáo Vắc-xin Dại</h3>
+                <button class="close-modal" onclick="dongModalBaoCaoDai()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
+            </div>
+            <div class="form-group-modal">
+                <label>Từ ngày:</label>
+                <input type="date" id="bcTuNgay">
+            </div>
+            <div class="form-group-modal">
+                <label>Đến ngày:</label>
+                <input type="date" id="bcDenNgay">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="dongModalBaoCaoDai()" style="padding: 6px 14px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Hủy</button>
+                <button class="btn-primary" onclick="thucHienXuatBaoCaoDai()" style="padding: 6px 14px; background: #059669; color: #fff; border: 0; border-radius: 4px; cursor: pointer;">Tải file Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHUNG BẢNG HTML ẨN ĐỂ XUẤT EXCEL CHUẨN MẪU BIỂU DẠI -->
+    <div id="excelBaoCaoDaiWrapper" style="display: none;">
+        <table id="tableBaoCaoDai" border="1">
+            <thead>
+                <tr><th colspan="20" style="font-size: 14px; font-weight: bold; text-align: center;">BÁO CÁO THÔNG TIN CHI TIẾT VỀ TÌNH HÌNH TIÊM VẮC XIN PHÒNG BỆNH DẠI</th></tr>
+                <tr><th colspan="20" id="bc-khoang-thoigian" style="text-align: center; font-style: italic;">(Từ ngày... đến ngày...)</th></tr>
+                <tr><th colspan="20"></th></tr>
+                <tr style="background-color: #f1f5f9; text-align: center; vertical-align: middle;">
+                    <th rowspan="2">STT</th>
+                    <th rowspan="2">Ngày phòng bệnh bằng vắc xin</th>
+                    <th rowspan="2">Họ và tên chủ vật nuôi</th>
+                    <th rowspan="2">Số nhà/Số đường</th>
+                    <th rowspan="2">Tên thôn/khối phố/đân phố</th>
+                    <th rowspan="2">Xã/phường/đặc khu</th>
+                    <th rowspan="2">Huyện/thành phố</th>
+                    <th colspan="2">Số lượng vật nuôi được phòng bệnh (tổng vắc xin theo loài vật nuôi)</th>
+                    <th colspan="10">Đặc điểm dạng vật nuôi được tiêm phòng</th>
+                    <th colspan="2">Thông tin về vắc xin sử dụng để tiêm phòng</th>
+                </tr>
+                <tr style="background-color: #f1f5f9; text-align: center;">
+                    <th>Chó</th>
+                    <th>Mèo</th>
+                    <th>Tên vật nuôi (nếu có)</th>
+                    <th>Giống</th>
+                    <th>Trọng lượng</th>
+                    <th>Màu lông</th>
+                    <th>Tuổi</th>
+                    <th>Tính biệt</th>
+                    <th>Mục đích nuôi</th>
+                    <th>Đặc điểm nhận diện khác</th>
+                    <th>Tên vắc xin</th>
+                    <th>Số lô</th>
+                    <th>Hạn sử dụng</th>
+                </tr>
+            </thead>
+            <tbody id="bc-dai-tbody">
+                <!-- Dữ liệu điền tự động -->
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -205,17 +279,25 @@
             // 1. Tải khách hàng
             const { data: khData } = await db.from('khachhang').select('*');
             if (khData) {
-                khData.forEach(kh => { mapKhachHang[kh.id] = kh.hovaten; });
+                khData.forEach(kh => { mapKhachHang[kh.id] = kh; });
             }
 
-            // 2. Tải thú cưng
+            // 2. Tải thú cưng kèm thông tin chủ nuôi/địa chỉ
             const { data: tcData } = await db.from('thucung').select('*');
             if (tcData) {
                 tcData.forEach(tc => {
                     let maKH = tc.makhachhang || tc.makh || tc.khachhang_id;
+                    let khInfo = mapKhachHang[maKH] || {};
                     mapThuCung[tc.id] = {
                         tenthucung: tc.tenthucung,
-                        tenchu: mapKhachHang[maKH] || 'Không rõ chủ'
+                        giong: tc.giong || '---',
+                        trongluong: tc.trongluong || '---',
+                        loai: tc.loai || tc.loaihinh || 'Chó',
+                        tuoi: tc.tuoi || '---',
+                        maulong: tc.maulong || tc.long || '---',
+                        tinhbiet: tc.tinhbiet || tc.gioitinh || '---',
+                        tenchu: khInfo.hovaten || 'Không rõ chủ',
+                        diachi: khInfo.diachi || khInfo.diachichu || ''
                     };
                 });
             }
@@ -237,13 +319,13 @@
             if (error) {
                 console.error('Lỗi tải nhật ký tiêm vắc-xin:', error);
             } else {
-                danhSachNhatKyGoc = data;
+                danhSachNhatKyGoc = data || [];
                 hienThiBang(danhSachNhatKyGoc);
             }
         }
 
         function chonVaccineKho(selectEl) {
-            // Xử lý tự động nếu cần lấy thông tin thêm
+            // Xử lý tự động nếu cần
         }
 
         function hienThiBang(data) {
@@ -327,7 +409,6 @@
             document.getElementById('bacsi').value = item.bacsi || '';
             document.getElementById('trangthai').value = item.trangthai || 'Đã tiêm';
             
-            // Chọn đúng vắc-xin trong select box
             const selectEl = document.getElementById('selectVaccine');
             for (let option of selectEl.options) {
                 if (option.text.includes(item.tenvaccine)) {
@@ -367,7 +448,6 @@
             const mavaccine = selectedOption.getAttribute('data-mavc');
             const tenvaccine = selectedOption.getAttribute('data-ten');
 
-            // 1. Hoàn lại số lượng 'datiem' trong kho nếu sửa mũi tiêm cũ
             if (id !== "") {
                 const itemCu = danhSachNhatKyGoc.find(x => x.id == id);
                 if (itemCu) {
@@ -379,7 +459,6 @@
                 }
             }
 
-            // 2. Tăng số lượng 'datiem' trong kho vắc-xin mới
             const khoMoi = danhSachKhoVaccineGoc.find(v => v.id == vaccineId);
             if (khoMoi) {
                 const daTiemMoi = (parseInt(khoMoi.datiem) || 0) + 1;
@@ -420,7 +499,6 @@
 
         async function xoaNhatKy(id) {
             if (confirm('Bạn có chắc chắn muốn xóa mũi tiêm này không?')) {
-                // Hoàn lại số lượng tiêm vào kho trước khi xóa
                 const itemCu = danhSachNhatKyGoc.find(x => x.id == id);
                 if (itemCu) {
                     const khoCu = danhSachKhoVaccineGoc.find(v => v.tenvaccine === itemCu.tenvaccine);
@@ -438,6 +516,94 @@
                     fetchDuLieuBanDau();
                 }
             }
+        }
+
+        // CÁC HÀM XỬ LÝ XUẤT BÁO CÁO VẮC-XIN DẠI
+        function moModalBaoCaoDai() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('bcTuNgay').value = `${year}-${month}-01`;
+            document.getElementById('bcDenNgay').value = now.toISOString().split('T')[0];
+            document.getElementById('modalBaoCaoDai').style.display = 'flex';
+        }
+
+        function dongModalBaoCaoDai() {
+            document.getElementById('modalBaoCaoDai').style.display = 'none';
+        }
+
+        function thucHienXuatBaoCaoDai() {
+            const tuNgay = document.getElementById('bcTuNgay').value;
+            const denNgay = document.getElementById('bcDenNgay').value;
+            if (!tuNgay || !denNgay) {
+                alert('Vui lòng chọn đầy đủ từ ngày và đến ngày!');
+                return;
+            }
+
+            dongModalBaoCaoDai();
+
+            let filtered = danhSachNhatKyGoc.filter(item => {
+                let ngayTiem = item.ngaytiem || '';
+                if (!ngayTiem) return false;
+                let dStr = ngayTiem.split('T')[0];
+                return dStr >= tuNgay && dStr <= denNgay && item.trangthai !== 'Đã hủy';
+            });
+
+            const fTuNgay = tuNgay.split('-').reverse().join('/');
+            const fDenNgay = denNgay.split('-').reverse().join('/');
+            document.getElementById('bc-khoang-thoigian').innerText = `(Từ ngày ${fTuNgay} đến ngày ${fDenNgay})`;
+
+            let htmlBody = '';
+            filtered.forEach((item, index) => {
+                let petInfo = mapThuCung[item.mathucung] || {};
+                let loaiVatNuoi = (petInfo.loai || '').toLowerCase();
+                let laCho = loaiVatNuoi.includes('chó') || loaiVatNuoi.includes('dog') ? '1' : '';
+                let laMeo = loaiVatNuoi.includes('mèo') || loaiVatNuoi.includes('cat') ? '1' : '';
+                let khoInfo = danhSachKhoVaccineGoc.find(v => v.tenvaccine === item.tenvaccine) || {};
+                let ngayTiemFormatted = item.ngaytiem ? item.ngaytiem.split('-').reverse().join('/') : '';
+
+                htmlBody += `
+                    <tr>
+                        <td style="text-align:center;">${index + 1}</td>
+                        <td>${ngayTiemFormatted}</td>
+                        <td>${petInfo.tenchu || ''}</td>
+                        <td>${petInfo.diachi || ''}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td style="text-align:center;">${laCho}</td>
+                        <td style="text-align:center;">${laMeo}</td>
+                        <td>${petInfo.tenthucung || ''}</td>
+                        <td>${petInfo.giong || ''}</td>
+                        <td>${petInfo.trongluong || ''}</td>
+                        <td>${petInfo.maulong || ''}</td>
+                        <td>${petInfo.tuoi || ''}</td>
+                        <td>${petInfo.tinhbiet || ''}</td>
+                        <td>Thú cưng gia đình</td>
+                        <td></td>
+                        <td>${item.tenvaccine || ''}</td>
+                        <td>${khoInfo.solo || ''}</td>
+                        <td>${khoInfo.handung || ''}</td>
+                    </tr>
+                `;
+            });
+
+            if (!htmlBody) {
+                htmlBody = `<tr><td colspan="20" style="text-align:center; color:red; padding: 20px;">Không có dữ liệu tiêm vắc-xin dại trong khoảng thời gian này!</td></tr>`;
+            }
+
+            document.getElementById('bc-dai-tbody').innerHTML = htmlBody;
+
+            const tableHtml = document.getElementById('excelBaoCaoDaiWrapper').innerHTML;
+            const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BaoCao_TiemVaccineDai_${tuNgay}_den_${denNgay}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
